@@ -232,17 +232,56 @@ class TransbankApi {
           ((data['payload'] as Map<String, dynamic>?)?['result'] as Map<String, dynamic>?) ??
           {};
 
-      final panNumber = (result['panNumber']?.toString() ?? result['pan']?.toString() ?? '').toUpperCase().trim();
-      final name = (result['name']?.toString() ?? result['fullName']?.toString() ?? '').trim();
+      final panNumber = (result['panNumber']?.toString() ??
+              result['pan_number']?.toString() ??
+              result['pan']?.toString() ??
+              result['idNumber']?.toString() ??
+              result['card_number']?.toString() ??
+              data['panNumber']?.toString() ??
+              data['card_number']?.toString() ??
+              '')
+          .toUpperCase()
+          .trim();
+
+      final name = (result['name']?.toString() ??
+              result['full_name']?.toString() ??
+              result['fullName']?.toString() ??
+              result['nameOnCard']?.toString() ??
+              result['name_on_card']?.toString() ??
+              data['name']?.toString() ??
+              data['name_on_card']?.toString() ??
+              '')
+          .trim();
+
+      final rawDob = (result['dateOfBirth']?.toString() ??
+              result['dob']?.toString() ??
+              result['date_of_birth']?.toString() ??
+              data['dateOfBirth']?.toString() ??
+              data['date_of_birth']?.toString() ??
+              '')
+          .trim();
+
+      String? dateOfBirth;
+      if (rawDob.isNotEmpty) {
+        final ddmmyyyy = RegExp(r'^(\d{2})/(\d{2})/(\d{4})$').firstMatch(rawDob);
+        if (ddmmyyyy != null) {
+          dateOfBirth = '${ddmmyyyy.group(3)}-${ddmmyyyy.group(2)}-${ddmmyyyy.group(1)}';
+        } else {
+          dateOfBirth = rawDob;
+        }
+      }
 
       final ok = data['ok'] == true ||
           (data['status']?.toString().toLowerCase() == 'success') ||
+          (data['status']?.toString() == '1') ||
+          RegExp(r'success', caseSensitive: false).hasMatch(data['message']?.toString() ?? '') ||
           (panNumber.isNotEmpty && RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$').hasMatch(panNumber));
 
       return {
         'ok': ok,
         'panNumber': panNumber.isNotEmpty ? panNumber : null,
         'name': name.isNotEmpty ? name : null,
+        'dateOfBirth': dateOfBirth,
         'message': data['message']?.toString() ?? (ok ? 'PAN verified via OCR.' : 'Could not verify PAN from image.'),
         'raw': data,
       };

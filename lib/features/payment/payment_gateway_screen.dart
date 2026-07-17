@@ -151,6 +151,23 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen> {
   Widget _buildWebView() {
     final controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(NavigationDelegate(
+        onNavigationRequest: (request) async {
+          final url = request.url;
+          if (url.contains('/payment/return') || url.contains('payment_return') || url.contains('payment/return')) {
+            final uri = Uri.parse(url);
+            final orderId = uri.queryParameters['order_id'] ?? uri.queryParameters['order_id'] ?? '';
+            if (orderId.isNotEmpty) {
+              _pollTimer?.cancel();
+              if (mounted) {
+                context.go(AppRoutes.paymentReturn, extra: {'orderId': orderId});
+              }
+              return NavigationDecision.prevent;
+            }
+          }
+          return NavigationDecision.navigate;
+        },
+      ))
       ..loadHtmlString(_checkoutHtml!);
     _webViewController = controller;
     return WebViewWidget(controller: controller);

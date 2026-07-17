@@ -1,0 +1,188 @@
+import 'dart:typed_data';
+import 'package:flutter/services.dart';
+import 'package:image/image.dart' as img_lib;
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'certificate_service.dart';
+
+String _fmt(num v, int d) => v.toStringAsFixed(d);
+
+late pw.Font _regularFont;
+late pw.Font _boldFont;
+
+pw.TextStyle _s(double fontSize, {bool bold = false, int color = 0xFF000000, double? letterSpacing, double? lineSpacing}) {
+  return pw.TextStyle(
+    font: bold ? _boldFont : _regularFont,
+    fontSize: fontSize,
+    fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+    color: PdfColor.fromInt(color),
+    letterSpacing: letterSpacing,
+    lineSpacing: lineSpacing,
+  );
+}
+
+Future<Uint8List> generateDiamondCertificatePdf(DiamondCertificateData data) async {
+  final reg = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
+  final bld = await rootBundle.load('assets/fonts/NotoSans-Bold.ttf');
+  _regularFont = pw.Font.ttf(reg);
+  _boldFont = pw.Font.ttf(bld);
+
+  final doc = pw.Document();
+
+  Uint8List? sigBytes, stampBytes;
+  try {
+    sigBytes = _compress((await rootBundle.load('assets/images/certificate/signature.png')).buffer.asUint8List(), 40);
+    stampBytes = _compress((await rootBundle.load('assets/images/certificate/stamp.png')).buffer.asUint8List(), 56);
+  } catch (_) {}
+
+  doc.addPage(pw.MultiPage(pageFormat: PdfPageFormat.a4, margin: const pw.EdgeInsets.all(24), build: (ctx) => [
+    _header(),
+    pw.SizedBox(height: 16), _titleCard(), pw.SizedBox(height: 16), _infoRow(data), pw.SizedBox(height: 16),
+    _customerInfo(data), pw.SizedBox(height: 16),
+    _investmentSummary(data), pw.SizedBox(height: 16),
+    _orderHistory(data), pw.SizedBox(height: 16),
+    pw.Row(children: [pw.Expanded(child: _hlCard('Certified Diamond', 'GIA / IGI certified')), pw.SizedBox(width: 8), pw.Expanded(child: _hlCard('Insured Shipping', 'Fully insured delivery')), pw.SizedBox(width: 8), pw.Expanded(child: _hlCard('100% Verified', 'Authenticity guaranteed'))]),
+    pw.SizedBox(height: 16), _noteVerification(data), pw.SizedBox(height: 24),
+    if (sigBytes != null && stampBytes != null) _signatureStamp(sigBytes!, stampBytes!),
+    pw.SizedBox(height: 16), _footer(),
+  ]));
+
+  return doc.save();
+}
+
+pw.Widget _header() => pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+  pw.Row(children: [
+    pw.Container(width: 48, height: 48, decoration: pw.BoxDecoration(borderRadius: pw.BorderRadius.circular(14), border: pw.Border.all(color: PdfColor.fromInt(0xFFA5B4FC)), color: PdfColor.fromInt(0x80EEF2FF)),
+      child: pw.Center(child: pw.Text('K', style: _s(22, bold: true, color: 0xFF6366F1)))),
+    pw.SizedBox(width: 12),
+    pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+      pw.Text('KARATLY', style: _s(20, bold: true, letterSpacing: 2, color: 0xFF000000)),
+      pw.Text('Digital Gold \u00b7 Silver \u00b7 Diamonds', style: _s(9, letterSpacing: 2, color: 0xFF000000)),
+    ]),
+  ]),
+  pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
+    pw.Text('Powered by', style: _s(9, letterSpacing: 2, color: 0xFF000000)),
+    pw.Text('AUGMONT', style: _s(14, bold: true, color: 0xFF000000)),
+    pw.Text('Diamonds for All', style: _s(8, letterSpacing: 2, color: 0xFF000000)),
+  ]),
+]);
+
+pw.Widget _titleCard() => pw.Container(padding: pw.EdgeInsets.all(20), decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFEEF2FF), border: pw.Border.all(color: PdfColor.fromInt(0xFFE0E7FF)), borderRadius: pw.BorderRadius.circular(16)),
+  child: pw.Column(children: [
+    pw.Text('DIAMOND PURCHASE', style: _s(16, bold: true, letterSpacing: 3, color: 0xFF000000)),
+    pw.Text('CERTIFICATE', style: _s(16, bold: true, letterSpacing: 3, color: 0xFF000000)),
+    pw.SizedBox(height: 6), pw.Text('Your diamond. Certified. Eternal.', style: _s(10, letterSpacing: 2, color: 0xFF000000)),
+  ]));
+
+pw.Widget _infoBox(String label, String value) => pw.Container(padding: pw.EdgeInsets.all(12), decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFF5F7FF), border: pw.Border.all(color: PdfColor.fromInt(0xFFE0E7FF)), borderRadius: pw.BorderRadius.circular(14)),
+  child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+    pw.Text(label, style: _s(9, letterSpacing: 2, color: 0xFF000000)),
+    pw.SizedBox(height: 4), pw.Text(value, style: _s(11, bold: true, color: 0xFF000000)),
+  ]));
+
+pw.Widget _infoRow(DiamondCertificateData data) => pw.Row(children: [
+  pw.Expanded(child: _infoBox('Certificate No.', data.certificateNumber)), pw.SizedBox(width: 8),
+  pw.Expanded(child: _infoBox('Date of Issue', data.issueDate)), pw.SizedBox(width: 8),
+  pw.Expanded(child: _infoBox('Certificate Type', data.certificateType)),
+]);
+
+pw.Widget _customerInfo(DiamondCertificateData data) => pw.Container(padding: pw.EdgeInsets.all(16), decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFF5F7FF), border: pw.Border.all(color: PdfColor.fromInt(0xFFE0E7FF)), borderRadius: pw.BorderRadius.circular(16)),
+  child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+    pw.Text('Customer Information', style: _s(10, bold: true, letterSpacing: 2, color: 0xFF000000)),
+    pw.SizedBox(height: 12), _kv('Customer Name', data.customer.name), _kv('Customer ID', data.customer.customerId),
+    _kv('Registered Mobile', data.customer.mobileNumber), _kv('Email Address', data.customer.email), _kv('PAN (Masked)', data.customer.panMasked),
+  ]));
+
+pw.Widget _kv(String label, String value) => pw.Padding(padding: const pw.EdgeInsets.symmetric(vertical: 3),
+  child: pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+    pw.Text(label, style: _s(9, color: 0xFF000000)),
+    pw.Text(value, style: _s(9, color: 0xFF000000)),
+  ]));
+
+pw.Widget _investmentSummary(DiamondCertificateData data) => pw.Container(padding: pw.EdgeInsets.all(16), decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFF5F7FF), border: pw.Border.all(color: PdfColor.fromInt(0xFFE0E7FF)), borderRadius: pw.BorderRadius.circular(16)),
+  child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+    pw.Text('Investment Summary', style: _s(10, bold: true, letterSpacing: 2, color: 0xFF000000)),
+    pw.SizedBox(height: 12),
+    _kv('Total Investment', data.totalInvestment), _kv('Total Orders', data.totalOrders.toString()),
+    _kv('Payment Partner', 'Cashfree'), _kv('Certification', 'GIA / IGI'),
+    _kv('Shipping', 'Insured & Tracked'), _kv('Authenticity', '100% Verified'),
+  ]));
+
+pw.Widget _orderHistory(DiamondCertificateData data) => pw.Container(padding: pw.EdgeInsets.all(16), decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFF5F7FF), border: pw.Border.all(color: PdfColor.fromInt(0xFFE0E7FF)), borderRadius: pw.BorderRadius.circular(16)),
+  child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+    pw.Text('Order History', style: _s(10, bold: true, letterSpacing: 2, color: 0xFF000000)),
+    pw.SizedBox(height: 8),
+    pw.Row(children: [pw.Expanded(child: pw.Text('Date', style: _s(7, bold: true))), pw.Expanded(flex: 2, child: pw.Text('Transaction ID', style: _s(7, bold: true))), pw.Expanded(child: pw.Text('Diamond', style: _s(7, bold: true))), pw.Expanded(child: pw.Text('Amount', style: _s(7, bold: true))), pw.Expanded(child: pw.Text('Status', style: _s(7, bold: true)))]),
+    pw.Divider(color: PdfColor.fromInt(0xFFC7D2FE)),
+    ...data.orderHistory.map((item) => pw.Padding(padding: const pw.EdgeInsets.symmetric(vertical: 4), child: pw.Row(children: [
+      pw.Expanded(child: pw.Text(item.date, style: _s(7))), pw.Expanded(flex: 2, child: pw.Text(item.transactionId, style: _s(7))),
+      pw.Expanded(child: pw.Text(item.diamond, style: _s(7))), pw.Expanded(child: pw.Text(item.amount, style: _s(7))),
+      pw.Expanded(child: pw.Text(item.status, style: _s(7, color: 0xFF10B981))),
+    ]))),
+    pw.Align(alignment: pw.Alignment.centerRight, child: pw.Text('Latest Transactions', style: _s(8, color: 0xFF000000))),
+  ]));
+
+pw.Widget _hlCard(String title, String subtitle) => pw.Container(padding: pw.EdgeInsets.all(12), decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFF5F7FF), border: pw.Border.all(color: PdfColor.fromInt(0xFFE0E7FF)), borderRadius: pw.BorderRadius.circular(16)),
+  child: pw.Column(children: [    pw.Text(title, style: _s(10, bold: true, color: 0xFF000000)), pw.SizedBox(height: 4), pw.Text(subtitle, style: _s(8, color: 0xFF000000))]));
+
+pw.Widget _noteVerification(DiamondCertificateData data) {
+  return pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+    pw.Expanded(flex: 3, child: pw.Container(
+      padding: pw.EdgeInsets.all(16),
+      decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFF5F7FF), border: pw.Border.all(color: PdfColor.fromInt(0xFFE0E7FF)), borderRadius: pw.BorderRadius.circular(16)),
+      child: pw.Text(data.certificateNote, style: _s(8, lineSpacing: 1.6, color: 0xFF000000)),
+    )),
+    pw.SizedBox(width: 8),
+    pw.Expanded(flex: 2, child: pw.Column(children: [
+      pw.Container(
+        padding: pw.EdgeInsets.all(12),
+        decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFF5F7FF), border: pw.Border.all(color: PdfColor.fromInt(0xFFE0E7FF)), borderRadius: pw.BorderRadius.circular(16)),
+        child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+          pw.Text('Verification', style: _s(10, bold: true, color: 0xFF000000)),
+          pw.SizedBox(height: 8),
+          pw.Container(
+            padding: pw.EdgeInsets.all(10),
+            decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFFFFFFF), border: pw.Border.all(color: PdfColor.fromInt(0xFFE0E7FF)), borderRadius: pw.BorderRadius.circular(14)),
+            child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+              pw.Text('Scan to Verify Certificate', style: _s(7, bold: true, color: 0xFF000000)),
+              pw.Text('Verification URL', style: _s(7, color: 0xFF000000)),
+              pw.Text(data.verificationUrl, style: _s(7, bold: true, color: 0xFF000000)),
+              pw.SizedBox(height: 4),
+              pw.Text('Verification Hash', style: _s(7, color: 0xFF000000)),
+              pw.Text(data.verificationHash, style: _s(7, bold: true, color: 0xFF000000)),
+            ]),
+          ),
+        ]),
+      ),
+      pw.SizedBox(height: 8),
+      pw.Container(
+        padding: pw.EdgeInsets.all(12),
+        decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFEEF2FF), border: pw.Border.all(color: PdfColor.fromInt(0xFFC7D2FE)), borderRadius: pw.BorderRadius.circular(16)),
+        child: pw.Column(children: [pw.Text('Authorized by', style: _s(8, color: 0xFF000000)), pw.Text('Karatly', style: _s(12, bold: true, color: 0xFF000000)), pw.Text('Powered by Augmont', style: _s(7, letterSpacing: 2, color: 0xFF000000))]),
+      ),
+    ])),
+  ]);
+}
+
+pw.Widget _signatureStamp(Uint8List sigBytes, Uint8List stampBytes) {
+  final sigImg = pw.Image(pw.MemoryImage(sigBytes), height: 40, fit: pw.BoxFit.contain);
+  final stampImg = pw.Image(pw.MemoryImage(stampBytes), height: 56, fit: pw.BoxFit.contain);
+  return pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+    pw.Column(children: [sigImg, pw.Text('Authorised Signatory', style: _s(8, letterSpacing: 1, color: 0xFF000000))]),
+    pw.Column(children: [stampImg, pw.Text('Karatly Finvest Technology India Private Limited', style: _s(8, letterSpacing: 1, color: 0xFF000000))]),
+  ]);
+}
+
+pw.Widget _footer() => pw.Container(padding: pw.EdgeInsets.only(top: 12), decoration: pw.BoxDecoration(border: pw.Border(top: pw.BorderSide(color: PdfColor.fromInt(0xFFE0E7FF)))),
+  child: pw.Column(children: [
+    pw.Text('Customer Support', style: _s(8, bold: true, color: 0xFF000000)),
+    pw.SizedBox(height: 4),
+    pw.Text('Phone: +91 93929 18025  |  Email: support@karatly.com  |  Website: www.karatly.net', style: _s(7, color: 0xFF000000)),
+  ]));
+
+Uint8List _compress(Uint8List raw, int height) {
+  img_lib.Image? original = img_lib.decodeImage(raw);
+  if (original == null) return raw;
+  final r = height / original.height;
+  return Uint8List.fromList(img_lib.encodeJpg(img_lib.copyResize(original, width: (original.width * r).round(), height: height), quality: 85));
+}

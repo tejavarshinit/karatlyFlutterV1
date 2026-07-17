@@ -27,6 +27,7 @@ class LocalStorageService {
   static const _keyDiamondClientId = 'diamondClientId';
   static const _keyDiamondPaymentContext = 'diamondPaymentContext';
   static const _keyRedeemResult = 'redeemResult';
+  static const _keyMobilePaymentResult = 'mobilePaymentResult';
   static const _keyHasSeenSplash = 'hasSeenSplash';
   static const _keyPendingRegistrationProfile = 'pendingRegistrationProfile';
 
@@ -212,6 +213,15 @@ class LocalStorageService {
   }
   static Future<void> clearRedeemResult() async {
     await _instance.remove(_keyRedeemResult);
+  }
+
+  // Mobile payment result (normalized verifyPaymentDetails response)
+  static String? getMobilePaymentResult() => _instance.getString(_keyMobilePaymentResult);
+  static Future<void> setMobilePaymentResult(String value) async {
+    await _instance.setString(_keyMobilePaymentResult, value);
+  }
+  static Future<void> clearMobilePaymentResult() async {
+    await _instance.remove(_keyMobilePaymentResult);
   }
 
   // Auth session

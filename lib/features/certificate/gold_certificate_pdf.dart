@@ -7,7 +7,26 @@ import 'certificate_service.dart';
 
 String _fmt(num v, int d) => v.toStringAsFixed(d);
 
+late pw.Font _regularFont;
+late pw.Font _boldFont;
+
+pw.TextStyle _s(double fontSize, {bool bold = false, int color = 0xFF000000, double? letterSpacing, double? lineSpacing}) {
+  return pw.TextStyle(
+    font: bold ? _boldFont : _regularFont,
+    fontSize: fontSize,
+    fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+    color: PdfColor.fromInt(color),
+    letterSpacing: letterSpacing,
+    lineSpacing: lineSpacing,
+  );
+}
+
 Future<Uint8List> generateGoldCertificatePdf(CertificateData data) async {
+  final reg = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
+  final bld = await rootBundle.load('assets/fonts/NotoSans-Bold.ttf');
+  _regularFont = pw.Font.ttf(reg);
+  _boldFont = pw.Font.ttf(bld);
+
   final doc = pw.Document();
 
   Uint8List? sigBytes;
@@ -20,34 +39,31 @@ Future<Uint8List> generateGoldCertificatePdf(CertificateData data) async {
   } catch (_) {}
 
   doc.addPage(
-    pw.Page(
+    pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(24),
-      build: (ctx) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          _header(),
-          pw.SizedBox(height: 16),
-          _titleCard(),
-          pw.SizedBox(height: 16),
-          _infoRow(data),
-          pw.SizedBox(height: 16),
-          _customerPortfolioSection(data),
-          pw.SizedBox(height: 16),
-          _latestPurchaseHoldingSection(data),
-          pw.SizedBox(height: 16),
-          _historyTable(data),
-          pw.SizedBox(height: 16),
-          _highlights(),
-          pw.SizedBox(height: 16),
-          _noteVerification(data),
-          pw.SizedBox(height: 24),
-          if (sigBytes != null && stampBytes != null)
-            _signatureStamp(sigBytes!, stampBytes!, doc),
-          pw.SizedBox(height: 16),
-          _footer(),
-        ],
-      ),
+      build: (ctx) => [
+        _header(),
+        pw.SizedBox(height: 16),
+        _titleCard(),
+        pw.SizedBox(height: 16),
+        _infoRow(data),
+        pw.SizedBox(height: 16),
+        _customerPortfolioSection(data),
+        pw.SizedBox(height: 16),
+        _latestPurchaseHoldingSection(data),
+        pw.SizedBox(height: 16),
+        _historyTable(data),
+        pw.SizedBox(height: 16),
+        _highlights(),
+        pw.SizedBox(height: 16),
+        _noteVerification(data),
+        pw.SizedBox(height: 24),
+        if (sigBytes != null && stampBytes != null)
+          _signatureStamp(sigBytes!, stampBytes!),
+        pw.SizedBox(height: 16),
+        _footer(),
+      ],
     ),
   );
 
@@ -67,19 +83,19 @@ pw.Widget _header() {
               border: pw.Border.all(color: PdfColor.fromInt(0xFFD3B868)),
               color: PdfColor.fromInt(0x21F5E0A0),
             ),
-            child: pw.Center(child: pw.Text('K', style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFFB68611)))),
+            child: pw.Center(child: pw.Text('K', style: _s(22, bold: true, color: 0xFFB68611))),
           ),
           pw.SizedBox(width: 12),
           pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-            pw.Text('KARATLY', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold, letterSpacing: 2, color: PdfColor.fromInt(0xFF9A7800))),
-            pw.Text('Digital Gold · Silver · Diamonds', style: pw.TextStyle(fontSize: 9, letterSpacing: 2, color: PdfColor.fromInt(0xFF6B5F40))),
+            pw.Text('KARATLY', style: _s(20, bold: true, letterSpacing: 2, color: 0xFF9A7800)),
+            pw.Text('Digital Gold \u00b7 Silver \u00b7 Diamonds', style: _s(9, letterSpacing: 2, color: 0xFF6B5F40)),
           ]),
         ],
       ),
       pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
-        pw.Text('Powered by', style: pw.TextStyle(fontSize: 9, letterSpacing: 2, color: PdfColor.fromInt(0xFF1F2937))),
-        pw.Text('AUGMONT', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF0F1720))),
-        pw.Text('Gold for All', style: pw.TextStyle(fontSize: 8, letterSpacing: 2, color: PdfColor.fromInt(0xFF6B7280))),
+        pw.Text('Powered by', style: _s(9, letterSpacing: 2, color: 0xFF1F2937)),
+        pw.Text('AUGMONT', style: _s(14, bold: true, color: 0xFF0F1720)),
+        pw.Text('Gold for All', style: _s(8, letterSpacing: 2, color: 0xFF6B7280)),
       ]),
     ],
   );
@@ -94,10 +110,10 @@ pw.Widget _titleCard() {
       borderRadius: pw.BorderRadius.circular(16),
     ),
     child: pw.Column(children: [
-      pw.Text('OVERALL DIGITAL GOLD', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, letterSpacing: 3, color: PdfColor.fromInt(0xFF111827))),
-      pw.Text('HOLDING CERTIFICATE', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, letterSpacing: 3, color: PdfColor.fromInt(0xFF111827))),
+      pw.Text('OVERALL DIGITAL GOLD', style: _s(16, bold: true, letterSpacing: 3, color: 0xFF111827)),
+      pw.Text('HOLDING CERTIFICATE', style: _s(16, bold: true, letterSpacing: 3, color: 0xFF111827)),
       pw.SizedBox(height: 6),
-      pw.Text('Your gold. Secure today. Wealth for tomorrow.', style: pw.TextStyle(fontSize: 10, letterSpacing: 2, color: PdfColor.fromInt(0xFF6B7280))),
+      pw.Text('Your gold. Secure today. Wealth for tomorrow.', style: _s(10, letterSpacing: 2, color: 0xFF6B7280)),
     ]),
   );
 }
@@ -121,9 +137,9 @@ pw.Widget _infoBox(String label, String value) {
       borderRadius: pw.BorderRadius.circular(14),
     ),
     child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-      pw.Text(label, style: pw.TextStyle(fontSize: 9, letterSpacing: 2, color: PdfColor.fromInt(0xFF111827))),
+      pw.Text(label, style: _s(9, letterSpacing: 2, color: 0xFF000000)),
       pw.SizedBox(height: 4),
-      pw.Text(value, style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF111827))),
+      pw.Text(value, style: _s(11, bold: true, color: 0xFF000000)),
     ]),
   );
 }
@@ -145,7 +161,7 @@ pw.Widget _customerInfo(CertificateData data) {
       borderRadius: pw.BorderRadius.circular(16),
     ),
     child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-      pw.Text('Customer Information', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, letterSpacing: 2, color: PdfColor.fromInt(0xFF0F1720))),
+      pw.Text('Customer Information', style: _s(10, bold: true, letterSpacing: 2, color: 0xFF000000)),
       pw.SizedBox(height: 12),
       _kv('Customer Name', data.customer.name),
       _kv('Customer ID', data.customer.customerId),
@@ -160,8 +176,8 @@ pw.Widget _kv(String label, String value) {
   return pw.Padding(
     padding: const pw.EdgeInsets.symmetric(vertical: 3),
     child: pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-      pw.Text(label, style: pw.TextStyle(fontSize: 9, color: PdfColor.fromInt(0xFF6B7280))),
-      pw.Text(value, style: pw.TextStyle(fontSize: 9, color: PdfColor.fromInt(0xFF1F2937))),
+      pw.Text(label, style: _s(9, color: 0xFF000000)),
+      pw.Text(value, style: _s(9, color: 0xFF000000)),
     ]),
   );
 }
@@ -178,16 +194,12 @@ pw.Widget _portfolioBadges(CertificateData data) {
       borderRadius: pw.BorderRadius.circular(16),
     ),
     child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-      pw.Text('Overall Gold Portfolio', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, letterSpacing: 2, color: PdfColor.fromInt(0xFF0F1720))),
+      pw.Text('Overall Gold Portfolio', style: _s(10, bold: true, letterSpacing: 2, color: 0xFF000000)),
       pw.SizedBox(height: 12),
-      _badge('Total Gold Purchased (Lifetime)', '${f4(p.totalGoldPurchased)} g'),
-      _badge('Total Investment Amount', '₹${f2(p.totalInvestmentAmount)}'),
-      _badge('Total Gold Sold', '${f4(p.totalGoldSold)} g'),
-      _badge('Current Gold Balance', '${f4(p.currentGoldBalance)} g'),
-      _badge('Average Purchase Price', '₹${f2(p.averagePurchasePrice)}/g'),
-      _badge('Current Gold Rate', '₹${f2(p.currentGoldRate)}/g'),
-      _badge('Current Portfolio Value', '₹${f2(p.currentPortfolioValue)}'),
-      _badge('Unrealized Gain / Loss', '₹${f2(p.unrealizedGainLoss)} (${f2(p.unrealizedGainPercent)}%)'),
+      _badge('Total Portfolio (g)', '${f4(p.totalGoldPortfolioGrams)} g'),
+      _badge('Total Portfolio (Value)', '\u20b9${f2(p.totalGoldPortfolioValue)}'),
+      _badge('Total Redeem/Sold (g)', '${f4(p.totalDigitalGoldRedeemSold)} g'),
+      _badge('Current Gold Rate', '\u20b9${f2(p.currentGoldRate)}/g'),
     ]),
   );
 }
@@ -202,8 +214,8 @@ pw.Widget _badge(String label, String value) {
     ),
     child: pw.Row(children: [
       pw.Expanded(child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-        pw.Text(label, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFFF7CD57))),
-        pw.Text(value, style: pw.TextStyle(fontSize: 7, color: PdfColor.fromInt(0xE6FFFFFF))),
+        pw.Text(label, style: _s(7, bold: true, color: 0xFFFFFFFF)),
+        pw.Text(value, style: _s(7, color: 0xFFFFFFFF)),
       ])),
     ]),
   );
@@ -229,14 +241,14 @@ pw.Widget _latestPurchaseCard(CertificateData data) {
       borderRadius: pw.BorderRadius.circular(16),
     ),
     child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-      pw.Text('Latest Purchase Summary', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, letterSpacing: 2, color: PdfColor.fromInt(0xFF0F1720))),
+      pw.Text('Latest Purchase Summary', style: _s(10, bold: true, letterSpacing: 2, color: 0xFF0F1720)),
       pw.SizedBox(height: 12),
       _kv('Latest Transaction ID', lp.transactionId),
       _kv('Purchase Date', lp.purchaseDate),
       _kv('Purchase Time', lp.purchaseTime),
       _kv('Quantity Purchased', '${f4(lp.quantity)} g'),
-      _kv('Gold Rate', '₹${f2(lp.rate)}/g'),
-      _kv('Investment Amount', '₹${f2(lp.amount)}'),
+      _kv('Gold Rate', '\u20b9${f2(lp.rate)}/g'),
+      _kv('Investment Amount', '\u20b9${f2(lp.amount)}'),
       _kv('Payment Method', lp.paymentMethod),
       _kv('Payment Status', lp.paymentStatus),
     ]),
@@ -254,12 +266,11 @@ pw.Widget _holdingSummaryCard(CertificateData data) {
       borderRadius: pw.BorderRadius.circular(16),
     ),
     child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-      pw.Text('Gold Holding Summary', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, letterSpacing: 2, color: PdfColor.fromInt(0xFF0F1720))),
+      pw.Text('Gold Holding Summary', style: _s(10, bold: true, letterSpacing: 2, color: 0xFF0F1720)),
       pw.SizedBox(height: 12),
-      _kv('Lifetime Gold Purchased', '${f4(hs.lifetimePurchased)} g'),
-      _kv('Lifetime Gold Sold', '${f4(hs.lifetimeSold)} g'),
-      _kv('Current Gold Holding', '${f4(hs.currentHolding)} g'),
-      _kv('Available for Redemption', '${f4(hs.availableForRedemption)} g'),
+      _kv('Total Gold Portfolio (g)', '${f4(hs.totalGoldPortfolio)} g'),
+      _kv('Total Digital Gold Redeem/Sold (g)', '${f4(hs.totalDigitalGoldRedeemSold)} g'),
+      _kv('Available for Redemption (g)', '${f4(hs.availableForRedemption)} g'),
       _kv('Vault Storage', hs.vaultStorage),
       _kv('Gold Purity', hs.goldPurity),
       _kv('Storage Partner', hs.storagePartner),
@@ -279,31 +290,31 @@ pw.Widget _historyTable(CertificateData data) {
       borderRadius: pw.BorderRadius.circular(16),
     ),
     child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-      pw.Text('Purchase History', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, letterSpacing: 2, color: PdfColor.fromInt(0xFF111827))),
+      pw.Text('Purchase History', style: _s(10, bold: true, letterSpacing: 2, color: 0xFF111827)),
       pw.SizedBox(height: 8),
       pw.Row(children: [
-        pw.Expanded(child: pw.Text('Date', style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF111827)))),
-        pw.Expanded(flex: 2, child: pw.Text('Transaction ID', style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF111827)))),
-        pw.Expanded(child: pw.Text('Qty (g)', style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF111827)))),
-        pw.Expanded(child: pw.Text('Rate/g', style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF111827)))),
-        pw.Expanded(child: pw.Text('Amount', style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF111827)))),
-        pw.Expanded(child: pw.Text('Status', style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF111827)))),
+        pw.Expanded(child: pw.Text('Date', style: _s(7, bold: true, color: 0xFF000000))),
+        pw.Expanded(flex: 2, child: pw.Text('Transaction ID', style: _s(7, bold: true, color: 0xFF000000))),
+        pw.Expanded(child: pw.Text('Qty (g)', style: _s(7, bold: true, color: 0xFF000000))),
+        pw.Expanded(child: pw.Text('Rate/g', style: _s(7, bold: true, color: 0xFF000000))),
+        pw.Expanded(child: pw.Text('Amount', style: _s(7, bold: true, color: 0xFF000000))),
+        pw.Expanded(child: pw.Text('Status', style: _s(7, bold: true, color: 0xFF000000))),
       ]),
       pw.Divider(color: PdfColor.fromInt(0xFFE7D4A9)),
       ...data.purchaseHistory.map((item) => pw.Padding(
         padding: const pw.EdgeInsets.symmetric(vertical: 4),
         child: pw.Row(children: [
-          pw.Expanded(child: pw.Text(item.date, style: pw.TextStyle(fontSize: 7))),
-          pw.Expanded(flex: 2, child: pw.Text(item.transactionId, style: pw.TextStyle(fontSize: 7))),
-          pw.Expanded(child: pw.Text(f4(item.quantity), style: pw.TextStyle(fontSize: 7))),
-          pw.Expanded(child: pw.Text('₹${f2(item.rate)}', style: pw.TextStyle(fontSize: 7))),
-          pw.Expanded(child: pw.Text('₹${f2(item.amount)}', style: pw.TextStyle(fontSize: 7))),
-          pw.Expanded(child: pw.Text(item.status, style: pw.TextStyle(fontSize: 7, color: PdfColor.fromInt(0xFF10B981)))),
+          pw.Expanded(child: pw.Text(item.date, style: _s(7))),
+          pw.Expanded(flex: 2, child: pw.Text(item.transactionId, style: _s(7))),
+          pw.Expanded(child: pw.Text(f4(item.quantity), style: _s(7))),
+          pw.Expanded(child: pw.Text('\u20b9${f2(item.rate)}', style: _s(7))),
+          pw.Expanded(child: pw.Text('\u20b9${f2(item.amount)}', style: _s(7))),
+          pw.Expanded(child: pw.Text(item.status, style: _s(7, color: 0xFF10B981))),
         ]),
       )),
       pw.Align(
         alignment: pw.Alignment.centerRight,
-        child: pw.Text('Total Records: ${data.purchaseHistory.length.toString().padLeft(2, '0')}', style: pw.TextStyle(fontSize: 8, color: PdfColor.fromInt(0xFF6B7280))),
+        child:         pw.Text('Latest 5 Transactions', style: _s(8, color: 0xFF000000)),
       ),
     ]),
   );
@@ -328,9 +339,9 @@ pw.Widget _hlCard(String title, String subtitle) {
       borderRadius: pw.BorderRadius.circular(16),
     ),
     child: pw.Column(children: [
-      pw.Text(title, style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFFB48600))),
+      pw.Text(title, style: _s(10, bold: true, color: 0xFF000000)),
       pw.SizedBox(height: 4),
-      pw.Text(subtitle, style: pw.TextStyle(fontSize: 8, color: PdfColor.fromInt(0xFF4B5563))),
+      pw.Text(subtitle, style: _s(8, color: 0xFF000000)),
     ]),
   );
 }
@@ -344,7 +355,7 @@ pw.Widget _noteVerification(CertificateData data) {
         border: pw.Border.all(color: PdfColor.fromInt(0xFFE8D7A6)),
         borderRadius: pw.BorderRadius.circular(16),
       ),
-      child: pw.Text(data.certificateNote, style: pw.TextStyle(fontSize: 8, lineSpacing: 1.6, color: PdfColor.fromInt(0xFF4B5563))),
+      child: pw.Text(data.certificateNote, style: _s(8, lineSpacing: 1.6, color: 0xFF000000)),
     )),
     pw.SizedBox(width: 8),
     pw.Expanded(flex: 2, child: pw.Column(children: [
@@ -356,7 +367,7 @@ pw.Widget _noteVerification(CertificateData data) {
           borderRadius: pw.BorderRadius.circular(16),
         ),
         child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-          pw.Text('Verification', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF111827))),
+          pw.Text('Verification', style: _s(10, bold: true, color: 0xFF111827)),
           pw.SizedBox(height: 8),
           pw.Container(
             padding: pw.EdgeInsets.all(10),
@@ -366,11 +377,12 @@ pw.Widget _noteVerification(CertificateData data) {
               borderRadius: pw.BorderRadius.circular(14),
             ),
             child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-              pw.Text('Verification URL', style: pw.TextStyle(fontSize: 7, color: PdfColor.fromInt(0xFF6B7280))),
-              pw.Text(data.verificationUrl, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF111827))),
+              pw.Text('Scan to Verify Certificate', style: _s(7, bold: true, color: 0xFF000000)),
+              pw.Text('Verification URL', style: _s(7, color: 0xFF000000)),
+              pw.Text(data.verificationUrl, style: _s(7, bold: true, color: 0xFF000000)),
               pw.SizedBox(height: 4),
-              pw.Text('Verification Hash', style: pw.TextStyle(fontSize: 7, color: PdfColor.fromInt(0xFF6B7280))),
-              pw.Text(data.verificationHash, style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF111827))),
+              pw.Text('Verification Hash', style: _s(7, color: 0xFF000000)),
+              pw.Text(data.verificationHash, style: _s(7, bold: true, color: 0xFF000000)),
             ]),
           ),
         ]),
@@ -384,26 +396,26 @@ pw.Widget _noteVerification(CertificateData data) {
           borderRadius: pw.BorderRadius.circular(16),
         ),
         child: pw.Column(children: [
-          pw.Text('Authorized by', style: pw.TextStyle(fontSize: 8, color: PdfColor.fromInt(0xFF4B5563))),
-          pw.Text('Karatly', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF0F1720))),
-          pw.Text('Powered by Augmont', style: pw.TextStyle(fontSize: 7, letterSpacing: 2, color: PdfColor.fromInt(0xFF6B7280))),
+          pw.Text('Authorized by', style: _s(8, color: 0xFF000000)),
+          pw.Text('Karatly', style: _s(12, bold: true, color: 0xFF000000)),
+          pw.Text('Powered by Augmont', style: _s(7, letterSpacing: 2, color: 0xFF000000)),
         ]),
       ),
     ])),
   ]);
 }
 
-pw.Widget _signatureStamp(Uint8List sigBytes, Uint8List stampBytes, pw.Document doc) {
+pw.Widget _signatureStamp(Uint8List sigBytes, Uint8List stampBytes) {
   final sigImg = pw.Image(pw.MemoryImage(sigBytes), height: 40, fit: pw.BoxFit.contain);
   final stampImg = pw.Image(pw.MemoryImage(stampBytes), height: 56, fit: pw.BoxFit.contain);
   return pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
     pw.Column(children: [
       sigImg,
-      pw.Text('Authorised Signatory', style: pw.TextStyle(fontSize: 8, letterSpacing: 1, color: PdfColor.fromInt(0xFF6B7280))),
+      pw.Text('Authorised Signatory', style: _s(8, letterSpacing: 1, color: 0xFF000000)),
     ]),
     pw.Column(children: [
       stampImg,
-      pw.Text('Karatly Finvest Technology India Private Limited', style: pw.TextStyle(fontSize: 8, letterSpacing: 1, color: PdfColor.fromInt(0xFF6B7280))),
+      pw.Text('Karatly Finvest Technology India Private Limited', style: _s(8, letterSpacing: 1, color: 0xFF000000)),
     ]),
   ]);
 }
@@ -413,9 +425,9 @@ pw.Widget _footer() {
     padding: pw.EdgeInsets.only(top: 12),
     decoration: pw.BoxDecoration(border: pw.Border(top: pw.BorderSide(color: PdfColor.fromInt(0xFFE8D7A6)))),
     child: pw.Column(children: [
-      pw.Text('Customer Support', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF111827))),
+      pw.Text('Customer Support', style: _s(8, bold: true, color: 0xFF000000)),
       pw.SizedBox(height: 4),
-      pw.Text('Phone: +91 93929 18025  |  Email: support@karatly.com  |  Website: www.karatly.net', style: pw.TextStyle(fontSize: 7, color: PdfColor.fromInt(0xFF6B7280))),
+      pw.Text('Phone: +91 93929 18025  |  Email: support@karatly.com  |  Website: www.karatly.net', style: _s(7, color: 0xFF000000)),
     ]),
   );
 }

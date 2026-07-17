@@ -38,7 +38,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final investment = home.investment;
     final goldInvested = investment.goldTotalInvested;
     final silverInvested = investment.silverTotalInvested;
-    final totalInvested = investment.goldTotalInvested;
+    final totalInvested = investment.totalInvested;
     final portfolioValue = investment.goldHoldingWithMultiplier * goldRate
         + investment.silverHoldingWithMultiplier * silverRate;
 
@@ -191,9 +191,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              _buildStatBox(label: 'Total Portfolio', value: _formatCurrency(portfolioValue)),
+              _buildStatBox(label: 'Total Portfolio Value', value: _formatCurrency(portfolioValue)),
               const SizedBox(width: 12),
-              _buildStatBox(label: 'Total Invested', value: _formatCurrency(totalInvested)),
+              _buildStatBox(label: 'Total Invested Value', value: _formatCurrency(totalInvested)),
             ],
           ),
         ],
@@ -490,7 +490,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Row(
           children: [
             Expanded(child: _buildAssetCard(
-              title: 'Gold Investment',
+              title: 'Digital Gold Invested',
               holdingsLabel: 'Total Gold Holdings',
               holdingsValue: '${goldInvested.toStringAsFixed(2)} gm',
               value: _formatCurrency(goldValue),
@@ -499,7 +499,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             )),
             const SizedBox(width: 12),
             Expanded(child: _buildAssetCard(
-              title: 'Silver Investment',
+              title: 'Digital Silver Invested',
               holdingsLabel: 'Total Silver Holdings',
               holdingsValue: '${silverInvested.toStringAsFixed(2)} gm',
               value: _formatCurrency(silverValue),
@@ -512,7 +512,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Row(
           children: [
             Expanded(child: _buildAssetCard(
-              title: 'Diamond Investment',
+              title: 'Diamond purchased',
               holdingsLabel: 'Coming Soon',
               holdingsValue: '--',
               value: '₹0',
@@ -521,7 +521,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             )),
             const SizedBox(width: 12),
             Expanded(child: _buildAssetCard(
-              title: 'Jewel Investment',
+              title: 'Jewellery purchased',
               holdingsLabel: 'Coming Soon',
               holdingsValue: '--',
               value: '₹0',

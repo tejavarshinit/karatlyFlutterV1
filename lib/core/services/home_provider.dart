@@ -15,6 +15,7 @@ class InvestmentData {
   final double silverHoldingWithMultiplier;
   final double silverTotalInvested;
   final double silverTotalBuyPreTaxAmount;
+  final double totalInvested;
 
   const InvestmentData({
     this.goldHoldingGrams = 0,
@@ -25,9 +26,8 @@ class InvestmentData {
     this.silverHoldingWithMultiplier = 0,
     this.silverTotalInvested = 0,
     this.silverTotalBuyPreTaxAmount = 0,
+    this.totalInvested = 0,
   });
-
-  double get totalInvested => goldTotalInvested + silverTotalInvested;
 }
 
 // ── Home State ──
@@ -106,12 +106,13 @@ class HomeNotifier extends StateNotifier<HomeState> {
       final investment = InvestmentData(
         goldHoldingGrams: (goldRes['currentHoldingGrams'] as num?)?.toDouble() ?? 0,
         goldHoldingWithMultiplier: (goldRes['currentHoldingWithMultiplier'] as num?)?.toDouble() ?? 0,
-        goldTotalInvested: (goldRes['totalInvested'] as num?)?.toDouble() ?? 0,
+        goldTotalInvested: (goldRes['totalInvestedOfGold'] as num?)?.toDouble() ?? (goldRes['totalInvested'] as num?)?.toDouble() ?? 0,
         goldTotalBuyPreTaxAmount: (goldRes['totalBuyPreTaxAmount'] as num?)?.toDouble() ?? 0,
         silverHoldingGrams: (silverRes['currentHoldingGrams'] as num?)?.toDouble() ?? 0,
         silverHoldingWithMultiplier: (silverRes['currentHoldingWithMultiplier'] as num?)?.toDouble() ?? 0,
-        silverTotalInvested: (silverRes['totalInvested'] as num?)?.toDouble() ?? 0,
+        silverTotalInvested: (silverRes['totalInvestedOfSilver'] as num?)?.toDouble() ?? (silverRes['totalInvested'] as num?)?.toDouble() ?? 0,
         silverTotalBuyPreTaxAmount: (silverRes['totalBuyPreTaxAmount'] as num?)?.toDouble() ?? 0,
+        totalInvested: (goldRes['totalInvested'] as num?)?.toDouble() ?? (silverRes['totalInvested'] as num?)?.toDouble() ?? 0,
       );
 
       state = state.copyWith(investment: investment, loading: false);

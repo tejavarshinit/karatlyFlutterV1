@@ -9,6 +9,7 @@ import '../../core/services/orders_provider.dart';
 import '../../core/services/auth_provider.dart';
 import '../../core/models/augmont_model.dart';
 import '../../core/models/diamond_model.dart';
+import '../invoice/invoice_download_util.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -97,9 +98,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _buildKycLimitBanner(rateState, homeState),
                 _buildMetalTabs(),
                 _buildQuickActions(),
-                if (_isGold) _buildGoldCertificateSection(),
-                if (!_isDiamond) _buildAssetOverview(rateState, homeState),
                 _buildBuyNowButton(),
+                if (_isGold) _buildGoldCertificateSection(),
+                if (_isSilver) _buildSilverCertificateEntry(),
+                if (_isDiamond) _buildDiamondCertificateEntry(),
+                if (!_isDiamond) _buildAssetOverview(rateState, homeState),
                 _buildAIInsight(),
                 _buildRecentTransactions(ordersState),
                 const SizedBox(height: 16),
@@ -191,6 +194,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final goldRate = rateState.currentRate?.buyPrice ?? 0;
     final silverRate = rateState.currentRate?.silver.buyPrice ?? 0;
     final investment = homeState.investment;
+    final authState = ref.watch(authProvider);
+    final userName = authState.user?.name ?? authState.fullName ?? 'Investor';
 
     final portfolioValue = _isGold
         ? investment.goldHoldingWithMultiplier * goldRate
@@ -199,6 +204,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             : investment.goldHoldingWithMultiplier * goldRate + investment.silverHoldingWithMultiplier * silverRate;
 
     final holdingGrams = _isSilver ? investment.silverHoldingWithMultiplier : investment.goldHoldingWithMultiplier;
+    final portfolioLabel = _isDiamond ? 'PORTFOLIO VALUE' : (_isSilver ? 'SILVER PORTFOLIO VALUE' : 'GOLD PORTFOLIO VALUE');
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -229,9 +235,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text('Welcome, $userName', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _accentColor, fontFamily: 'Lato')),
+                  const SizedBox(height: 8),
                   if (!_isDiamond) ...[
-                    const Text('PORTFOLIO VALUE', style: TextStyle(fontSize: 12, letterSpacing: 1.4, color: Color(0xFFBCBCBC), fontFamily: 'Lato')),
-                    const SizedBox(height: 12),
+                    Text(portfolioLabel, style: const TextStyle(fontSize: 12, letterSpacing: 1.4, color: Color(0xFFBCBCBC), fontFamily: 'Lato')),
+                    const SizedBox(height: 8),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -247,13 +255,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text(
                       '${_formatGrams(holdingGrams)} ${_isSilver ? "Silver" : "Gold"} Holdings',
                       style: const TextStyle(fontSize: 12, color: Color(0xFFBCBCBC), fontFamily: 'Lato'),
-                    ),
-                  ] else ...[
-                    const Text('DIAMOND VAULT', style: TextStyle(fontSize: 12, letterSpacing: 1.4, color: Color(0xFFBCBCBC), fontFamily: 'Lato')),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Invest in premium certified diamonds.',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _accentColor, fontFamily: 'Lato'),
                     ),
                   ],
                 ],
@@ -479,7 +480,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   Image.asset('assets/images/splash_logo.png', height: 16, width: 16),
                   const SizedBox(width: 8),
-                  const Text('Download Gold Certificate', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Lato')),
+                  const Text('Gold Portfolio Statement', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Lato')),
                 ],
               ),
             ),
@@ -552,6 +553,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSilverCertificateEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      child: GestureDetector(
+        onTap: () => context.go(AppRoutes.silverCertificate),
+        child: Container(
+          width: double.infinity, height: 40,
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(5), gradient: const LinearGradient(colors: [Color(0xFFE2E8F0), Color(0xFF94A3B8)])),
+          child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.monetization_on, size: 16, color: Colors.black),
+            SizedBox(width: 8),
+            Text('Silver Portfolio Statement', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Lato')),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiamondCertificateEntry() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      child: GestureDetector(
+        onTap: () => context.go(AppRoutes.diamondCertificate),
+        child: Container(
+          width: double.infinity, height: 40,
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(5), gradient: const LinearGradient(colors: [Color(0xFFC7D2FE), Color(0xFF818CF8)])),
+          child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.diamond, size: 16, color: Colors.black),
+            SizedBox(width: 8),
+            Text('Diamond Purchase Certificate', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black, fontFamily: 'Lato')),
+          ]),
+        ),
+      ),
     );
   }
 
@@ -981,6 +1018,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     style: const TextStyle(fontSize: 9, color: Color(0xFF6E6E6E), fontFamily: 'Lato'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(3),
+                      color: _badgeBg,
+                    ),
+                    child: Text(
+                      'Applicable GST is reflected in the invoice.',
+                      style: TextStyle(fontSize: 6.5, fontWeight: FontWeight.w600, color: _accentColor.withValues(alpha: 0.8)),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      final t = order.type.toLowerCase();
+                      final invType = t == 'sell' ? 'sell' : (t == 'redeem' ? 'redeem' : 'buy');
+                      downloadInvoice(
+                        context: context,
+                        transactionId: order.transactionId.isNotEmpty ? order.transactionId : order.merchantTransactionId,
+                        type: invType,
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Row(
+                        children: [
+                          Icon(Icons.description_outlined, size: 11, color: _accentColor),
+                          const SizedBox(width: 3),
+                          Text(
+                            'Invoice',
+                            style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: _accentColor),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),

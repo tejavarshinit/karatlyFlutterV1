@@ -16,7 +16,7 @@ import '../features/sip_flow/sip_screen.dart';
 import '../features/cart/cart_screen.dart';
 import '../features/brands/brands_screen.dart';
 import '../features/payment/payment_gateway_screen.dart';
-import '../features/payment/payment_result_screen.dart';
+
 import '../features/payment/payment_return_screen.dart';
 import '../features/settings/help_center_screen.dart';
 import '../features/settings/terms_screen.dart';
@@ -31,6 +31,9 @@ import '../features/commerce/rewards_screen.dart';
 import '../features/commerce/transfer_screen.dart';
 import '../features/commerce/gold_certificate_screen.dart';
 import '../features/commerce/audit_certificate_screen.dart';
+import '../features/certificate/silver_certificate_screen.dart';
+import '../features/certificate/diamond_certificate_screen.dart';
+import '../features/invoice/invoice_screen.dart';
 import '../features/commerce/bank_verify_screen.dart';
 import '../features/commerce/bank_verify_loading_screen.dart';
 import '../features/notifications/notifications_screen.dart';
@@ -134,12 +137,14 @@ class AppRoutes {
   static const portfolio = '/portfolio';
   static const goldCertificate = '/gold-certificate';
   static const auditCertificate = '/audit-certificate';
+  static const silverCertificate = '/silver-certificate';
+  static const diamondCertificate = '/diamond-certificate';
   static const diamondPaymentSuccess = '/diamond-payment-success';
   static const kycVerification = '/kyc-verification';
   static const paymentMethods = '/payment-methods';
   static const paymentGateway = '/payment-gateway';
   static const paymentReturn = '/payment/return';
-  static const paymentResult = '/payment-result';
+
   static const rewards = '/rewards';
   static const security = '/security';
   static const helpCenter = '/help-center';
@@ -152,6 +157,7 @@ class AppRoutes {
   static const transfer = '/transfer';
   static const why = '/why';
   static const notifications = '/notifications';
+  static const invoice = '/invoice';
   static const partner = '/partner';
   static const nearby = '/nearby';
   static const bankVerify = '/bank-verify';
@@ -314,13 +320,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           orderId: extras['orderId'] as String? ?? '',
         );
       }),
-      GoRoute(path: AppRoutes.paymentResult, builder: (_, state) {
-        final extras = state.extra as Map<String, dynamic>? ?? {};
-        return PaymentResultScreen(
-          orderId: extras['orderId'] as String? ?? '',
-          status: extras['status'] as String? ?? '',
-        );
-      }),
       GoRoute(path: AppRoutes.paymentReturn, builder: (_, state) {
         final extras = state.extra as Map<String, dynamic>? ?? {};
         final orderId = extras['orderId'] as String? ?? state.uri.queryParameters['order_id'] ?? '';
@@ -331,6 +330,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.transfer, builder: (_, __) => const TransferScreen()),
       GoRoute(path: AppRoutes.goldCertificate, builder: (_, __) => const GoldCertificateScreen()),
       GoRoute(path: AppRoutes.auditCertificate, builder: (_, __) => const AuditCertificateScreen()),
+      GoRoute(path: AppRoutes.silverCertificate, builder: (_, __) => const SilverCertificateScreen()),
+      GoRoute(path: AppRoutes.diamondCertificate, builder: (_, __) => const DiamondCertificateScreen()),
+      GoRoute(path: AppRoutes.invoice, builder: (_, state) {
+        final extras = state.extra as Map<String, dynamic>? ?? {};
+        return InvoiceScreen(
+          transactionId: extras['transactionId'] as String? ?? '',
+          type: extras['type'] as String? ?? 'buy',
+        );
+      }),
       GoRoute(path: AppRoutes.bankVerify, builder: (_, __) => const BankVerifyScreen()),
       GoRoute(path: AppRoutes.bankVerifyLoading, builder: (_, state) {
         final extras = state.extra as Map<String, dynamic>? ?? {};

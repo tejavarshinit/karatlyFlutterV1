@@ -1,0 +1,7 @@
+-keepattributes *Annotation*
+-keepattributes SourceFile,LineNumberTable
+-keep class * extends FlutterActivity
+-keep class io.flutter.** { *; }
+-keep class com.karatly.** { *; }
+-dontwarn io.flutter.embedding.**
+-keep class kotlin.Metadata { *; }

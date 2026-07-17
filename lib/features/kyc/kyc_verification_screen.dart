@@ -832,7 +832,7 @@ class _PanSectionState extends State<PanSection> {
 
     final panNumber = result['panNumber']?.toString() ?? _panController.text.trim().toUpperCase();
     final name = result['name']?.toString() ?? _nameController.text.trim();
-    final dob = _dobController.text.trim();
+    final dob = result['dateOfBirth']?.toString().trim() ?? _dobController.text.trim();
 
     final augmont = AugmontApi(dio);
     final response = await augmont.updateAugmontKyc(

@@ -445,26 +445,25 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSelected ? const Color(0xFF15EE01) : const Color(0xFF2E2E2E)),
-          color: const Color(0xFF0F1416),
+          border: Border.all(color: isSelected ? const Color(0xFF15EE01) : const Color(0xFF2E2E2E), width: isSelected ? 1.5 : 1),
+          color: isSelected ? const Color(0x1815EE01) : const Color(0xFF0F1416),
         ),
         child: Row(
           children: [
-            Radio<String>(
-              value: addrId,
-              groupValue: _paymentAddressId,
-              onChanged: (v) => setState(() { _paymentAddressId = v!; _showCustomAddress = false; }),
-              fillColor: WidgetStateProperty.all(const Color(0xFFF7CD57)),
-            ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(addr['name']?.toString() ?? 'Address', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+                  const SizedBox(height: 2),
                   Text('${addr['address']?.toString() ?? ""}, ${addr['cityName']?.toString() ?? addr['city']?.toString() ?? ""}', style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
                 ],
               ),
             ),
+            if (isSelected)
+              const Icon(Icons.check_circle, size: 22, color: Color(0xFF15EE01))
+            else
+              Container(width: 22, height: 22, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFF4E4E4E)))),
           ],
         ),
       ),

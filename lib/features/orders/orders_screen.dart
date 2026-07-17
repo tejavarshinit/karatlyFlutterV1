@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
+import '../../app/router.dart';
 import '../../core/models/augmont_model.dart';
 import '../../core/models/diamond_model.dart';
 import '../../core/services/orders_provider.dart';
+import '../invoice/invoice_download_util.dart';
 
 enum MetalFilter { all, gold, silver, diamond }
 
@@ -129,7 +132,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           metalName: metalName,
           displayName: displayName,
           badgeLabel: badgeLabel,
-          transactionId: o.orderReference,
+          transactionId: o.transactionId.isNotEmpty ? o.transactionId : o.orderReference,
         ));
       }
     }
@@ -696,16 +699,13 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   }
 
   Future<void> _downloadInvoice(_DisplayOrder order) async {
-    // TODO: Implement invoice download with PDF generation
-    // For now show a snackbar
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Invoice download for ${order.type} order'),
-        backgroundColor: const Color(0xFF242320),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
+    final type = order.type.toLowerCase();
+    final invoiceType = type == 'sell' ? 'sell' : (type == 'redeem' ? 'redeem' : 'buy');
+    await downloadInvoice(
+      context: context,
+      transactionId: order.transactionId,
+      type: invoiceType,
     );
   }
 }

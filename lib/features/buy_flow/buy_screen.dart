@@ -53,7 +53,7 @@ class _BuyScreenState extends ConsumerState<BuyScreen> {
         _hasStoredValues = true;
       }
     }
-    if (_amountController.text.isEmpty) _amountController.text = '1000';
+    if (_amountController.text.isEmpty) _amountController.text = '100';
     if (_weightController.text.isEmpty) _weightController.text = '1';
   }
 
@@ -311,7 +311,7 @@ class _BuyScreenState extends ConsumerState<BuyScreen> {
   Widget _buildStep1Amount() {
     final presets = _mode == 'weight'
         ? [0.5, 1.0, 2.0, 5.0]
-        : [500, 1000, 5000, 10000];
+        : [100, 500, 1000, 5000];
 
     return SingleChildScrollView(
       child: Column(
