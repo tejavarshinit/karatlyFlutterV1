@@ -191,8 +191,6 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildStatusBar(),
-                    const SizedBox(height: 18),
                     _buildHeader(context),
                     const SizedBox(height: 24),
                     if (_approvalMessage != null) ...[
@@ -300,24 +298,6 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
     );
   }
 
-  Widget _buildStatusBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: const [
-        Text('9:30', style: TextStyle(fontSize: 12, color: Colors.white, height: 1.5)),
-        Row(
-          children: [
-            _StatusGlyph(width: 18, child: _SignalBars()),
-            SizedBox(width: 6),
-            _StatusGlyph(width: 14, child: _WifiGlyph()),
-            SizedBox(width: 6),
-            _StatusGlyph(width: 25, child: _BatteryGlyph()),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget _buildHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -325,7 +305,7 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
         Row(
           children: [
             GestureDetector(
-              onTap: () => Navigator.maybePop(context),
+              onTap: () => context.go(AppRoutes.profile),
               child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
             ),
             const SizedBox(width: 8),
@@ -694,7 +674,6 @@ class PanSection extends StatefulWidget {
 class _PanSectionState extends State<PanSection> {
   final _panController = TextEditingController();
   final _nameController = TextEditingController();
-  final _dobController = TextEditingController();
   bool _loading = false;
   String? _error;
   bool _showOcr = false;
@@ -713,14 +692,12 @@ class _PanSectionState extends State<PanSection> {
   void dispose() {
     _panController.dispose();
     _nameController.dispose();
-    _dobController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     final pan = _panController.text.trim().toUpperCase();
     final name = _nameController.text.trim();
-    final dob = _dobController.text.trim();
     final mobile = LocalStorageService.getUserProfile()?['mobileNumber']?.toString() ?? LocalStorageService.getUserPhone() ?? '';
 
     if (!RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$').hasMatch(pan)) {
@@ -729,10 +706,6 @@ class _PanSectionState extends State<PanSection> {
     }
     if (name.isEmpty) {
       setState(() => _error = 'Enter name as per PAN card');
-      return;
-    }
-    if (dob.isEmpty) {
-      setState(() => _error = 'Select your date of birth');
       return;
     }
 
@@ -764,7 +737,6 @@ class _PanSectionState extends State<PanSection> {
       request: {
         'panNumber': pan,
         'nameAsPerPan': name,
-        'dateOfBirth': dob,
         'status': 'approved',
       },
     );
@@ -832,7 +804,6 @@ class _PanSectionState extends State<PanSection> {
 
     final panNumber = result['panNumber']?.toString() ?? _panController.text.trim().toUpperCase();
     final name = result['name']?.toString() ?? _nameController.text.trim();
-    final dob = result['dateOfBirth']?.toString().trim() ?? _dobController.text.trim();
 
     final augmont = AugmontApi(dio);
     final response = await augmont.updateAugmontKyc(
@@ -840,7 +811,6 @@ class _PanSectionState extends State<PanSection> {
       request: {
         'panNumber': panNumber,
         'nameAsPerPan': name,
-        'dateOfBirth': dob,
         'status': 'approved',
       },
     );
@@ -953,14 +923,6 @@ class _PanSectionState extends State<PanSection> {
           const SizedBox(height: 10),
           _inputField(controller: _nameController, label: 'Name as per PAN', hint: 'FULL NAME AS ON PAN', toUpperCase: true),
           const SizedBox(height: 10),
-          _inputField(
-            controller: _dobController,
-            label: 'Date of Birth',
-            hint: 'YYYY-MM-DD',
-            keyboardType: TextInputType.datetime,
-            maxLength: 10,
-          ),
-          const SizedBox(height: 8),
           if (_error != null) ...[
             Text(_error!, style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350))),
             const SizedBox(height: 8),
@@ -1153,29 +1115,6 @@ class _AadhaarSectionState extends State<AadhaarSection> {
     }
   }
 
-  Future<void> _resendOtp() async {
-    if (_loading) return;
-    setState(() {
-      _loading = true;
-      _error = null;
-      _success = null;
-    });
-    final aadhaar = _aadhaarController.text.trim().replaceAll(RegExp(r'\D'), '');
-    final api = TransbankApi(ProviderScope.containerOf(context).read(dioAugmontProvider));
-    final result = await api.transbankAadhaarGenerateOtp(aadhaar);
-    if (!mounted) return;
-    setState(() => _loading = false);
-    if (result['ok'] == true) {
-      setState(() {
-        _sessionId = result['sessionId']?.toString();
-        _success = 'OTP resent successfully';
-      });
-      _startCountdown();
-    } else {
-      setState(() => _error = result['message']?.toString() ?? 'Could not resend OTP.');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     if (widget.verified) {
@@ -1233,38 +1172,6 @@ class _AadhaarSectionState extends State<AadhaarSection> {
             maxLength: 6,
           ),
           const SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: _countdown > 0 ? null : _resendOtp,
-                  child: Text(
-                    _countdown > 0 ? 'Resend OTP in $_countdown s' : 'Resend OTP',
-                    style: TextStyle(fontSize: 11, color: _countdown > 0 ? const Color(0xFF7E7E7E) : const Color(0xFFF7CD57)),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _stage = 'enter';
-                      _otpController.clear();
-                      _error = null;
-                      _success = null;
-                    });
-                  },
-                  child: const Text('Change number', style: TextStyle(fontSize: 11, color: Color(0xFF7E7E7E))),
-                ),
-              ),
-              Expanded(
-                child: TextButton(
-                  onPressed: widget.onVerified,
-                  child: const Text('Skip OTP', style: TextStyle(fontSize: 11, color: Color(0xFF7E7E7E))),
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 8),
           _goldButton(label: 'Verify OTP', loading: _loading, onTap: _verifyOtp),
         ],
@@ -1425,9 +1332,35 @@ class _BankSectionState extends State<BankSection> {
     }
 
     final augmont = AugmontApi(ProviderScope.containerOf(context).read(dioAugmontProvider));
+
+    final createResult = await augmont.createAugmontUserBank(
+      uniqueId: widget.uniqueId,
+      request: {
+        'accountNumber': accountNumber,
+        'accountName': accountName,
+        'ifscCode': ifsc,
+      },
+    );
+
+    if (!mounted) return;
+    if (createResult['ok'] != true) {
+      setState(() => _error = createResult['message']?.toString() ?? 'Failed to save bank details.');
+      return;
+    }
+
     final banksRes = await augmont.fetchAugmontUserBanks(widget.uniqueId);
     final latestBanks = _parseBanks(banksRes['banks']);
-    if (latestBanks.isNotEmpty) {
+    if (latestBanks.length == 1) {
+      final bankId = _extractBankId(latestBanks.first);
+      if (bankId.isNotEmpty) {
+        await augmont.setPrimaryAugmontUserBank(uniqueId: widget.uniqueId, userBankId: bankId);
+        final bankMap = Map<String, dynamic>.from(latestBanks.first);
+        bankMap['isPrimary'] = true;
+        bankMap['is_primary'] = true;
+        await LocalStorageService.setPrimaryBankId(bankId);
+        await LocalStorageService.setPrimaryBank(jsonEncode(bankMap));
+      }
+    } else {
       final apiPrimary = latestBanks.where((item) => item['isPrimary'] == true || item['is_primary'] == true).toList();
       if (apiPrimary.isNotEmpty) {
         final primaryId = _extractBankId(apiPrimary.first);
@@ -1435,20 +1368,6 @@ class _BankSectionState extends State<BankSection> {
           await LocalStorageService.setPrimaryBankId(primaryId);
           await LocalStorageService.setPrimaryBank(jsonEncode(apiPrimary.first));
         }
-      }
-    }
-    if (latestBanks.isEmpty) {
-      final validatedBankId = _extractBankId((result['bank'] as Map?)?.cast<String, dynamic>() ?? {});
-      if (validatedBankId.isNotEmpty) {
-        await LocalStorageService.setPrimaryBankId(validatedBankId);
-        await LocalStorageService.setPrimaryBank(jsonEncode({
-          'userBankId': validatedBankId,
-          'accountName': accountName,
-          'accountNumber': accountNumber,
-          'ifscCode': ifsc,
-          'isPrimary': true,
-          'is_primary': true,
-        }));
       }
     }
 
@@ -1598,79 +1517,4 @@ class _BankSectionState extends State<BankSection> {
       ),
     );
   }
-}
-
-class _StatusGlyph extends StatelessWidget {
-  final double width;
-  final Widget child;
-  const _StatusGlyph({required this.width, required this.child});
-  @override
-  Widget build(BuildContext context) => SizedBox(width: width, height: 12, child: child);
-}
-
-class _SignalBars extends StatelessWidget {
-  const _SignalBars();
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: const [
-        _Bar(height: 4),
-        SizedBox(width: 2),
-        _Bar(height: 7),
-        SizedBox(width: 2),
-        _Bar(height: 10),
-      ],
-    );
-  }
-}
-
-class _Bar extends StatelessWidget {
-  final double height;
-  const _Bar({required this.height});
-  @override
-  Widget build(BuildContext context) => Container(width: 3, height: height, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(1)));
-}
-
-class _WifiGlyph extends StatelessWidget {
-  const _WifiGlyph();
-  @override
-  Widget build(BuildContext context) => CustomPaint(painter: _WifiPainter());
-}
-
-class _WifiPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white..style = PaintingStyle.fill;
-    final path = Path()
-      ..moveTo(size.width / 2, 0)
-      ..quadraticBezierTo(0, size.height * 0.15, 0, size.height * 0.7)
-      ..lineTo(size.width, size.height * 0.7)
-      ..quadraticBezierTo(size.width, size.height * 0.15, size.width / 2, 0)
-      ..close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _BatteryGlyph extends StatelessWidget {
-  const _BatteryGlyph();
-  @override
-  Widget build(BuildContext context) => CustomPaint(painter: _BatteryPainter());
-}
-
-class _BatteryPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final stroke = Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1;
-    final fill = Paint()..color = Colors.white..style = PaintingStyle.fill;
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(1, 1, size.width - 4, size.height - 2), const Radius.circular(3)), stroke);
-    canvas.drawRect(Rect.fromLTWH(3, 3, size.width * 0.6, size.height - 6), fill);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(size.width - 2, 4, 2, size.height - 8), const Radius.circular(1)), fill);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

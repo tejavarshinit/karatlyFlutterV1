@@ -19,8 +19,9 @@ import '../shared/step_rail.dart';
 class GoldCoinScreen extends ConsumerStatefulWidget {
   final int step;
   final String metalType;
+  final String backRoute;
 
-  const GoldCoinScreen({super.key, this.step = 1, this.metalType = 'gold'});
+  const GoldCoinScreen({super.key, this.step = 1, this.metalType = 'gold', this.backRoute = AppRoutes.market});
 
   @override
   ConsumerState<GoldCoinScreen> createState() => _GoldCoinScreenState();
@@ -63,6 +64,7 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('[FLOW] GoldCoinScreen.initState | step=${widget.step} metal=${widget.metalType}');
     if (widget.step == 1) _loadProducts();
     if (widget.step >= 2) _restoreState();
   }
@@ -97,11 +99,13 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
   // ─── Step 1: Load Products ───
 
   Future<void> _loadProducts() async {
+    debugPrint('[FLOW] GoldCoin._loadProducts | loading rate + products');
     setState(() => _loading = true);
     try {
       final api = AugmontApi(ref.read(augmontDioProvider));
       final rateRes = await api.fetchLiveGoldRateSnapshot();
       final prodRes = await api.fetchAugmontProducts(1, 24);
+      debugPrint('[FLOW] GoldCoin._loadProducts | rateOk=${rateRes['ok']} productsOk=${prodRes['ok']}');
       if (mounted) {
         final snapshot = rateRes['snapshot'];
         final rate = snapshot is GoldRate
@@ -194,6 +198,7 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
       _selectedWeight = _getStr(product, 'redeemWeight', _getStr(product, 'productWeight', ''));
       _selectedPurity = _getStr(product, 'purity', '999');
     });
+    debugPrint('[FLOW] GoldCoin._onProductTap | sku=$sku name=$_selectedName price=$_selectedBasePrice weight=$_selectedWeight');
 
     final uniqueId = _resolveUniqueId();
     if (uniqueId.isEmpty) return;
@@ -249,7 +254,10 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
         final rawData = aadhaarRes['data'] as Map<String, dynamic>?;
         final payload = rawData?['payload'] as Map<String, dynamic>?;
         final res = payload?['result'] as Map<String, dynamic>?;
-        final data = res?['data'] as Map<String, dynamic>? ?? res;
+        final data = (res?['data'] as Map<String, dynamic>?) ??
+            res ??
+            payload ??
+            rawData;
         if (data != null) {
           aadhaarAddr = data;
           providerId = data['providerAddressId']?.toString() ?? '';
@@ -542,6 +550,7 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
       'metalType': widget.metalType,
       'addressId': _paymentAddressId,
     }));
+    debugPrint('[FLOW] GoldCoin._confirmAddress | sku=$_selectedSku basePrice=$_selectedBasePrice weight=$_selectedWeight addressId=$_paymentAddressId');
 
     if (mounted) {
       Navigator.pop(bottomCtx);
@@ -555,7 +564,7 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
     if (widget.step > 1) {
       context.go('/sell/gold-coin/${widget.step - 1}?metal=${widget.metalType}');
     } else {
-      context.pop();
+      if (mounted) context.go(widget.backRoute);
     }
   }
 
@@ -567,8 +576,10 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          Container(
-            constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height * 0.86),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
             decoration: BoxDecoration(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
               gradient: RadialGradient(
@@ -595,18 +606,20 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(width: 100, height: 10, decoration: BoxDecoration(color: const Color(0xFF3E3E3E), borderRadius: BorderRadius.circular(10))),
                         const SizedBox(height: 16),
                         _buildHeader(),
                         const SizedBox(height: 8),
-                        Expanded(child: _buildStepContent()),
+                        Flexible(child: _buildStepContent()),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
+          ),
           ),
           _buildKycPrompt(),
         ],
@@ -750,7 +763,8 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
             colors: _isSilver ? [const Color(0xFF1C2633), const Color(0xFF0D1117)] : [const Color(0xFF241B0D), const Color(0xFF120D05)]),
           border: Border.all(color: _isSilver ? Colors.white.withValues(alpha: 0.19) : const Color(0xFF3E3522)),
         ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        child: SingleChildScrollView(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Container(width: 52, height: 52,
               decoration: BoxDecoration(shape: BoxShape.circle,
@@ -769,6 +783,7 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
           const SizedBox(height: 8),
           Text('Tap to redeem', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _isSilver ? Colors.white : const Color(0xFFF7CD57))),
         ]),
+        ),
       ),
     );
   }

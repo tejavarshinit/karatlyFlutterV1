@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import '../models/payment_model.dart';
 import '../storage/local_storage.dart';
@@ -15,6 +16,9 @@ class CashfreeApi {
   Future<T> _post<T>(String path, Map<String, dynamic> body) async {
     final token = LocalStorageService.getToken() ?? '';
     try {
+      if (path == '/api/v1/cfpg/payment') {
+        developer.log('Cashfree request => ${body.toString()}', name: 'CashfreeApi');
+      }
       final res = await _dio.post(
         '$_baseUrl$path',
         data: body,
@@ -29,6 +33,10 @@ class CashfreeApi {
 
       if (res.statusCode == 401) {
         throw Exception('Session expired. Please login again.');
+      }
+
+      if (path == '/api/v1/cfpg/payment') {
+        developer.log('Cashfree response => ${res.data}', name: 'CashfreeApi');
       }
 
       return res.data as T;

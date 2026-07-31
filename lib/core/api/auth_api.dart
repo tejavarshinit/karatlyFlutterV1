@@ -271,6 +271,7 @@ class AuthApi {
         'valid': valid,
         'message': data['message']?.toString() ?? (valid ? 'Token is valid' : 'Invalid or expired token'),
         ...data,
+        'userInfo': backendProfile,
       };
     } catch (error) {
       return _normalizeError(error, 'Unable to validate token');

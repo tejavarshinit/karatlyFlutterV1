@@ -213,7 +213,7 @@ class _SplashScreen2State extends State<SplashScreen2> with TickerProviderStateM
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      'Start with as little as ₹1',
+                      'Start with as little as ₹10',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w900,

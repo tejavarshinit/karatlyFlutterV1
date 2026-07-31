@@ -1,3 +1,5 @@
+import '../utils/money.dart';
+
 class PaymentRequest {
   final double amount;
   final String currency;
@@ -12,11 +14,20 @@ class PaymentRequest {
   });
 
   Map<String, dynamic> toJson() => {
-    'amount': amount,
+    'amount': MoneyHelper.truncateMoney(amount),
     'currency': currency,
     'customer': customer.toJson(),
     'business': business.toJson(),
   };
+
+  factory PaymentRequest.fromJson(Map<String, dynamic> json) {
+    return PaymentRequest(
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      currency: json['currency']?.toString() ?? 'INR',
+      customer: PaymentCustomer.fromJson((json['customer'] as Map?)?.cast<String, dynamic>() ?? const {}),
+      business: PaymentBusiness.fromJson((json['business'] as Map?)?.cast<String, dynamic>() ?? const {}),
+    );
+  }
 }
 
 class PaymentCustomer {
@@ -38,6 +49,15 @@ class PaymentCustomer {
     'email': email,
     'mobile': mobile,
   };
+
+  factory PaymentCustomer.fromJson(Map<String, dynamic> json) {
+    return PaymentCustomer(
+      customerId: json['customerId']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      mobile: json['mobile']?.toString() ?? '',
+    );
+  }
 }
 
 class PaymentBusiness {
@@ -65,12 +85,29 @@ class PaymentBusiness {
     'flowType': flowType,
     'uniqueId': uniqueId,
     'metalType': metalType,
-    'quantity': quantity.toString(),
+    'quantity': flowType == 'DIGITAL_BUY'
+        ? quantity.toStringAsFixed(4)
+        : quantity.toString(),
     'lockPrice': lockPrice,
-    if (blockId != null) 'blockId': blockId,
-    if (sku != null) 'sku': sku,
-    if (addressId != null) 'addressId': addressId,
+    'blockId': blockId ?? '',
+    if (sku != null && sku!.isNotEmpty) 'sku': sku,
+    if (addressId != null && addressId!.isNotEmpty) 'addressId': addressId,
   };
+
+  factory PaymentBusiness.fromJson(Map<String, dynamic> json) {
+    return PaymentBusiness(
+      flowType: json['flowType']?.toString() ?? 'DIGITAL_BUY',
+      uniqueId: json['uniqueId']?.toString() ?? '',
+      metalType: json['metalType']?.toString() ?? '',
+      quantity: (json['quantity'] is num)
+          ? (json['quantity'] as num).toDouble()
+          : double.tryParse(json['quantity']?.toString() ?? '') ?? 0,
+      lockPrice: json['lockPrice']?.toString() ?? '',
+      blockId: json['blockId']?.toString(),
+      sku: json['sku']?.toString(),
+      addressId: json['addressId']?.toString(),
+    );
+  }
 }
 
 class PaymentResponse {

@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/router.dart';
 import '../../app/theme.dart';
 import '../../core/api/augmont_api.dart';
+import '../../core/api/config.dart';
 import '../../core/services/rate_provider.dart';
 import '../../core/services/gold_flow_provider.dart';
 import '../../core/storage/local_storage.dart';
@@ -39,12 +41,20 @@ class _SellScreenState extends ConsumerState<SellScreen> {
   double _storedPlatformFee = 0;
   bool _hasStoredValues = false;
 
+  // Bank selection state
+  List<Map<String, dynamic>> _banks = [];
+  bool _banksLoading = false;
+  Map<String, dynamic>? _selectedBank;
+  String? _bankError;
+  bool _orderExecuted = false;
+
   @override
   void initState() {
     super.initState();
     if (_amountController.text.isEmpty) _amountController.text = '1000';
     if (_weightController.text.isEmpty) _weightController.text = '1';
     _loadHoldings();
+    if (widget.step == 3) _loadPrimaryBank();
     if (widget.step > 1) {
       final sellState = ref.read(goldFlowProvider).sellState;
       if (sellState.amount > 0) {
@@ -107,6 +117,161 @@ class _SellScreenState extends ConsumerState<SellScreen> {
     return rateState.currentRate?.sellPrice ?? 0;
   }
 
+  String _extractBankId(Map<String, dynamic> bank) {
+    final raw =
+      (bank['provider_bank_id']?.toString() ??
+          bank['userBankId']?.toString() ??
+          bank['bankId']?.toString() ??
+          bank['id']?.toString() ??
+          '').trim();
+    return raw.replaceAll(RegExp(r'[()]'), '');
+  }
+
+  Map<String, dynamic>? _normalizeBankRecord(Map<String, dynamic>? bank) {
+    if (bank == null) return null;
+
+    final bankId = _extractBankId(bank);
+    final bankName = (bank['bankName'] ?? bank['bank_name'] ?? bank['bank'] ?? '').toString().trim();
+    final accountNumber = (bank['accountNumber'] ?? bank['account_number'] ?? bank['bankNumber'] ?? bank['bank_number'] ?? '').toString().trim();
+    final accountType = (bank['accountType'] ?? bank['account_type'] ?? 'Savings').toString().trim();
+    final ifsc = (bank['ifscCode'] ?? bank['ifsc_code'] ?? bank['ifsc'] ?? '').toString().trim().toUpperCase();
+    final isPrimary = bank['isPrimary'] == true || bank['is_primary'] == true;
+
+    return <String, dynamic>{
+      ...bank,
+      if (bankId.isNotEmpty) 'userBankId': bankId,
+      if (bankId.isNotEmpty) 'provider_bank_id': bankId,
+      if (bankName.isNotEmpty) 'bankName': bankName,
+      if (bankName.isNotEmpty) 'bank_name': bankName,
+      if (bankName.isNotEmpty) 'bank': bankName,
+      if (accountNumber.isNotEmpty) 'accountNumber': accountNumber,
+      if (accountNumber.isNotEmpty) 'account_number': accountNumber,
+      if (accountType.isNotEmpty) 'accountType': accountType,
+      if (accountType.isNotEmpty) 'account_type': accountType,
+      if (ifsc.isNotEmpty) 'ifscCode': ifsc,
+      if (ifsc.isNotEmpty) 'ifsc_code': ifsc,
+      if (ifsc.isNotEmpty) 'ifsc': ifsc,
+      'isPrimary': isPrimary,
+      'is_primary': isPrimary,
+    };
+  }
+
+  Map<String, dynamic>? _readStoredPrimaryBank() {
+    try {
+      final rawBank = LocalStorageService.getPrimaryBank();
+      if (rawBank == null || rawBank.isEmpty) return null;
+      final decoded = jsonDecode(rawBank);
+      if (decoded is Map) {
+        return _normalizeBankRecord(Map<String, dynamic>.from(decoded));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<void> _storePrimaryBank(Map<String, dynamic> bank) async {
+    final normalized = _normalizeBankRecord(bank);
+    if (normalized == null) return;
+    final bankId = _extractBankId(normalized);
+    if (bankId.isNotEmpty) {
+      await LocalStorageService.setPrimaryBankId(bankId);
+    }
+    await LocalStorageService.setPrimaryBank(jsonEncode(normalized));
+  }
+
+  String _maskAccount(String accountNumber) {
+    final cleaned = accountNumber.replaceAll(' ', '');
+    if (cleaned.length <= 4) return '****$cleaned';
+    return '****${cleaned.substring(cleaned.length - 4)}';
+  }
+
+  Future<void> _loadPrimaryBank() async {
+    final profile = LocalStorageService.getUserProfile();
+    final uniqueId = profile?['uniqueId']?.toString() ?? '';
+    if (uniqueId.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _banksLoading = false;
+          _bankError = 'User session not found.';
+        });
+      }
+      return;
+    }
+    setState(() {
+      _banksLoading = true;
+      _bankError = null;
+    });
+    try {
+      final api = AugmontApi(ref.read(augmontDioProvider));
+      // Call all three APIs in parallel like React
+      final results = await Future.wait([
+        api.fetchAugmontUserBanks(uniqueId),
+        api.fetchAugmontPrimaryUserBank(uniqueId: uniqueId),
+      ]);
+      final listRes = results[0];
+      final primaryRes = results[1];
+
+      // 1. Parse all banks from list
+      final allBanks = (listRes['ok'] == true)
+          ? (listRes['banks'] as List<dynamic>?)
+              ?.map((b) => Map<String, dynamic>.from(b as Map))
+              .toList() ?? []
+          : <Map<String, dynamic>>[];
+
+      // 2. Try primary bank from primary API
+      Map<String, dynamic>? selectedBank;
+      if (primaryRes['ok'] == true && primaryRes['bank'] != null) {
+        selectedBank = _normalizeBankRecord(Map<String, dynamic>.from(primaryRes['bank'] as Map));
+      } else if (primaryRes['ok'] == true && primaryRes['banks'] != null) {
+        final banks = primaryRes['banks'] as List<dynamic>;
+        if (banks.isNotEmpty) {
+          selectedBank = _normalizeBankRecord(Map<String, dynamic>.from(banks.first as Map));
+        }
+      }
+
+      // 3. If no primary found, find from list
+      if (selectedBank == null && allBanks.isNotEmpty) {
+        final primaryBank = allBanks.where((b) => b['isPrimary'] == true || b['is_primary'] == true).toList();
+        if (primaryBank.isNotEmpty) {
+          selectedBank = _normalizeBankRecord(primaryBank.first);
+        } else if (allBanks.length == 1) {
+          selectedBank = _normalizeBankRecord(allBanks.first);
+          final singleId = _extractBankId(allBanks.first);
+          if (singleId.isNotEmpty) {
+            await api.setPrimaryAugmontUserBank(uniqueId: uniqueId, userBankId: singleId);
+          }
+        }
+      }
+
+      if (selectedBank == null) {
+        selectedBank = _readStoredPrimaryBank();
+      }
+
+      if (selectedBank != null) {
+        final bankId = _extractBankId(selectedBank);
+        final bankName = (selectedBank['bankName'] ?? selectedBank['bank_name'] ?? selectedBank['bank'] ?? '').toString().trim();
+        await _storePrimaryBank(selectedBank);
+        if (mounted) {
+          ref.read(goldFlowProvider.notifier).updateSellState(
+            uniqueId: uniqueId,
+            userBankId: bankId.isNotEmpty ? bankId : null,
+            bankName: bankName.isNotEmpty ? bankName : null,
+          );
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _selectedBank = selectedBank;
+          _banks = allBanks.map((b) => _normalizeBankRecord(b) ?? b).toList();
+          _bankError = selectedBank == null ? 'No primary bank found.' : null;
+          _banksLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() { _bankError = 'Could not load bank details.'; _banksLoading = false; });
+    }
+  }
+
   double get _quantity {
     if (_hasStoredValues) return _storedGrams;
     final liveRate = _getLiveRate();
@@ -157,7 +322,11 @@ class _SellScreenState extends ConsumerState<SellScreen> {
 
   void _continueToNext() {
     final nextStep = widget.step + 1;
-    // Save to GoldFlowProvider for cross-step persistence
+    final resolvedBank = _selectedBank ?? _readStoredPrimaryBank();
+    final resolvedBankId = resolvedBank != null ? _extractBankId(resolvedBank) : '';
+    final resolvedBankName = resolvedBank != null
+        ? (resolvedBank['bankName'] ?? resolvedBank['bank_name'] ?? resolvedBank['bank'] ?? '').toString().trim()
+        : '';
     ref.read(goldFlowProvider.notifier).updateSellState(
       amount: _amount,
       grams: _quantity,
@@ -165,6 +334,9 @@ class _SellScreenState extends ConsumerState<SellScreen> {
       payout: _payout,
       platformFee: _platformFee,
       metalType: _metalType,
+      uniqueId: _resolveUniqueId(),
+      userBankId: resolvedBankId.isNotEmpty ? resolvedBankId : null,
+      bankName: resolvedBankName.isNotEmpty ? resolvedBankName : null,
     );
     if (nextStep <= 5) {
       context.go('/sell/sell/$nextStep?metal=$_metalType');
@@ -174,7 +346,9 @@ class _SellScreenState extends ConsumerState<SellScreen> {
   }
 
   void _goBack() {
-    if (widget.step > 1) {
+    if (widget.step == 5) {
+      context.go(AppRoutes.home);
+    } else if (widget.step > 1) {
       context.go('/sell/sell/${widget.step - 1}');
     } else {
       context.go(AppRoutes.home);
@@ -190,9 +364,11 @@ class _SellScreenState extends ConsumerState<SellScreen> {
     ref.watch(rateProvider);
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Container(
+      body: Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
         constraints: BoxConstraints(
-          minHeight: MediaQuery.of(context).size.height * 0.86,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         decoration: BoxDecoration(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(60)),
@@ -232,16 +408,18 @@ class _SellScreenState extends ConsumerState<SellScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildDragHandle(),
                     _buildHeader(),
                     const SizedBox(height: 8),
-                    Expanded(child: _buildStepContent()),
+                    Flexible(child: _buildStepContent()),
                   ],
                 ),
               ),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -1076,7 +1254,18 @@ class _SellScreenState extends ConsumerState<SellScreen> {
           const SizedBox(height: 16),
 
           // Bank account card
-          _buildBankCard(),
+          _banksLoading
+              ? const Center(child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.gold),
+                ))
+              : _selectedBank != null
+                  ? _buildBankCard(_selectedBank!)
+                  : _buildNoBankCard(),
+          if (_bankError != null && _selectedBank == null) ...[
+            const SizedBox(height: 8),
+            Text(_bankError!, style: const TextStyle(fontSize: 12, color: Color(0xFFFF4D4D))),
+          ],
           const SizedBox(height: 12),
 
           // Security info
@@ -1089,7 +1278,12 @@ class _SellScreenState extends ConsumerState<SellScreen> {
     );
   }
 
-  Widget _buildBankCard() {
+  Widget _buildBankCard(Map<String, dynamic> bank) {
+    final normalized = _normalizeBankRecord(bank) ?? bank;
+    final isPrimary = normalized['isPrimary'] == true || normalized['is_primary'] == true;
+    final accountNumber = (normalized['accountNumber'] ?? normalized['account_number'] ?? '').toString();
+    final bankName = (normalized['bankName'] ?? normalized['bank_name'] ?? normalized['bank'] ?? 'Bank').toString();
+    final accountType = (normalized['accountType'] ?? normalized['account_type'] ?? 'Savings').toString();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1100,54 +1294,80 @@ class _SellScreenState extends ConsumerState<SellScreen> {
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 44, height: 44,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color: const Color(0xFF252218),
             ),
-            child: const Icon(
-              Icons.account_balance,
-              color: AppTheme.gold,
-            ),
+            child: const Icon(Icons.account_balance, color: AppTheme.gold),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'State Bank of India',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '$bankName ${_maskAccount(accountNumber)}',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isPrimary) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF263938),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Text(
+                          'Primary',
+                          style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Color(0xFF6DD6FF)),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 2),
-                const Text(
-                  'XXXX XXXX 1234',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF7E7E7E),
-                  ),
+                const SizedBox(height: 3),
+                Text(
+                  '$accountType · IMPS Instant',
+                  style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E)),
                 ),
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: const Color(0xFF1A301E),
-            ),
-            child: const Text(
-              'Primary',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF15EE01),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoBankCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF2E2E2E)),
+        color: const Color(0xFF19160F),
+      ),
+      child: Column(
+        children: [
+          const Text('No primary bank found.', style: TextStyle(fontSize: 12, color: Color(0xFF7E7E7E))),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => context.go(AppRoutes.paymentMethods),
+            child: Container(
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: _isSilver
+                    ? const LinearGradient(colors: [Colors.white, Color(0xFF999999)])
+                    : const LinearGradient(colors: [Color(0xFFF7CD57), Color(0xFFE5AF35), Color(0xFFB57F23)]),
               ),
+              child: const Center(child: Text('+ Add Bank', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black))),
             ),
           ),
         ],
@@ -1184,38 +1404,66 @@ class _SellScreenState extends ConsumerState<SellScreen> {
   // ─── Step 4: Processing ───────────────────────────────────────────────────────
 
   Widget _buildStep4Processing() {
+    // Auto-execute sell order on first render
+    WidgetsBinding.instance.addPostFrameCallback((_) => _executeSellOrder());
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(
-            width: 60,
-            height: 60,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.gold),
-            ),
-          ),
+          const SizedBox(width: 60, height: 60, child: CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(AppTheme.gold))),
           const SizedBox(height: 24),
-          Text(
-            'Processing your ${_isSilver ? "silver" : "gold"} sale...',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-            ),
-          ),
+          Text('Processing your ${_isSilver ? "silver" : "gold"} sale...', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
           const SizedBox(height: 8),
-          const Text(
-            'Instant payout is being processed',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF7E7E7E),
-            ),
-          ),
+          const Text('Instant payout is being processed', style: TextStyle(fontSize: 12, color: Color(0xFF7E7E7E))),
         ],
       ),
     );
+  }
+
+  Future<void> _executeSellOrder() async {
+    if (_orderExecuted) return;
+    _orderExecuted = true;
+    final sellState = ref.read(goldFlowProvider).sellState;
+    final uniqueId = sellState.uniqueId.isNotEmpty ? sellState.uniqueId : _resolveUniqueId();
+    final resolvedBank = _selectedBank ?? _readStoredPrimaryBank();
+    final userBankId = sellState.userBankId.isNotEmpty
+        ? sellState.userBankId
+        : (resolvedBank != null ? _extractBankId(resolvedBank) : '');
+    final grams = sellState.grams;
+    if (uniqueId.isEmpty || userBankId.isEmpty || grams <= 0) {
+      if (mounted) context.go('/sell/sell/${widget.step - 1}?metal=$_metalType');
+      return;
+    }
+    try {
+      final api = AugmontApi(ref.read(augmontDioProvider));
+      final res = await api.createAugmontSellOrder(
+        merchantId: ApiConfig.defaultMerchantId,
+        request: {
+          'metalType': _metalType,
+          'quantity': grams.toStringAsFixed(4),
+          'uniqueId': uniqueId,
+          'userBankId': userBankId,
+        },
+      );
+      if (res['ok'] == true) {
+        ref.read(goldFlowProvider.notifier).updateSellState(
+          transactionId: res['data']?['transactionId']?.toString(),
+          merchantTransactionId: res['data']?['merchantTransactionId']?.toString(),
+          orderStatus: 'completed',
+        );
+        if (mounted) context.go('/sell/sell/5?metal=$_metalType');
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['message']?.toString() ?? 'Sell order failed')));
+          context.go('/sell/sell/3?metal=$_metalType');
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to process sell order')));
+        context.go('/sell/sell/3?metal=$_metalType');
+      }
+    }
   }
 
   // ─── Step 5: Success ──────────────────────────────────────────────────────────
@@ -1344,6 +1592,12 @@ class _SellScreenState extends ConsumerState<SellScreen> {
   }
 
   Widget _buildTransactionDetails() {
+    final sellState = ref.read(goldFlowProvider).sellState;
+    final orderId = sellState.transactionId?.isNotEmpty == true
+        ? sellState.transactionId!
+        : sellState.merchantTransactionId?.isNotEmpty == true
+            ? sellState.merchantTransactionId!
+            : '#SLD${DateTime.now().millisecondsSinceEpoch % 100000}';
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1359,7 +1613,7 @@ class _SellScreenState extends ConsumerState<SellScreen> {
           _buildDetailRow('Platform fee', '-Rs.${_platformFee.toStringAsFixed(2)}'),
           _buildDetailRow('Payout', 'Rs.${_payout.toInt()}', isHighlight: true),
           const Divider(color: Color(0xFF2E2D2A), height: 16),
-          _buildDetailRow('Order ID', '#SLD${DateTime.now().millisecondsSinceEpoch % 100000}'),
+          _buildDetailRow('Order ID', orderId),
           _buildDetailRow('Status', 'Completed', statusColor: AppTheme.success),
         ],
       ),

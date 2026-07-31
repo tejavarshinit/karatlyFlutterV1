@@ -50,7 +50,8 @@ class AppConstants {
 
   static String formatDate(String dateStr, {String pattern = 'dd MMM yyyy'}) {
     try {
-      final date = DateTime.parse(dateStr);
+      final normalized = dateStr.replaceFirst(' ', 'T');
+      final date = DateTime.parse(normalized);
       return DateFormat(pattern).format(date);
     } catch (_) {
       return dateStr;

@@ -96,23 +96,22 @@ class OrdersNotifier extends StateNotifier<OrdersState> {
     state = state.copyWith(loading: true, clearError: true);
 
     try {
+      // Cross-product: gold × (buy, sell, redeem) + silver × (buy, sell, redeem) + diamond
       final results = await Future.wait([
-        _augmontApi.fetchAugmontBuyOrders(uniqueId: uniqueId),
-        _augmontApi.fetchAugmontSellOrders(uniqueId: uniqueId),
-        _augmontApi.fetchAugmontRedeemOrders(uniqueId: uniqueId),
+        _augmontApi.fetchUserTransactions(type: 'buy', uniqueId: uniqueId, metalType: 'gold'),
+        _augmontApi.fetchUserTransactions(type: 'sell', uniqueId: uniqueId, metalType: 'gold'),
+        _augmontApi.fetchUserTransactions(type: 'redeem', uniqueId: uniqueId, metalType: 'gold'),
+        _augmontApi.fetchUserTransactions(type: 'buy', uniqueId: uniqueId, metalType: 'silver'),
+        _augmontApi.fetchUserTransactions(type: 'sell', uniqueId: uniqueId, metalType: 'silver'),
+        _augmontApi.fetchUserTransactions(type: 'redeem', uniqueId: uniqueId, metalType: 'silver'),
         _diamondApi.fetchDiamondOrders(),
       ]);
 
-      final buyRes = results[0];
-      final sellRes = results[1];
-      final redeemRes = results[2];
-      final diamondRes = results[3];
-
-      final allOrders = <AugmontOrder>[
-        ...((buyRes['orders'] as List<AugmontOrder>?) ?? []),
-        ...((sellRes['orders'] as List<AugmontOrder>?) ?? []),
-        ...((redeemRes['orders'] as List<AugmontOrder>?) ?? []),
-      ];
+      final allOrders = <AugmontOrder>[];
+      for (var i = 0; i < 6; i++) {
+        final res = results[i] as Map<String, dynamic>;
+        allOrders.addAll((res['orders'] as List<AugmontOrder>?) ?? []);
+      }
 
       allOrders.sort((a, b) {
         final dateA = DateTime.tryParse(a.date) ?? DateTime(0);
@@ -120,6 +119,7 @@ class OrdersNotifier extends StateNotifier<OrdersState> {
         return dateB.compareTo(dateA);
       });
 
+      final diamondRes = results[6] as Map<String, dynamic>;
       List<DiamondOrder> diamondOrders = [];
       if (diamondRes['ok'] == true && diamondRes['data'] != null) {
         final data = diamondRes['data'] as Map<String, dynamic>;

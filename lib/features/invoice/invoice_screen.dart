@@ -48,7 +48,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Invoice downloaded successfully')),
           );
-          context.pop();
+          if (mounted) Navigator.maybePop(context);
         }
       } catch (e) {
         if (mounted) {
@@ -65,7 +65,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Invoice'),
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
+        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.maybePop(context)),
       ),
       body: _loading
           ? const Center(
@@ -91,7 +91,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(onPressed: _loadAndDownload, child: const Text('Retry')),
                         const SizedBox(height: 8),
-                        TextButton(onPressed: () => context.pop(), child: const Text('Go back')),
+                        TextButton(onPressed: () => Navigator.maybePop(context), child: const Text('Go back')),
                       ],
                     ),
                   ),

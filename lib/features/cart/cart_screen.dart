@@ -192,6 +192,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       context.go(AppRoutes.paymentGateway, extra: {
         'paymentSessionId': response.paymentSessionId,
         'orderId': response.merchantOrderId.isNotEmpty ? response.merchantOrderId : response.sabbpeOrderId,
+        'amount': _selectedTotal,
       });
     } catch (e) {
       final msg = e.toString().replaceAll('Exception: ', '');
@@ -220,7 +221,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 child: Row(
                   children: [
                     GestureDetector(
-                      onTap: () => context.pop(),
+                      onTap: () => context.go(AppRoutes.home),
                       child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
                     ),
                     const SizedBox(width: 12),

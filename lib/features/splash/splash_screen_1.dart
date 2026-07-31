@@ -160,10 +160,12 @@ class _SplashScreen1State extends State<SplashScreen1> with TickerProviderStateM
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Jar + Coins container
-                      SizedBox(
-                        width: 360,
-                        height: 320,
-                        child: Stack(
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: SizedBox(
+                          width: 360,
+                          height: 320,
+                          child: Stack(
                           alignment: Alignment.center,
                           children: [
                             // Jar image
@@ -308,8 +310,9 @@ class _SplashScreen1State extends State<SplashScreen1> with TickerProviderStateM
                                 );
                               }),
                           ],
-                        ),
                       ),
+                      ),
+                    ),
 
                       const SizedBox(height: 16),
 

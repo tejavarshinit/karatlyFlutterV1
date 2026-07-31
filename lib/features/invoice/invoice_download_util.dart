@@ -9,6 +9,7 @@ Future<bool> downloadInvoice({
   required BuildContext context,
   required String transactionId,
   required String type,
+  bool showSnackBar = true,
 }) async {
   try {
     final r = await fetchInvoiceData(
@@ -16,7 +17,7 @@ Future<bool> downloadInvoice({
       type: type,
     );
     if (r['ok'] != true) {
-      if (context.mounted) {
+      if (showSnackBar && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(r['message']?.toString() ?? 'Failed to load invoice')),
         );
@@ -27,7 +28,7 @@ Future<bool> downloadInvoice({
     final bytes = await generateInvoicePdf(data, type);
     final fileName = 'Invoice-${data.transactionId}.pdf';
     await downloadPdf(bytes, fileName);
-    if (context.mounted) {
+    if (showSnackBar && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invoice downloaded successfully'),
@@ -37,7 +38,7 @@ Future<bool> downloadInvoice({
     }
     return true;
   } catch (e) {
-    if (context.mounted) {
+    if (showSnackBar && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Download failed: $e')),
       );

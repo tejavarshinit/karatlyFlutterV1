@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../app/router.dart';
 
 class TrademarkNoticeScreen extends StatelessWidget {
   const TrademarkNoticeScreen({super.key});
@@ -22,18 +24,34 @@ class TrademarkNoticeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16),
-                _buildHeader(context, 'Trademark Notice'),
+                const SizedBox(height: 12),
+                _buildHeader(context),
                 const SizedBox(height: 24),
-                _buildTrademarkTable(),
-                const SizedBox(height: 24),
-                _buildSection(
-                  'Platform Technology',
-                  'All software, code, algorithms, user interface designs, graphics, logos, icons, and technical infrastructure powering the Karatly platform are the exclusive intellectual property of Karatly Technologies Pvt. Ltd. This includes but is not limited to the mobile application, website, APIs, data models, and proprietary trading algorithms. Unauthorized copying, modification, reverse engineering, or distribution of any part of the platform\'s technology is strictly prohibited and may result in legal action.',
-                ),
-                _buildSection(
-                  'Content',
-                  'All text, images, graphics, videos, animations, documentation, and other content published on the Karatly platform are protected under Indian copyright law (Copyright Act, 1957) and international intellectual property treaties. Users may not reproduce, distribute, display, or create derivative works from any content without prior written consent from Karatly. User-generated content posted on the platform remains the intellectual property of the user, but by posting, users grant Karatly a non-exclusive, worldwide, royalty-free license to use, display, and distribute such content in connection with the platform\'s services.',
+                SizedBox(
+                  height: 400,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildTitle(),
+                        SizedBox(height: 16),
+                        _buildBlockquote(),
+                        SizedBox(height: 24),
+                        _sectionTitle('1 TRADEMARK DETAILS'),
+                        SizedBox(height: 12),
+                        _trademarkTable(),
+                        SizedBox(height: 24),
+                        _sectionTitle('2 INTELLECTUAL PROPERTY \u2014 OWNERSHIP'),
+                        SizedBox(height: 12),
+                        _subsection('2.1 Platform Technology',
+                            'All source code, APIs, algorithms, database architectures, UI/UX designs, and technology infrastructure underlying the Karatly Platform are the exclusive proprietary intellectual property of Karatly Finvest Technology India Private Limited.'),
+                        SizedBox(height: 16),
+                        _subsection('2.2 Content',
+                            'All content on the Platform including website and app text, marketing copy, educational content, data compilations, and graphics are owned by or licensed to Karatly and protected under the Copyright Act, 1957.'),
+                        SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 32),
               ],
@@ -44,125 +62,123 @@ class TrademarkNoticeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, String title) {
+  Widget _buildHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
             GestureDetector(
-              onTap: () => Navigator.pop(context),
+              onTap: () => context.go(AppRoutes.dashboard),
               child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
             ),
             const SizedBox(width: 8),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 14, color: Color(0xFFF7CD57)),
-            ),
+            const Text('Trademark Notice', style: TextStyle(fontSize: 14, color: Color(0xFFF7CD57))),
           ],
         ),
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0xFF1D170D),
-            border: Border.all(color: const Color(0xFFE8B438)),
+        GestureDetector(
+          onTap: () => context.go(AppRoutes.notifications),
+          child: Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF1D170D),
+              border: Border.all(color: const Color(0xFFE8B438)),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(Icons.notifications_outlined, color: Colors.grey[400], size: 14),
+                const Positioned(right: 4, top: 4, child: SizedBox(width: 5, height: 5, child: DecoratedBox(decoration: BoxDecoration(color: Color(0xFFEE0105), shape: BoxShape.circle)))),
+              ],
+            ),
           ),
-          child: Icon(Icons.notifications_outlined, color: Colors.grey[400], size: 16),
         ),
       ],
     );
   }
 
-  Widget _buildTrademarkTable() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F1416),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Trademark Details',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildTableRow('Word Mark', 'KARATLY'),
-          const Divider(color: Color(0xFF2E2E2E), height: 24),
-          _buildTableRow('Proprietor', 'Karatly Technologies Pvt. Ltd.'),
-          const Divider(color: Color(0xFF2E2E2E), height: 24),
-          _buildTableRow('Class 36', 'Gold trading, digital gold, investment services'),
-          const Divider(color: Color(0xFF2E2E2E), height: 24),
-          _buildTableRow('Class 9', 'Mobile application, software platform'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTableRow(String label, String value) {
-    return Row(
+  static Widget _buildTitle() {
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 100,
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFFF7CD57),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              color: Color(0xFF7E7E7E),
-              fontSize: 12,
-              height: 1.4,
-            ),
-          ),
-        ),
+        Text('Trademark Notice', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFF7CD57))),
+        SizedBox(height: 4),
+        Text('Proprietary Rights and Usage Guidelines', style: TextStyle(fontSize: 12, color: Color(0x80FFFFFF))),
       ],
     );
   }
 
-  Widget _buildSection(String title, String body) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
+  static Widget _buildBlockquote() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 12),
+      decoration: BoxDecoration(
+        border: Border(left: BorderSide(color: const Color(0xFFF7CD57).withOpacity(0.5), width: 4)),
+      ),
+      child: const Text(
+        'The KARATLY trademark and logo have been applied for registration with the Office of the Controller General of Patents, Designs and Trade Marks (CGPDTM), Government of India. Karatly asserts full common-law trademark rights from the date of first use in commerce.',
+        style: TextStyle(fontSize: 12, color: Color(0x99FFFFFF), fontStyle: FontStyle.italic, height: 1.5),
+      ),
+    );
+  }
+
+  static Widget _trademarkTable() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
+        children: [
+          _trademarkRow('Word Mark', 'KARATLY'),
+          _divider(),
+          _trademarkRow('Proprietor', 'Karatly Finvest Technology India Pvt Ltd'),
+          _divider(),
+          _trademarkRow('Class 36', 'Financial services \u2014 digital gold/silver savings, investment platform.'),
+          _divider(),
+          _trademarkRow('Class 9', 'Mobile applications, financial technology software.'),
+        ],
+      ),
+    );
+  }
+
+  static Widget _trademarkRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
+          SizedBox(
+            width: 100,
+            child: Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: Colors.white)),
           ),
-          const SizedBox(height: 8),
-          Text(
-            body,
-            style: const TextStyle(
-              color: Color(0xFF7E7E7E),
-              fontSize: 12,
-              height: 1.6,
-            ),
+          Expanded(
+            child: Text(value, style: const TextStyle(fontSize: 10, color: Color(0xB3FFFFFF), height: 1.4)),
           ),
         ],
       ),
+    );
+  }
+
+  static Widget _divider() {
+    return Divider(height: 1, color: Colors.white.withOpacity(0.05));
+  }
+
+  static Widget _sectionTitle(String text) {
+    return Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white, height: 1.5));
+  }
+
+  static Widget _subsection(String title, String body) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white, height: 1.5)),
+        const SizedBox(height: 6),
+        Text(body, style: const TextStyle(fontSize: 12, color: Color(0xB3FFFFFF), height: 1.6)),
+      ],
     );
   }
 }

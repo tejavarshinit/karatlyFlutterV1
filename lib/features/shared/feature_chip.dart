@@ -38,12 +38,16 @@ class FeatureChip extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: iconColor),
           const SizedBox(width: 12),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10,
-              height: 15 / 10,
-              color: Color(0xFF5E5E5E),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 10,
+                height: 15 / 10,
+                color: Color(0xFF5E5E5E),
+              ),
             ),
           ),
         ],

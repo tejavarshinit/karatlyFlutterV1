@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +7,7 @@ import '../../app/router.dart';
 import '../../core/models/augmont_model.dart';
 import '../../core/models/diamond_model.dart';
 import '../../core/services/orders_provider.dart';
+import '../../core/services/auth_provider.dart';
 import '../invoice/invoice_download_util.dart';
 
 enum MetalFilter { all, gold, silver, diamond }
@@ -22,6 +24,9 @@ class OrdersScreen extends ConsumerStatefulWidget {
 class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   MetalFilter _metalFilter = MetalFilter.all;
   OrderTypeFilter _typeFilter = OrderTypeFilter.all;
+  String _invoiceStatusKey = '';
+  String _invoiceStatusMessage = '';
+  bool _invoiceDownloading = false;
 
   @override
   void initState() {
@@ -76,7 +81,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           panel: const Color(0xFF1A1710),
           heroBg1: const Color(0xFF1E2A28),
           heroBg2: const Color(0xFF6C5123),
-          activeGradient: [const Color(0xFFFED75D), const Color(0xFFECB000), const Color(0xFFD48D00)],
+          activeGradient: [const Color(0xFFF8CF59), const Color(0xFFB68024)],
           activeText: Colors.black,
           inactiveText: const Color(0xFF8C8B8B),
           iconBg: const Color(0xFF3D3214),
@@ -117,8 +122,9 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
             (_typeFilter == OrderTypeFilter.redeem && typeUpper == 'REDEEM');
         if (!typeMatch) continue;
 
-        final metalName = o.metalType.toLowerCase() == 'silver' ? 'Silver' : 'Gold';
-        final displayName = typeUpper == 'BUY' ? 'Digital $metalName' : metalName;
+        final mt = o.metalType.toLowerCase();
+        final metalName = mt == 'silver' ? 'Silver' : mt == 'diamond' ? 'Diamond' : 'Gold';
+        final displayName = typeUpper == 'BUY' ? (mt == 'diamond' ? 'Diamond' : 'Digital $metalName') : metalName;
         final badgeLabel = typeUpper == 'BUY' ? 'Invested' : typeUpper;
 
         displayOrders.add(_DisplayOrder(
@@ -149,7 +155,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   String _formatDate(String dateStr) {
     if (dateStr.isEmpty) return '';
     try {
-      final d = DateTime.parse(dateStr);
+      final normalized = dateStr.replaceFirst(' ', 'T');
+      final d = DateTime.parse(normalized);
       final now = DateTime.now();
       final isToday = d.year == now.year && d.month == now.month && d.day == now.day;
       final time = DateFormat('h:mm a').format(d);
@@ -161,7 +168,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   }
 
   String _formatCurrency(double amount) {
-    final formatter = NumberFormat.currency(symbol: '₹', locale: 'en_IN', decimalDigits: 0);
+    final formatter = NumberFormat.currency(symbol: '\u20B9', locale: 'en_IN', decimalDigits: 0);
     return formatter.format(amount);
   }
 
@@ -177,6 +184,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     final state = ref.watch(ordersProvider);
     final colors = _colors;
     final filteredOrders = _getFilteredOrders(state);
+    final authState = ref.watch(authProvider);
+    final userName = authState.fullName ?? authState.user?.name ?? 'Investor';
 
     // Counts for hero card
     final augmontFiltered = _metalFilter == MetalFilter.diamond
@@ -222,7 +231,12 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 4),
+
+                      // ── Welcome Section ──
+                      _buildWelcomeSection(userName, colors),
+
+                      const SizedBox(height: 16),
 
                       // ── Hero Summary Card ──
                       _buildHeroCard(colors, totalAmt, totalOrdersCount, buyCount, sellCount, redeemCount, isDiamond, state),
@@ -258,29 +272,49 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Navigator.of(context).maybePop(),
+            onTap: () => context.go(AppRoutes.home),
             child: Icon(Icons.arrow_back_ios_new, size: 20, color: colors.accent),
           ),
-          const SizedBox(width: 8),
-          Text(
-            'Orders',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: colors.accent,
-            ),
+          const Spacer(),
+          Image.asset(
+            'assets/images/KaratlyLOGO-removebg-preview.png',
+            width: 32,
+            height: 32,
+            fit: BoxFit.contain,
           ),
           const Spacer(),
-          Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: colors.border, width: 1),
-              color: colors.panel,
+          GestureDetector(
+            onTap: () => context.go(AppRoutes.notifications),
+            child: Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: colors.border, width: 1),
+                color: colors.panel,
+              ),
+              child: const Icon(Icons.notifications_outlined, size: 14, color: Color(0xFFC1C1C1)),
             ),
-            child: const Icon(Icons.notifications_outlined, size: 14, color: Color(0xFFC1C1C1)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWelcomeSection(String userName, _ColorScheme colors) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Welcome,', style: TextStyle(fontSize: 16, color: Color(0xFFA1A1A1))),
+          const SizedBox(height: 4),
+          ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(colors: colors.activeGradient).createShader(bounds),
+            child: Text(
+              userName,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -288,6 +322,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   }
 
   Widget _buildHeroCard(_ColorScheme colors, double totalAmt, int totalOrders, int buyCount, int sellCount, int redeemCount, bool isDiamond, OrdersState state) {
+    final amountText = _formatCurrency(totalAmt);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Container(
@@ -295,10 +330,11 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: colors.border, width: 1),
-          gradient: LinearGradient(
-            begin: const Alignment(2.2, -1.0),
-            end: const Alignment(-0.5, 0.5),
-            colors: [colors.heroBg1, colors.heroBg2],
+          gradient: const LinearGradient(
+            begin: Alignment(-0.25, 1.0),
+            end: Alignment(0.25, -1.0),
+            colors: [Color(0xFF1E2A28), Color(0xFF6C5123)],
+            stops: [0.6448, 0.9645],
           ),
         ),
         child: Column(
@@ -307,32 +343,39 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${_metalFilter == MetalFilter.all ? "ALL" : _metalFilter.name.toUpperCase()} ORDERS',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF7E7E7E)),
-                    ),
-                    const SizedBox(height: 4),
-                    ShaderMask(
-                      shaderCallback: (bounds) => LinearGradient(colors: colors.activeGradient).createShader(bounds),
-                      child: Text(
-                        'Rs.${_formatAmountShort(totalAmt)}',
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          height: 1.18,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${_metalFilter == MetalFilter.all ? "ALL" : _metalFilter.name.toUpperCase()} ORDERS',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF7E7E7E)),
+                      ),
+                      const SizedBox(height: 4),
+                      ShaderMask(
+                        shaderCallback: (bounds) => LinearGradient(colors: colors.activeGradient).createShader(bounds),
+                        child: Text(
+                          'Rs.$amountText',
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            height: 1.18,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$totalOrders total orders',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF7E7E7E)),
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+                      Text(
+                        '$totalOrders total orders',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF7E7E7E)),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: _PulsingCoinImage(metalType: _metalFilter == MetalFilter.all ? 'gold' : _metalFilter.name),
                 ),
               ],
             ),
@@ -397,8 +440,6 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
-          const Text('Filter by Asset', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-          const SizedBox(width: 12),
           Expanded(
             child: Container(
               height: 34,
@@ -413,10 +454,13 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                   final isActive = _metalFilter == filterValues[i];
                   return Expanded(
                     child: GestureDetector(
-                      onTap: () => setState(() {
-                        _metalFilter = filterValues[i];
-                        _typeFilter = OrderTypeFilter.all;
-                      }),
+                      onTap: () {
+                        setState(() {
+                          _metalFilter = filterValues[i];
+                          _typeFilter = OrderTypeFilter.all;
+                        });
+                        ref.read(ordersProvider.notifier).fetchAllOrders();
+                      },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         margin: const EdgeInsets.all(2),
@@ -441,6 +485,15 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                 }),
               ),
             ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFFACD44), Color(0xFFD79001)]),
+            ),
+            child: const Icon(Icons.settings, size: 18, color: Colors.black),
           ),
         ],
       ),
@@ -521,8 +574,12 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: filteredOrders.map((order) => _buildOrderCard(order, colors)).toList(),
+      child: SizedBox(
+        height: 456,
+        child: ListView.builder(
+          itemCount: filteredOrders.length,
+          itemBuilder: (context, index) => _buildOrderCard(filteredOrders[index], colors),
+        ),
       ),
     );
   }
@@ -622,16 +679,26 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 
                 const SizedBox(height: 2),
 
-                // Reference, grams, rate, date
+                // Order reference (separate line, truncated at 180px)
+                if (order.orderReference.isNotEmpty)
+                  Text(
+                    order.orderReference,
+                    style: const TextStyle(fontSize: 8, color: Color(0xFF707070)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                const SizedBox(height: 1),
+
+                // Weight, rate, date (pipe separators)
                 Text(
-                  '${order.orderReference.isNotEmpty ? "${order.orderReference} - " : ""}'
                   '${order.gold != null && order.gold! > 0 ? "${order.gold!.toStringAsFixed(2)}g" : ""}'
-                  '${(order.gold != null && order.gold! > 0 && order.rate != null && order.rate! > 0) ? " - " : ""}'
+                  '${order.gold != null && order.gold! > 0 ? " | " : ""}'
                   '${order.rate != null && order.rate! > 0 ? "Rs.${order.rate!.toStringAsFixed(0)}/g" : ""}'
-                  '${(order.rate != null && order.rate! > 0 || (order.gold != null && order.gold! > 0)) ? " - " : ""}'
+                  '${order.rate != null && order.rate! > 0 ? " | " : ""}'
                   '${_formatDate(order.date)}',
                   style: const TextStyle(fontSize: 8, color: Color(0xFF6E6E6E)),
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
 
@@ -666,6 +733,22 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                       ],
                     ),
                   ),
+                  if (_invoiceStatusKey == order.transactionId && _invoiceStatusMessage.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        _invoiceStatusMessage,
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w600,
+                          color: _invoiceDownloading
+                              ? colors.accent
+                              : (_invoiceStatusMessage.toLowerCase().contains('failed')
+                                  ? const Color(0xFFFF6B6B)
+                                  : const Color(0xFF15EE01)),
+                        ),
+                      ),
+                    ),
                 ],
               ],
             ),
@@ -702,11 +785,23 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     if (!mounted) return;
     final type = order.type.toLowerCase();
     final invoiceType = type == 'sell' ? 'sell' : (type == 'redeem' ? 'redeem' : 'buy');
-    await downloadInvoice(
+    setState(() {
+      _invoiceStatusKey = order.transactionId;
+      _invoiceStatusMessage = 'Preparing invoice...';
+      _invoiceDownloading = true;
+    });
+    final ok = await downloadInvoice(
       context: context,
       transactionId: order.transactionId,
       type: invoiceType,
+      showSnackBar: false,
     );
+    if (!mounted) return;
+    setState(() {
+      _invoiceStatusKey = order.transactionId;
+      _invoiceDownloading = false;
+      _invoiceStatusMessage = ok ? 'Invoice downloaded' : 'Invoice download failed';
+    });
   }
 }
 
@@ -776,4 +871,52 @@ class _ColorScheme {
     required this.badgeBg,
     required this.badgeText,
   });
+}
+
+// ── Pulsing Coin Image ──
+class _PulsingCoinImage extends StatefulWidget {
+  final String metalType;
+  const _PulsingCoinImage({this.metalType = 'gold'});
+
+  @override
+  State<_PulsingCoinImage> createState() => _PulsingCoinImageState();
+}
+
+class _PulsingCoinImageState extends State<_PulsingCoinImage> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))
+      ..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = widget.metalType == 'diamond'
+        ? 'assets/images/DiamondCoin.png'
+        : widget.metalType == 'silver'
+            ? 'assets/images/silvercoin.png'
+            : 'assets/images/COinClarity.png';
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final scale = 1.0 + 0.05 * math.sin(_controller.value * 2 * math.pi);
+        return Transform.scale(
+          scale: scale,
+          child: Image.asset(
+            asset,
+            fit: BoxFit.contain,
+          ),
+        );
+      },
+    );
+  }
 }

@@ -87,6 +87,101 @@ class AugmontApi {
   }
 
   // ── Core request ──
+  String _extractBankRecordId(Map<String, dynamic> bank) {
+    final raw = (
+      bank['provider_bank_id']?.toString() ??
+      bank['userBankId']?.toString() ??
+      bank['bankId']?.toString() ??
+      bank['id']?.toString() ??
+      ''
+    ).trim();
+    return raw.replaceAll(RegExp(r'[()]'), '');
+  }
+
+  Map<String, dynamic>? _normalizeBankRecord(Map<String, dynamic>? bank) {
+    if (bank == null) return null;
+
+    final bankId = _extractBankRecordId(bank);
+    final bankName = (bank['bankName'] ?? bank['bank_name'] ?? bank['bank'] ?? '').toString().trim();
+    final accountNumber = (bank['accountNumber'] ?? bank['account_number'] ?? bank['bankNumber'] ?? bank['bank_number'] ?? '').toString().trim();
+    final accountType = (bank['accountType'] ?? bank['account_type'] ?? 'Savings').toString().trim();
+    final ifsc = (bank['ifscCode'] ?? bank['ifsc_code'] ?? bank['ifsc'] ?? '').toString().trim().toUpperCase();
+    final isPrimary = bank['isPrimary'] == true || bank['is_primary'] == true;
+
+    return <String, dynamic>{
+      ...bank,
+      if (bankId.isNotEmpty) 'userBankId': bankId,
+      if (bankId.isNotEmpty) 'provider_bank_id': bankId,
+      if (bankName.isNotEmpty) 'bankName': bankName,
+      if (bankName.isNotEmpty) 'bank_name': bankName,
+      if (bankName.isNotEmpty) 'bank': bankName,
+      if (accountNumber.isNotEmpty) 'accountNumber': accountNumber,
+      if (accountNumber.isNotEmpty) 'account_number': accountNumber,
+      if (accountType.isNotEmpty) 'accountType': accountType,
+      if (accountType.isNotEmpty) 'account_type': accountType,
+      if (ifsc.isNotEmpty) 'ifscCode': ifsc,
+      if (ifsc.isNotEmpty) 'ifsc_code': ifsc,
+      if (ifsc.isNotEmpty) 'ifsc': ifsc,
+      'isPrimary': isPrimary,
+      'is_primary': isPrimary,
+    };
+  }
+
+  Map<String, dynamic>? _extractPrimaryBankRecord(dynamic source) {
+    final candidates = <dynamic>[
+      source,
+      source is Map<String, dynamic> ? source['payload'] : null,
+      source is Map<String, dynamic> ? source['data'] : null,
+      source is Map<String, dynamic> ? source['bank'] : null,
+      source is Map<String, dynamic> ? source['primaryBank'] : null,
+    ];
+
+    for (final candidate in candidates) {
+      if (candidate == null) continue;
+
+      if (candidate is List) {
+        for (final item in candidate) {
+          if (item is Map) {
+            final record = Map<String, dynamic>.from(item);
+            if (record['isPrimary'] == true || record['is_primary'] == true) {
+              return _normalizeBankRecord(record);
+            }
+          }
+        }
+        if (candidate.isNotEmpty && candidate.first is Map) {
+          return _normalizeBankRecord(Map<String, dynamic>.from(candidate.first as Map));
+        }
+      }
+
+      if (candidate is Map) {
+        final record = Map<String, dynamic>.from(candidate);
+        final nestedBanks = record['banks'] ?? record['bankAccounts'] ?? record['data'];
+        if (nestedBanks is List && nestedBanks.isNotEmpty) {
+          for (final item in nestedBanks) {
+            if (item is Map) {
+              final nested = Map<String, dynamic>.from(item);
+              if (nested['isPrimary'] == true || nested['is_primary'] == true) {
+                return _normalizeBankRecord(nested);
+              }
+            }
+          }
+          final first = nestedBanks.first;
+          if (first is Map) return _normalizeBankRecord(Map<String, dynamic>.from(first));
+        }
+
+        if (_extractBankRecordId(record).isNotEmpty ||
+            record['accountNumber'] != null ||
+            record['account_number'] != null ||
+            record['bankName'] != null ||
+            record['bank_name'] != null) {
+          return _normalizeBankRecord(record);
+        }
+      }
+    }
+
+    return null;
+  }
+
   Future<Map<String, dynamic>> _requestAugmontOrderEndpoint(
     String path,
     Map<String, dynamic> body, [
@@ -420,9 +515,16 @@ class AugmontApi {
     });
     if (!response['ok']) return {...response, 'banks': []};
     final payload = (response['data'] as Map<String, dynamic>?)?['payload'] as Map<String, dynamic>?;
-    final result = payload?['result'] as Map<String, dynamic>?;
-    final banksList = result?['data'] ?? result ?? (response['data'] as Map<String, dynamic>?)?['data'] ?? [];
-    return {'ok': true, 'banks': banksList is List ? banksList : []};
+    final result = payload?['result'];
+    final banksList = result is List ? result : (result as Map<String, dynamic>?)?['data'] ?? (response['data'] as Map<String, dynamic>?)?['data'] ?? [];
+    final banks = banksList is List
+        ? banksList
+            .whereType<Map>()
+            .map((bank) => _normalizeBankRecord(Map<String, dynamic>.from(bank)))
+            .whereType<Map<String, dynamic>>()
+            .toList()
+        : <Map<String, dynamic>>[];
+    return {'ok': true, 'banks': banks};
   }
 
   Future<Map<String, dynamic>> fetchAugmontPrimaryUserBank({required String uniqueId}) async {
@@ -430,9 +532,11 @@ class AugmontApi {
     final response = await _requestAugmontOrderEndpoint('/api/v1/users/banks/primary', {
       'merchantId': ApiConfig.defaultMerchantId,
       'uniqueId': uniqueId.trim(),
+      'provider_client_reference': uniqueId.trim(),
     });
     if (!response['ok']) return {...response, 'bank': null};
-    return {'ok': true, 'bank': response['data']};
+    final bank = _extractPrimaryBankRecord(response['data']);
+    return {'ok': true, 'bank': bank, 'banks': bank != null ? [bank] : <Map<String, dynamic>>[]};
   }
 
   // ── Addresses ──
@@ -506,6 +610,31 @@ class AugmontApi {
     return {'ok': true, 'raw': response['raw'], 'data': response['data']};
   }
 
+  Future<Map<String, dynamic>> createAugmontSellOrder({
+    required String merchantId,
+    required Map<String, dynamic> request,
+  }) async {
+    if (request['uniqueId'] == null || request['userBankId'] == null) {
+      return {'ok': false, 'message': 'Missing uniqueId or userBankId'};
+    }
+    return _requestAugmontOrderEndpoint('/api/v1/orders/sell/create', {
+      'merchantId': merchantId,
+      'request': request,
+    });
+  }
+
+  Future<Map<String, dynamic>> fetchAugmontSellOrderDetail({
+    required String merchantId,
+    required String merchantTransactionId,
+    required String uniqueId,
+  }) async {
+    return _requestAugmontOrderEndpoint('/api/v1/orders/sell/detail', {
+      'merchantId': merchantId,
+      'merchantTransactionId': merchantTransactionId,
+      'uniqueId': uniqueId,
+    });
+  }
+
   Future<Map<String, dynamic>> initiatePayment({
     String merchantId = ApiConfig.defaultMerchantId,
     required dynamic amount,
@@ -561,8 +690,8 @@ class AugmontApi {
         return {'ok': false, 'message': _extractBackendMessage(data, 'Failed to fetch products'), 'products': [], 'pagination': {}};
       }
       final payload = data['payload'] as Map<String, dynamic>?;
-      final result = payload?['result'] as Map<String, dynamic>?;
-      final rawList = (result?['data'] as List<dynamic>?) ?? [];
+      final result = payload?['result'];
+      final rawList = result is List ? result : (result as Map<String, dynamic>?)?['data'] as List<dynamic>? ?? [];
       final products = rawList
           .map((e) => Product.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -659,11 +788,12 @@ class AugmontApi {
     }
 
     final createdAt = (order['createdAt'] ?? order['transactionDate'] ?? order['orderDate'] ?? order['date'] ?? order['updatedAt'] ?? '').toString();
-    final rawType = (order['type'] ?? '').toString().toLowerCase();
+    final rawType = (order['raw'] is Map ? (order['raw'] as Map)['type'] : order['type'] ?? '').toString().toLowerCase();
     final metalCandidate = (order['metalType'] ?? order['metal'] ?? firstProduct['metalType'] ?? firstProduct['metal'] ?? '').toString().toLowerCase().trim();
-    final metalType = metalCandidate.isNotEmpty
+    final detected = metalCandidate.isNotEmpty
         ? metalCandidate
         : (rawType == 'gold' || rawType == 'silver' || rawType == 'diamond' ? rawType : '');
+    final metalType = detected.contains('silver') ? 'silver' : detected.contains('gold') ? 'gold' : detected.contains('diamond') ? 'diamond' : detected;
 
     return AugmontOrder(
       id: merchantTransactionId.isNotEmpty ? merchantTransactionId : (transactionId.isNotEmpty ? transactionId : '$source-order-$index'),
@@ -757,6 +887,98 @@ class AugmontApi {
     return {'ok': true, 'invoice': result?['data'] ?? result ?? {}, 'raw': response['raw']};
   }
 
+  // ── Transaction order normalizer (React normalizeTransactionOrder) ──
+  AugmontOrder _normalizeTransactionOrder(String source, Map<String, dynamic> order) {
+    final pd = (((order['providerResponsePayload'] as Map<String, dynamic>?)
+            ?['result'] as Map<String, dynamic>?)
+            ?['data'] as Map<String, dynamic>?) ??
+        <String, dynamic>{};
+
+    final orderType = order['orderType']?.toString() ?? '';
+    const typeMap = {'digital_purchase': 'BUY', 'digital_sell': 'SELL', 'physical_redemption': 'REDEEM'};
+    final type = typeMap[orderType] ?? source.toUpperCase();
+
+    double amount;
+    if (orderType == 'physical_redemption') {
+      amount = _pickFirstPositiveNumber([order['shippingAmount'], order['totalAmount']]);
+    } else {
+      amount = _pickFirstPositiveNumber([pd['preTaxAmount'], order['totalAmount']]);
+    }
+
+    final grams = _toNumber(pd['quantity']);
+    final rate = _toNumber(pd['rate']);
+
+    final transactionId = (pd['transactionId'] ?? order['orderReference'] ?? '').toString();
+    final merchantTransactionId = (order['merchantTransactionId'] ?? '').toString();
+    final uniqueId = (pd['uniqueId'] ?? '').toString();
+
+    final itemMetal = (order['item'] as Map<String, dynamic>?)?['catalogMetalType']?.toString() ?? '';
+    final metalCandidate = (pd['metalType']?.toString() ?? itemMetal).toLowerCase().trim();
+    final metalType = metalCandidate.contains('silver') ? 'silver' : metalCandidate.contains('gold') ? 'gold' : metalCandidate.contains('diamond') ? 'diamond' : metalCandidate;
+
+    final rawStatus = (order['orderStatus'] ?? '').toString();
+    String status;
+    if (rawStatus.isNotEmpty) {
+      status = rawStatus.replaceAll(RegExp(r'[_-]+'), ' ');
+      status = status.replaceAllMapped(RegExp(r'\b\w'), (m) => m.group(0)!.toUpperCase());
+    } else {
+      status = 'Completed';
+    }
+
+    return AugmontOrder(
+      id: merchantTransactionId.isNotEmpty ? merchantTransactionId : transactionId,
+      type: type,
+      amount: amount,
+      gold: grams,
+      rate: rate,
+      date: order['createdAt']?.toString() ?? '',
+      status: status,
+      merchantTransactionId: merchantTransactionId,
+      transactionId: transactionId,
+      uniqueId: uniqueId,
+      metalType: metalType,
+    );
+  }
+
+  // ── User transactions (React fetchUserTransactions) ──
+  Future<Map<String, dynamic>> fetchUserTransactions({
+    required String type,
+    required String uniqueId,
+    required String metalType,
+  }) async {
+    if (uniqueId.isEmpty) return {'ok': false, 'message': 'Missing uniqueId', 'orders': <AugmontOrder>[]};
+    final response = await _requestAugmontOrderEndpoint(
+      '/api/v1/users/transactions/$type',
+      {
+        'merchantId': ApiConfig.defaultMerchantId,
+        'uniqueId': uniqueId.trim(),
+        'metalType': metalType,
+      },
+    );
+    if (!response['ok']) return {...response, 'orders': <AugmontOrder>[]};
+    final rawOrders = _extractTransactionOrderArray(response['data']);
+    final orders = rawOrders
+        .map((o) => _normalizeTransactionOrder(type, o as Map<String, dynamic>))
+        .toList();
+    return {'ok': true, 'orders': orders, 'raw': response['raw']};
+  }
+
+  List<dynamic> _extractTransactionOrderArray(dynamic data) {
+    if (data == null) return [];
+    if (data is List) return data;
+    if (data is! Map<String, dynamic>) return [];
+    final result = (data['payload'] as Map<String, dynamic>?)?['result'];
+    if (result is List) return result;
+    if (result is Map<String, dynamic>) {
+      if (result['data'] is List) return result['data'] as List;
+      if (result['orders'] is List) return result['orders'] as List;
+    }
+    final payloadData = (data['payload'] as Map<String, dynamic>?)?['data'];
+    if (payloadData is List) return payloadData;
+    if (data['data'] is List) return data['data'] as List;
+    return [];
+  }
+
   // ── Investment summary ──
   Future<Map<String, dynamic>> fetchInvestmentSummary({required String uniqueId, String metalType = 'gold'}) async {
     if (uniqueId.isEmpty) return {'ok': false, 'message': 'Missing uniqueId'};
@@ -773,6 +995,7 @@ class AugmontApi {
       'currentHoldingWithMultiplier': _toNumber(raw['currentHoldingWithMultiplier']),
       'totalBuyAmountExclTax': _toNumber(raw['totalBuyAmountExclTax']),
       'totalBuyPreTaxAmount': _toNumber(raw['totalBuyPreTaxAmount']),
+      'totalBuyPostTaxAmount': _toNumber(raw['totalBuyPostTaxAmount']),
       'totalSellAmount': _toNumber(raw['totalSellAmount']),
       'totalInvested': _toNumber(raw['totalInvested']),
       'totalInvestedOfGold': _toNumber(raw['totalInvestedOfGold']),
@@ -791,14 +1014,48 @@ class AugmontApi {
 
   // ── Set primary bank ──
   Future<Map<String, dynamic>> setPrimaryAugmontUserBank({required String uniqueId, required String userBankId}) async {
-    if (uniqueId.isEmpty || userBankId.isEmpty) return {'ok': false, 'message': 'Missing uniqueId or userBankId'};
+    final cleanedId = uniqueId.trim();
+    final cleanedBank = userBankId.trim();
+    if (cleanedId.isEmpty || cleanedBank.isEmpty) return {'ok': false, 'message': 'Missing uniqueId or userBankId'};
     return _requestAugmontOrderEndpoint('/api/v1/users/banks/set-primary', {
-      'uniqueId': uniqueId.trim(),
-      'userBankId': userBankId.trim(),
+      'uniqueId': cleanedId,
+      'userBankId': cleanedBank,
+      'provider_client_reference': cleanedId,
+      'provider_bank_id': cleanedBank,
     }, 'Failed to set primary bank');
   }
 
   // ── Fetch Aadhaar address ──
+  Future<Map<String, dynamic>> downloadTransactionPdf({
+    required String type,
+    required String uniqueId,
+    required String fromDate,
+    required String toDate,
+  }) async {
+    final token = LocalStorageService.getToken() ?? '';
+    try {
+      final res = await _dio.post(
+        '${ApiConfig.augmontBaseUrl}/api/v1/users/transactions/$type/pdf',
+        data: {'uniqueId': uniqueId.trim(), 'fromDate': fromDate, 'toDate': toDate},
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/pdf',
+            if (token.isNotEmpty) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      if (res.statusCode != null && res.statusCode! >= 400) {
+        return {'ok': false, 'message': 'Failed to download $type PDF'};
+      }
+      final bytes = res.data as List<int>;
+      return {'ok': true, 'bytes': bytes, 'fileName': 'KARATLY_${type.toUpperCase()}_Statement_${DateTime.now().millisecondsSinceEpoch}.pdf'};
+    } catch (e) {
+      return {'ok': false, 'message': 'Failed to download $type PDF'};
+    }
+  }
+
   Future<Map<String, dynamic>> fetchAadhaarAddress({required String uniqueId}) async {
     if (uniqueId.isEmpty) return {'ok': false, 'message': 'Missing uniqueId'};
     return _requestAugmontOrderEndpoint('/api/v1/users/aadhaar/address', {

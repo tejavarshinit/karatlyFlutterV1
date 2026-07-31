@@ -13,57 +13,91 @@ class HelpCenterScreen extends StatefulWidget {
 class _HelpCenterScreenState extends State<HelpCenterScreen> {
   int? _openFaq;
   String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  String get _query => _searchQuery.trim().toLowerCase();
 
   static const List<Map<String, String>> _faqs = [
     {
       'question': 'How is gold price calculated?',
       'answer':
-          'Gold prices on Karatly are sourced from live international markets and updated in real-time. The price includes the base metal rate plus applicable taxes and a small making charge where relevant.',
+          'The gold price displayed on Karatly is based on live market rates provided by our trusted bullion partners. Prices may change throughout the day depending on market movement, taxes, and applicable charges.',
     },
     {
       'question': 'How do I buy gold?',
       'answer':
-          'Sign up, complete your KYC, add funds via UPI or net banking, and choose how much gold you want to buy. You can purchase gold starting from just ₹10.',
+          'Go to dashboard \u2192 enter amount or weight \u2192 click buy. Gold is instantly added to your digital vault upon successful payment.',
     },
     {
       'question': 'Is my gold safe?',
       'answer':
-          'Yes. Your gold is stored in insured vaults managed by our trusted partners. Each gram is backed by physical gold and you can request physical delivery or sell it at any time.',
+          'Yes, your gold is stored in world-class, insured vaults with 100% security and is fully backed by physical gold.',
     },
     {
       'question': 'When does SIP debit happen?',
       'answer':
-          'Your SIP amount is debited on the date you selected during setup. If the date falls on a weekend or holiday, the debit happens on the next working day.',
+          'Your SIP amount is debited on the scheduled date selected during SIP setup. If the debit fails due to insufficient balance or any payment issue, the transaction may not be processed. You can retry or update your payment method.',
     },
     {
       'question': 'How do I redeem physical gold?',
       'answer':
-          'You can redeem your digital gold for physical gold coins or bars from the Sell/Redeem section and have it delivered to your registered address.',
+          'You can redeem your digital gold for physical gold from the redemption section. Select an eligible product, choose the quantity, add or confirm your delivery address, and submit the redemption request. Delivery timelines and applicable charges will be shown during checkout.',
     },
     {
       'question': 'What are storage fees?',
       'answer':
-          'Karatly provides secure storage for your digital gold. Any applicable storage or maintenance fees are shown before confirmation.',
+          'Your digital gold purchased through Karatly is securely stored with our vaulting partner. Any applicable storage charges, if any, will be shown as per the product terms and pricing details available in the app.',
     },
     {
       'question': 'How do I withdraw funds?',
       'answer':
-          'Go to your dashboard, tap Withdraw, enter the amount you want to withdraw, and select your bank account. Funds are typically credited within 24-48 hours.',
+          'To withdraw funds, sell your digital gold or silver holdings first. Once the sale is completed, the proceeds will be credited to your registered bank account as per the standard settlement timeline.',
     },
   ];
 
-  List<Map<String, String>> get _filteredFaqs {
-    if (_searchQuery.isEmpty) return _faqs;
-    final query = _searchQuery.toLowerCase();
-    return _faqs.where((faq) {
-      return faq['question']!.toLowerCase().contains(query) || faq['answer']!.toLowerCase().contains(query);
+  List<Map<String, dynamic>> get _filteredFaqs {
+    if (_query.isEmpty) return _faqs.asMap().entries.map((e) => {'index': e.key, 'question': e.value['question'], 'answer': e.value['answer'], 'matchQ': true, 'matchA': true}).toList();
+    return _faqs.asMap().entries.where((e) {
+      final matchQ = e.value['question']!.toLowerCase().contains(_query);
+      final matchA = e.value['answer']!.toLowerCase().contains(_query);
+      return matchQ || matchA;
+    }).map((e) {
+      final matchQ = e.value['question']!.toLowerCase().contains(_query);
+      final matchA = e.value['answer']!.toLowerCase().contains(_query);
+      return {'index': e.key, 'question': e.value['question'], 'answer': e.value['answer'], 'matchQ': matchQ, 'matchA': matchA};
     }).toList();
   }
 
   @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() => _searchQuery = _searchController.text);
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final filtered = _filteredFaqs;
+
+    if (_query.isNotEmpty && filtered.length == 1) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _openFaq != filtered[0]['index']) {
+          setState(() => _openFaq = filtered[0]['index']);
+        }
+      });
+    }
+
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: RadialGradient(
             center: Alignment(0.9755, -0.3792),
@@ -73,55 +107,22 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 88),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildStatusBar(),
-                const SizedBox(height: 18),
-                _buildHeader(context),
-                const SizedBox(height: 24),
-                _buildSearchCard(),
-                const SizedBox(height: 28),
-                _buildSectionTitle('CONTACT US'),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _contactCard(
-                        icon: Icons.phone_outlined,
-                        label: 'Call Us',
-                        value: '+919392918025',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _contactCard(
-                        icon: Icons.mail_outline,
-                        label: 'Mail Us',
-                        value: 'Support@karatly.net',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 28),
-                _buildSectionTitle('FAQ'),
-                const SizedBox(height: 12),
-                ..._filteredFaqs.asMap().entries.map((entry) {
-                  final index = _faqs.indexOf(entry.value);
-                  return _faqItem(
-                    question: entry.value['question']!,
-                    answer: entry.value['answer']!,
-                    isOpen: _openFaq == index,
-                    onTap: () {
-                      setState(() {
-                        _openFaq = _openFaq == index ? null : index;
-                      });
-                    },
-                  );
-                }),
-                const SizedBox(height: 32),
-              ],
+            padding: EdgeInsets.zero,
+            child: SizedBox(
+              width: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 24),
+                  _buildSearchCard(),
+                  const SizedBox(height: 24),
+                  _buildContactUs(),
+                  const SizedBox(height: 24),
+                  _buildFaqSection(filtered),
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
           ),
         ),
@@ -129,110 +130,56 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     );
   }
 
-  Widget _buildStatusBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: const [
-        Text('9:30', style: TextStyle(fontSize: 12, color: Colors.white, height: 1.5)),
-        Row(
-          children: [
-            _StatusGlyph(width: 18, child: _SignalBars()),
-            SizedBox(width: 6),
-            _StatusGlyph(width: 14, child: _WifiGlyph()),
-            SizedBox(width: 6),
-            _StatusGlyph(width: 25, child: _BatteryGlyph()),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.maybePop(context),
-              child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
-            ),
-            const SizedBox(width: 8),
-            const Text('Help Center', style: TextStyle(fontSize: 14, color: Color(0xFFF7CD57))),
-          ],
-        ),
-        GestureDetector(
-          onTap: () => context.go(AppRoutes.notifications),
-          child: Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFF1D170D),
-              border: Border.all(color: const Color(0xFFE8B438)),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(Icons.notifications_outlined, color: Colors.grey[400], size: 14),
-                const Positioned(
-                  right: 4,
-                  top: 4,
-                  child: SizedBox(width: 5, height: 5, child: DecoratedBox(decoration: BoxDecoration(color: Color(0xFFEE0105), shape: BoxShape.circle))),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFFBFBFBF), letterSpacing: 1.2),
-    );
-  }
-
-  Widget _buildSearchCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F1416),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
-      ),
-      child: Column(
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFF1D170D),
-              border: Border.all(color: const Color(0xFFE8B438)),
-            ),
-            child: const Icon(Icons.help_outline, color: Color(0xFFF7CD57), size: 22),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => context.go(AppRoutes.profile),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text('Help Center', style: TextStyle(fontSize: 14, color: Color(0xFFF7CD57))),
+            ],
           ),
-          const SizedBox(height: 12),
-          const Text('How can we help?', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF202326),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF2E2E2E)),
-            ),
-            child: TextField(
-              onChanged: (value) => setState(() => _searchQuery = value),
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'Search for answers...',
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF7E7E7E), size: 20),
-                hintStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          GestureDetector(
+            onTap: () => context.go(AppRoutes.notifications),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF1D170D),
+                border: Border.all(color: const Color(0xFFE8B438)),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(Icons.notifications_outlined, color: Colors.grey[400], size: 14),
+                  const Positioned(
+                    right: 4,
+                    top: 4,
+                    child: SizedBox(
+                      width: 5,
+                      height: 5,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Color(0xFFEE0105),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -241,12 +188,100 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
     );
   }
 
-  Widget _contactCard({required IconData icon, required String label, required String value}) {
+  Widget _buildSearchCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F1416),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF2E2E2E)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFFBBF42), Color(0xFFE59700)],
+                ),
+              ),
+              child: CustomPaint(
+                painter: _HelpIconPainter(),
+                size: const Size(24, 24),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'How can we help?',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(40),
+                border: Border.all(color: const Color(0xFF2E2E2E)),
+              ),
+              child: TextField(
+                controller: _searchController,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+                decoration: InputDecoration(
+                  hintText: 'Search articles...',
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF4E4E4E), size: 18),
+                  hintStyle: const TextStyle(color: Color(0xFF4E4E4E), fontSize: 12),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactUs() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle('CONTACT US'),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _contactCard(
+                icon: Icons.phone_outlined,
+                title: 'Call Us at',
+                subtitle: '+919392918025',
+              )),
+              const SizedBox(width: 12),
+              Expanded(child: _contactCard(
+                icon: Icons.mail_outline,
+                title: 'Mail Us at',
+                subtitle: 'Support@karatly.net',
+              )),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _contactCard({required IconData icon, required String title, required String subtitle}) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1416),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFF16181A),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFF2E2E2E)),
       ),
       child: Column(
@@ -254,133 +289,173 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
           Container(
             width: 40,
             height: 40,
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF202326)),
-            child: Icon(icon, color: const Color(0xFFF7CD57), size: 18),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFF2A2923),
+            ),
+            child: Icon(icon, color: const Color(0xFFE5AF35), size: 16),
           ),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+          ),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(color: Color(0xFF7E7E7E), fontSize: 10), textAlign: TextAlign.center),
+          Text(
+            subtitle,
+            style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E)),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
   }
 
-  Widget _faqItem({
-    required String question,
-    required String answer,
-    required bool isOpen,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F1416),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF2E2E2E)),
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
+  Widget _buildFaqSection(List<Map<String, dynamic>> filtered) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle('FAQ'),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F1416),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF2E2E2E)),
+            ),
+            child: Column(
+              children: [
+                if (filtered.isEmpty && _query.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(24),
                     child: Text(
-                      question,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                      'No results found for "${_searchQuery.trim()}"',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF7E7E7E)),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  Icon(isOpen ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: const Color(0xFFF7CD57), size: 20),
-                ],
-              ),
+                ...List.generate(filtered.length, (i) {
+                  final item = filtered[i];
+                  final idx = item['index'] as int;
+                  final isOpen = _openFaq == idx;
+                  return Column(
+                    children: [
+                      InkWell(
+                        onTap: () => setState(() => _openFaq = isOpen ? null : idx),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildHighlightedText(
+                                  item['question'] as String,
+                                  item['matchQ'] as bool,
+                                ),
+                              ),
+                              AnimatedRotation(
+                                turns: isOpen ? 0.5 : 0,
+                                duration: const Duration(milliseconds: 200),
+                                child: const Icon(Icons.chevron_left, color: Color(0xFFBCBCBC), size: 16),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (isOpen)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                          child: _buildHighlightedText(
+                            item['answer'] as String,
+                            item['matchA'] as bool,
+                            style: const TextStyle(fontSize: 12, height: 1.5, color: Color(0xFF9E9E9E)),
+                          ),
+                        ),
+                      if (i < filtered.length - 1)
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 24),
+                          height: 1,
+                          color: const Color(0xFF2E2E2E),
+                        ),
+                    ],
+                  );
+                }),
+              ],
             ),
-            if (isOpen)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Text(
-                  answer,
-                  style: const TextStyle(color: Color(0xFF7E7E7E), fontSize: 12, height: 1.5),
-                ),
-              ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHighlightedText(String text, bool hasMatch, {TextStyle? style}) {
+    if (!hasMatch || _query.isEmpty) {
+      return Text(text, style: style ?? const TextStyle(fontSize: 14, color: Color(0xFFD5D5D5)));
+    }
+    final lower = text.toLowerCase();
+    final spans = <InlineSpan>[];
+    var lastIndex = 0;
+    var idx = lower.indexOf(_query);
+    while (idx != -1) {
+      if (idx > lastIndex) {
+        spans.add(TextSpan(text: text.substring(lastIndex, idx)));
+      }
+      spans.add(TextSpan(
+        text: text.substring(idx, idx + _query.length),
+        style: const TextStyle(backgroundColor: Color(0x40F7CD57), color: Color(0xFFF7CD57)),
+      ));
+      lastIndex = idx + _query.length;
+      idx = lower.indexOf(_query, lastIndex);
+    }
+    if (lastIndex < text.length) {
+      spans.add(TextSpan(text: text.substring(lastIndex)));
+    }
+    return RichText(
+      text: TextSpan(style: style ?? const TextStyle(fontSize: 14, color: Color(0xFFD5D5D5)), children: spans),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFFBFBFBF),
       ),
     );
   }
 }
 
-class _StatusGlyph extends StatelessWidget {
-  final double width;
-  final Widget child;
-  const _StatusGlyph({required this.width, required this.child});
-  @override
-  Widget build(BuildContext context) => SizedBox(width: width, height: 12, child: child);
-}
-
-class _SignalBars extends StatelessWidget {
-  const _SignalBars();
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: const [
-        _Bar(height: 4),
-        SizedBox(width: 2),
-        _Bar(height: 7),
-        SizedBox(width: 2),
-        _Bar(height: 10),
-      ],
-    );
-  }
-}
-
-class _Bar extends StatelessWidget {
-  final double height;
-  const _Bar({required this.height});
-  @override
-  Widget build(BuildContext context) => Container(width: 3, height: height, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(1)));
-}
-
-class _WifiGlyph extends StatelessWidget {
-  const _WifiGlyph();
-  @override
-  Widget build(BuildContext context) => CustomPaint(painter: _WifiPainter());
-}
-
-class _WifiPainter extends CustomPainter {
+class _HelpIconPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white..style = PaintingStyle.fill;
+    final paint = Paint()..color = Colors.black..style = PaintingStyle.fill;
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final radius = size.width / 2.4;
+
+    canvas.drawCircle(Offset(centerX, centerY), radius, paint);
+
+    final strokePaint = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round;
+
     final path = Path()
-      ..moveTo(size.width / 2, 0)
-      ..quadraticBezierTo(0, size.height * 0.15, 0, size.height * 0.7)
-      ..lineTo(size.width, size.height * 0.7)
-      ..quadraticBezierTo(size.width, size.height * 0.15, size.width / 2, 0)
-      ..close();
-    canvas.drawPath(path, paint);
-  }
+      ..moveTo(centerX - radius * 0.35, centerY - radius * 0.35)
+      ..lineTo(centerX + radius * 0.2, centerY + radius * 0.05);
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+    canvas.drawPath(path, strokePaint);
 
-class _BatteryGlyph extends StatelessWidget {
-  const _BatteryGlyph();
-  @override
-  Widget build(BuildContext context) => CustomPaint(painter: _BatteryPainter());
-}
-
-class _BatteryPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final stroke = Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1;
-    final fill = Paint()..color = Colors.white..style = PaintingStyle.fill;
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(1, 1, size.width - 4, size.height - 2), const Radius.circular(3)), stroke);
-    canvas.drawRect(Rect.fromLTWH(3, 3, size.width * 0.6, size.height - 6), fill);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(size.width - 2, 4, 2, size.height - 8), const Radius.circular(1)), fill);
+    canvas.drawCircle(
+      Offset(centerX + radius * 0.15, centerY + radius * 0.35),
+      1.2,
+      paint,
+    );
   }
 
   @override

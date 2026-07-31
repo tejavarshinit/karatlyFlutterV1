@@ -2,24 +2,29 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../app/router.dart';
 import '../../core/api/cashfree_api.dart';
+import '../../core/api/config.dart';
+import '../../core/models/payment_model.dart';
 import '../../core/services/auth_provider.dart';
 import '../../core/storage/local_storage.dart';
-import 'cashfree_helper.dart';
 
 class PaymentGatewayScreen extends ConsumerStatefulWidget {
   final String paymentSessionId;
   final String orderId;
+  final double paymentAmount;
+  final Map<String, dynamic>? paymentRequest;
 
   const PaymentGatewayScreen({
     super.key,
     required this.paymentSessionId,
     this.orderId = '',
+    this.paymentAmount = 0,
+    this.paymentRequest,
   });
 
   @override
@@ -27,34 +32,57 @@ class PaymentGatewayScreen extends ConsumerStatefulWidget {
 }
 
 class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen> {
-  String? _checkoutHtml;
+  static const _methodChannel = MethodChannel('custom_webview_channel');
+
   bool _loading = true;
   String _statusMessage = 'Preparing payment...';
-  bool _checkoutOpened = false;
+  String _checkoutUrl = '';
   Timer? _pollTimer;
   int _pollAttempts = 0;
-  WebViewController? _webViewController;
+  String _activeOrderId = '';
+  String _activePaymentSessionId = '';
+  bool _completed = false;
   static const _maxPollAttempts = 120;
   static const _pollInterval = Duration(seconds: 3);
 
   @override
   void initState() {
     super.initState();
-    _checkoutHtml = CashfreeHelper.getCheckoutHtml(widget.paymentSessionId);
-    if (_checkoutHtml == null) {
-      _loadSdkAndOpenCheckout();
-    } else {
-      _startPolling();
-    }
+    _methodChannel.setMethodCallHandler(_handleMethodCall);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initCheckout());
   }
 
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _methodChannel.setMethodCallHandler(null);
     super.dispose();
   }
 
+  Future<dynamic> _handleMethodCall(MethodCall call) async {
+    if (call.method == 'onReturn') {
+      // WebView detected the return URL — payment finished.
+      final returnUrl = call.arguments?.toString() ?? '';
+      debugPrint('[FLOW] METHOD_CHANNEL onReturn | url=$returnUrl');
+      String? orderId;
+      try {
+        final uri = Uri.parse(returnUrl);
+        // Handle both "?order_id=" and "??order_id=" (double ? from backend config)
+        final fromQuery = uri.queryParameters['order_id'] ?? uri.queryParameters['?order_id'];
+        if (fromQuery != null && fromQuery.isNotEmpty) {
+          orderId = fromQuery;
+        } else {
+          final match = RegExp(r'[?&]order_id=([^&]+)').firstMatch(returnUrl);
+          if (match != null) orderId = Uri.decodeComponent(match.group(1) ?? '');
+        }
+      } catch (_) {}
+      debugPrint('[FLOW] onReturn extracted orderId=$orderId | activeOrderId=$_activeOrderId');
+      if (mounted) _goToReturn(orderId: orderId);
+    }
+  }
+
   String get _sabbpeOrderId {
+    if (_activeOrderId.isNotEmpty) return _activeOrderId;
     try {
       final stored = LocalStorageService.getAugmontOrderReferences();
       if (stored != null && stored.isNotEmpty) {
@@ -65,49 +93,66 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen> {
     return widget.orderId;
   }
 
-  void _loadSdkAndOpenCheckout() {
-    CashfreeHelper.loadSdkAndOpenCheckout(
-      paymentSessionId: widget.paymentSessionId,
-      onReady: () {
-        if (mounted) {
-          setState(() {
-            _loading = false;
-            _statusMessage = 'Payment window opened. Complete your payment.';
-          });
-        }
-        _startPolling();
-      },
-      onError: (error) {
-        if (mounted) {
-          setState(() {
-            _loading = false;
-            _statusMessage = error;
-          });
-        }
-        _startPolling();
-      },
+  Future<void> _initCheckout() async {
+    debugPrint('[FLOW] PaymentGatewayScreen._initCheckout | widget.orderId=${widget.orderId} session=${widget.paymentSessionId}');
+    try {
+      final sessionResult = await _resolvePaymentSession();
+      if (!mounted) return;
+
+      _activePaymentSessionId = sessionResult.sessionId;
+      if (sessionResult.orderId.isNotEmpty) {
+        _activeOrderId = sessionResult.orderId;
+      }
+      debugPrint('[FLOW] checkout resolved | orderId=$_activeOrderId sessionId=$_activePaymentSessionId');
+
+      if (sessionResult.sessionId.isEmpty) {
+        throw Exception('Payment session ID is missing.');
+      }
+
+      final url = '${ApiConfig.cashfreeHostedCheckoutUrl}?paymentSessionId=${sessionResult.sessionId}';
+      debugPrint('[FLOW] loading WebView url=$url');
+
+      if (!mounted) return;
+      setState(() {
+        _checkoutUrl = url;
+        _loading = false;
+        _statusMessage = 'Complete payment in the secure window.';
+      });
+
+      _startPolling();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _statusMessage = 'Could not open payment.';
+      });
+    }
+  }
+
+  Future<_CheckoutSessionResult> _resolvePaymentSession() async {
+    // Use the session & order created by EmbeddedPaymentGateway — do NOT re-create,
+    // otherwise a second order is created and the status lookup mismatches.
+    return _CheckoutSessionResult(
+      sessionId: widget.paymentSessionId,
+      orderId: widget.orderId,
     );
-    _checkoutOpened = true;
   }
 
   void _startPolling() {
     _pollTimer?.cancel();
-    if (mounted) {
-      setState(() {
-        _loading = false;
-        _checkoutOpened = true;
-        _statusMessage = 'Checking payment status...';
-      });
-    }
+    setState(() => _statusMessage = 'Checking payment status...');
     _pollTimer = Timer.periodic(_pollInterval, (_) => _checkStatus());
   }
 
   Future<void> _checkStatus() async {
+    if (_completed) return;
     _pollAttempts++;
     try {
       final api = CashfreeApi(ref.read(dioAugmontProvider));
       final status = await api.checkPaymentStatus(_sabbpeOrderId);
       if (!mounted) return;
+
+      debugPrint('[FLOW] poll #$_pollAttempts order=$_sabbpeOrderId | paymentStatus=${status.paymentStatus} orderStatus=${status.orderStatus}');
 
       final ps = status.paymentStatus.toUpperCase();
       if (ps == 'SUCCESS' || ps == 'FAILED' || ps == 'CANCELLED' || ps == 'USER_DROPPED') {
@@ -123,12 +168,60 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen> {
     } catch (_) {}
   }
 
-  void _goToReturn() {
-    if (mounted) {
-      context.go(AppRoutes.paymentReturn, extra: {
-        'orderId': widget.orderId,
-      });
+  void _goToReturn({String? orderId}) {
+    _pollTimer?.cancel();
+    if (!mounted || _completed) return;
+    debugPrint('[FLOW] _goToReturn called | orderId=$orderId activeOrderId=$_activeOrderId completed=$_completed');
+    _completed = true;
+    if (orderId != null && orderId.isNotEmpty) {
+      _activeOrderId = orderId;
     }
+    // 1. Destroy the WebView first (unmount AndroidView) so the frozen
+    //    Cashfree page disappears from screen.
+    setState(() => _checkoutUrl = '');
+    // 2. Wait two frames for the platform view to actually dispose.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          debugPrint('[FLOW] navigating to paymentReturn | orderId=$_activeOrderId');
+          context.go(AppRoutes.paymentReturn, extra: {
+            'orderId': _activeOrderId.isNotEmpty ? _activeOrderId : widget.orderId,
+          });
+        }
+      });
+    });
+  }
+
+  Future<void> _closePayment() async {
+    _pollTimer?.cancel();
+    debugPrint('[FLOW] _closePayment (cross button) | completed=$_completed orderId=$_activeOrderId');
+    _completed = true;
+    setState(() => _checkoutUrl = '');
+    // Check payment status first — if payment succeeded, show the result page.
+    String targetOrder = _activeOrderId.isNotEmpty ? _activeOrderId : widget.orderId;
+    bool paid = false;
+    if (targetOrder.isNotEmpty) {
+      try {
+        final api = CashfreeApi(ref.read(dioAugmontProvider));
+        final status = await api.checkPaymentStatus(targetOrder);
+        final ps = status.paymentStatus.toUpperCase();
+        final os = status.orderStatus.toUpperCase();
+        paid = ps == 'SUCCESS' || os == 'PAID';
+        debugPrint('[FLOW] cross check status | paymentStatus=$ps orderStatus=$os paid=$paid');
+      } catch (_) {}
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (paid) {
+          debugPrint('[FLOW] cross → payment paid, going to result page');
+          context.go(AppRoutes.paymentReturn, extra: {'orderId': targetOrder});
+        } else {
+          debugPrint('[FLOW] cross → not paid, going home');
+          context.go(AppRoutes.home);
+        }
+      });
+    });
   }
 
   @override
@@ -141,81 +234,55 @@ class _PaymentGatewayScreenState extends ConsumerState<PaymentGatewayScreen> {
         title: const Text('Payment'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: _goToReturn,
+          onPressed: _closePayment,
         ),
       ),
-      body: _checkoutHtml != null ? _buildWebView() : _buildStatusView(),
+      body: _loading ? _buildLoadingView() : _buildWebView(),
     );
   }
 
-  Widget _buildWebView() {
-    final controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(NavigationDelegate(
-        onNavigationRequest: (request) async {
-          final url = request.url;
-          if (url.contains('/payment/return') || url.contains('payment_return') || url.contains('payment/return')) {
-            final uri = Uri.parse(url);
-            final orderId = uri.queryParameters['order_id'] ?? uri.queryParameters['order_id'] ?? '';
-            if (orderId.isNotEmpty) {
-              _pollTimer?.cancel();
-              if (mounted) {
-                context.go(AppRoutes.paymentReturn, extra: {'orderId': orderId});
-              }
-              return NavigationDecision.prevent;
-            }
-          }
-          return NavigationDecision.navigate;
-        },
-      ))
-      ..loadHtmlString(_checkoutHtml!);
-    _webViewController = controller;
-    return WebViewWidget(controller: controller);
-  }
-
-  Widget _buildStatusView() {
+  Widget _buildLoadingView() {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (_loading) ...[
-              const SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 3, color: Color(0xFFF7CD57))),
-              const SizedBox(height: 20),
-            ],
-            const Icon(Icons.payment, size: 64, color: Color(0xFFF7CD57)),
-            const SizedBox(height: 16),
-            const Text('Payment Gateway', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
-            Text(
-              _statusMessage,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF9E9A94), fontSize: 13),
-            ),
-            if (!_loading && !_checkoutOpened) ...[
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity, height: 48,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(50),
-                    gradient: const LinearGradient(colors: [Color(0xFFFED45C), Color(0xFFDB9502)]),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(50),
-                      onTap: _loadSdkAndOpenCheckout,
-                      child: const Center(child: Text('Retry', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black))),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            const SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 3, color: Color(0xFFF7CD57))),
+            const SizedBox(height: 20),
+            Text(_statusMessage, style: const TextStyle(color: Color(0xFF9E9A94), fontSize: 13)),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildWebView() {
+    if (_checkoutUrl.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_statusMessage, style: const TextStyle(color: Color(0xFF9E9A94), fontSize: 13)),
+          ],
+        ),
+      );
+    }
+
+    return AndroidView(
+      viewType: 'custom_webview',
+      creationParams: {'webUrl': _checkoutUrl},
+      creationParamsCodec: const StandardMessageCodec(),
+    );
+  }
+}
+
+class _CheckoutSessionResult {
+  final String sessionId;
+  final String orderId;
+
+  const _CheckoutSessionResult({
+    required this.sessionId,
+    required this.orderId,
+  });
 }

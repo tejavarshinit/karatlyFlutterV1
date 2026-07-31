@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/router.dart';
+import '../../core/services/home_provider.dart';
 
 class BottomNavShell extends StatelessWidget {
   final Widget child;
@@ -24,12 +26,18 @@ class BottomNavShell extends StatelessWidget {
   }
 }
 
-class _FloatingNavBar extends StatelessWidget {
+class _FloatingNavBar extends ConsumerWidget {
   const _FloatingNavBar();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentPath = GoRouterState.of(context).uri.path;
+    final metal = ref.watch(activeMetalProvider);
+    final accent = metal == 'diamond'
+        ? const Color(0xFF3AC7FF)
+        : metal == 'silver'
+            ? Colors.white
+            : const Color(0xFFF7CD57);
     return Container(
       width: 342,
       height: 56,
@@ -52,30 +60,35 @@ class _FloatingNavBar extends StatelessWidget {
             icon: 'home',
             label: 'Home',
             isActive: currentPath == AppRoutes.home,
+            accent: accent,
             onTap: () => context.go(AppRoutes.home),
           ),
           _NavItem(
             icon: 'dashboard',
             label: 'Dashboard',
             isActive: currentPath == AppRoutes.dashboard,
+            accent: accent,
             onTap: () => context.go(AppRoutes.dashboard),
           ),
           _NavItem(
             icon: 'market',
             label: 'Market',
             isActive: currentPath == AppRoutes.market,
+            accent: accent,
             onTap: () => context.go(AppRoutes.market),
           ),
           _NavItem(
             icon: 'orders',
             label: 'Order',
             isActive: currentPath == AppRoutes.orders,
+            accent: accent,
             onTap: () => context.go(AppRoutes.orders),
           ),
           _NavItem(
             icon: 'profile',
             label: 'Profile',
             isActive: currentPath == AppRoutes.profile,
+            accent: accent,
             onTap: () => context.go(AppRoutes.profile),
           ),
         ],
@@ -88,18 +101,20 @@ class _NavItem extends StatelessWidget {
   final String icon;
   final String label;
   final bool isActive;
+  final Color accent;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.isActive,
+    required this.accent,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? const Color(0xFFF7CD57) : const Color(0xFF726D6D);
+    final color = isActive ? accent : const Color(0xFF707070);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,

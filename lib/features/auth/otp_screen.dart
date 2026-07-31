@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../app/router.dart';
 import '../../core/api/augmont_api.dart';
 import '../../core/services/auth_provider.dart';
+import '../../core/services/biometric_auth_service.dart';
 import '../../core/services/rate_provider.dart';
 import '../../core/storage/local_storage.dart';
+import 'widgets/animated_ring_logo.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   final String mobileNumber;
@@ -94,16 +96,18 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
       if (mounted) {
         if (result['ok'] == true) {
-          // For registration, create Augmont user with pending profile
           if (widget.type == 'register') {
             await _createAugmontUser();
           }
+          if (!mounted) return;
+          await _promptBiometricSetup();
+          if (!mounted) return;
           final authState = ref.read(authProvider);
           final kycStatus = authState.user?.kycApproved == true || (authState.user?.kycStatus ?? '').toLowerCase() == 'approved';
           if (!kycStatus) {
             setState(() => _showKycPrompt = true);
           } else {
-            context.go(AppRoutes.home);
+            if (mounted) context.go(AppRoutes.home);
           }
         } else {
           setState(() => _error = _friendlyError(result['message']?.toString() ?? 'Verification failed'));
@@ -121,6 +125,42 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     if (lower.contains('invalid_otp')) return 'Invalid OTP';
     if (lower.contains('expired')) return 'OTP has expired. Please request a new one.';
     return raw.isEmpty ? 'Verification failed. Please try again.' : raw;
+  }
+
+  Future<void> _promptBiometricSetup() async {
+    try {
+      final biometric = BiometricAuthService();
+      if (!mounted || await biometric.isEnabled()) return;
+
+      final enable = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1918),
+          title: const Text('Quick Login', style: TextStyle(color: Colors.white)),
+          content: const Text(
+            'Use fingerprint, face, or PIN to login next time.',
+            style: TextStyle(color: Color(0xFF9E9A94)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Skip', style: TextStyle(color: Color(0xFF7E7E7E))),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Enable', style: TextStyle(color: Color(0xFFF7CD57))),
+            ),
+          ],
+        ),
+      );
+
+      if (enable == true && mounted) {
+        final token = LocalStorageService.getToken() ?? '';
+        final profile = LocalStorageService.getUserProfile() ?? {};
+        await biometric.saveLoginResult(token, profile);
+        await biometric.enable();
+      }
+    } catch (_) {}
   }
 
   Future<void> _createAugmontUser() async {
@@ -187,26 +227,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 ),
                 const SizedBox(height: 20),
                 // Logo
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: SweepGradient(
-                      colors: [Color(0xFF3D2600), Color(0xFFB17B21), Color(0xFF3D2600)],
-                    ),
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 72,
-                      height: 72,
-                      decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black),
-                      child: const Center(
-                        child: Text('K', style: TextStyle(fontFamily: 'Georgia', fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFF7CD57))),
-                      ),
-                    ),
-                  ),
-                ),
+                const AnimatedRingLogo(),
                 const SizedBox(height: 16),
                 // Badge
                 Container(

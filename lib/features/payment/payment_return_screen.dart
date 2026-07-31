@@ -55,13 +55,14 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
         _isRedemption = _flowType == 'PHYSICAL_REDEMPTION' || _sku.isNotEmpty;
       }
     } catch (_) {}
-    _orderId = _sabbpeOrderId.isNotEmpty ? _sabbpeOrderId : widget.orderId;
+    _orderId = widget.orderId.isNotEmpty ? widget.orderId : _sabbpeOrderId;
 
     final profile = LocalStorageService.getUserProfile();
     _uniqueId = profile?['uniqueId']?.toString().trim() ?? LocalStorageService.getUserUniqueId() ?? '';
   }
 
   Future<void> _check() async {
+    debugPrint('[FLOW] PaymentReturnScreen._check | orderId=$_orderId uniqueId=$_uniqueId');
     if (_orderId.isEmpty) {
       if (!mounted) return;
       setState(() { _loading = false; _message = 'No order ID found.'; });
@@ -70,18 +71,40 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
 
     try {
       final api = CashfreeApi(ref.read(dioAugmontProvider));
-      final status = await api.checkPaymentStatus(_orderId);
+
+      // Keep polling until the backend has a final status (SUCCESS/FAILED/CANCELLED).
+      // The webhook may take a moment to update the order, so retry like React does.
+      for (int attempt = 0; attempt < 10; attempt++) {
+        if (!mounted) return;
+        if (attempt > 0) {
+          setState(() => _message = 'Payment is processing. Checking again...');
+          await Future.delayed(const Duration(seconds: 2));
+          if (!mounted) return;
+        }
+
+        final status = await api.checkPaymentStatus(_orderId);
+        if (!mounted) return;
+
+        debugPrint('[FLOW] return check attempt=$attempt | paymentStatus=${status.paymentStatus} orderStatus=${status.orderStatus}');
+
+        final ps = status.paymentStatus.toUpperCase();
+        final os = status.orderStatus.toUpperCase();
+        _paymentStatusRaw = ps.isNotEmpty ? ps : os;
+        _success = ps == 'SUCCESS' || os == 'PAID';
+        _pending = ps == 'PENDING' || ps == 'USER_DROPPED';
+
+        if (_success || ps == 'FAILED' || ps == 'CANCELLED') {
+          break;
+        }
+      }
+
       if (!mounted) return;
-
-      final ps = status.paymentStatus.toUpperCase();
-      final os = status.orderStatus.toUpperCase();
-      _paymentStatusRaw = ps.isNotEmpty ? ps : os;
-      _success = ps == 'SUCCESS' || os == 'PAID';
-      _pending = ps == 'PENDING' || ps == 'USER_DROPPED';
-
+      debugPrint('[FLOW] final status after poll loop | success=$_success pending=$_pending raw=$_paymentStatusRaw');
       if (_success) {
+        debugPrint('[FLOW] status SUCCESS → calling _verifyWithAugmont');
         await _verifyWithAugmont();
       } else {
+        debugPrint('[FLOW] status NOT success → showing result message=${_buildStatusMessage()}');
         setState(() {
           _loading = false;
           _statusCode = _paymentStatusRaw;
@@ -95,6 +118,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
   }
 
   Future<void> _verifyWithAugmont() async {
+    debugPrint('[FLOW] _verifyWithAugmont | orderRef=$_orderId uniqueId=$_uniqueId isRedemption=$_isRedemption');
     final orderRef = _orderId;
     if (orderRef.isEmpty || _uniqueId.isEmpty) {
       setState(() {
@@ -117,6 +141,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
         orderReference: orderRef,
         uniqueId: _uniqueId,
       );
+      debugPrint('[FLOW] verifyPaymentDetails attempt=$attempt ok=${detailsRes['ok']} status=${detailsRes['status']}');
       if (!mounted) return;
       if (detailsRes['ok'] == true) break;
     }
@@ -125,6 +150,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
 
     if (detailsRes != null && detailsRes['ok'] == true) {
       final normalized = _normalizePaymentDetails(detailsRes);
+      debugPrint('[FLOW] payment details verified | normalizedStatus=${normalized['status']} amount=${normalized['amount']} qty=${normalized['quantity']}');
       await LocalStorageService.setMobilePaymentResult(jsonEncode(normalized));
 
       if (_isRedemption) {
@@ -132,6 +158,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
       }
 
       final normalizedStatus = (normalized['status'] ?? '').toString().toUpperCase();
+      debugPrint('[FLOW] final result | success=$_success pending=$_pending status=$_paymentStatusRaw');
       setState(() {
         _loading = false;
         _success = normalizedStatus == 'SUCCESS';
@@ -276,6 +303,18 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
     }
   }
 
+  void _goHome() {
+    final token = LocalStorageService.getToken();
+    if (token != null && token.isNotEmpty) {
+      ref.read(authProvider.notifier).restoreFromToken(token);
+    }
+    // Wait for auth state to propagate to the router before navigating,
+    // otherwise go_router's redirect sees stale "not logged in" state.
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) context.go(AppRoutes.home);
+    });
+  }
+
   bool get _isSilver => _metalType == 'silver';
   bool get _isDiamond => _metalType == 'diamond';
 
@@ -298,9 +337,11 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                const Spacer(),
+            child: Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                 if (_loading)
                   Column(
                     children: [
@@ -407,7 +448,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
                     SizedBox(
                       width: double.infinity, height: 44,
                       child: OutlinedButton(
-                        onPressed: () => context.pop(),
+                        onPressed: _goHome,
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFF2E2E2E)),
                           backgroundColor: const Color(0xFF0A1520),
@@ -429,7 +470,14 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
                         color: Colors.transparent,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(30),
-                          onTap: () => context.go(_getContinueRoute()),
+                          onTap: () {
+                            final route = _getContinueRoute();
+                            if (route == AppRoutes.home) {
+                              _goHome();
+                            } else {
+                              context.go(route);
+                            }
+                          },
                           child: Center(
                             child: Text(
                               _pending ? 'Go Home' : 'Continue Shopping',
@@ -441,12 +489,13 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
                     ),
                   ),
                 ],
-                const Spacer(),
               ],
             ),
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 }

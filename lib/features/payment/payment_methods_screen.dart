@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -105,13 +106,27 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
   }
 
   String _extractBankId(Map<String, dynamic> bank) {
-    return (
-      bank['provider_bank_id'] ??
-          bank['userBankId'] ??
-          bank['bankId'] ??
-          bank['id'] ??
-          '',
-    ).toString().trim();
+    final raw =
+      (bank['provider_bank_id']?.toString() ??
+          bank['userBankId']?.toString() ??
+          bank['bankId']?.toString() ??
+          bank['id']?.toString() ??
+          '').trim();
+    return raw.replaceAll(RegExp(r'[()]'), '');
+  }
+
+  String? _detectIfscMismatch(String accountNumber, String ifsc) {
+    final cleaned = accountNumber.replaceAll(' ', '');
+    for (final bank in _banks) {
+      final existingAcc = (bank['accountNumber'] ?? bank['account_number'] ?? '').toString().replaceAll(' ', '');
+      if (existingAcc == cleaned) {
+        final existingIfsc = (bank['ifscCode'] ?? bank['ifsc_code'] ?? '').toString().toUpperCase();
+        if (existingIfsc != ifsc.toUpperCase()) {
+          return 'Account $cleaned is already registered with IFSC $existingIfsc. Please verify the IFSC code.';
+        }
+      }
+    }
+    return null;
   }
 
   void _openAddForm() {
@@ -169,6 +184,16 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
     final accountNumber = _accountNumberController.text.trim().replaceAll(' ', '');
     final ifsc = _ifscController.text.trim().toUpperCase();
 
+    if (_editingBank == null) {
+      final mismatch = _detectIfscMismatch(accountNumber, ifsc);
+      if (mismatch != null) {
+        setState(() {
+          _formMessage = mismatch;
+        });
+        return;
+      }
+    }
+
     setState(() {
       _submitting = true;
       _formMessage = null;
@@ -184,41 +209,24 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
 
     if (!mounted) return;
     if (validateResult['ok'] != true || validateResult['isValid'] == false) {
+      final msg = validateResult['message']?.toString() ?? 'Bank account validation failed. Please check your details.';
       setState(() {
         _submitting = false;
-        _formMessage = validateResult['message']?.toString() ?? 'Bank account validation failed. Please check your details.';
+        _formMessage = msg;
       });
       return;
     }
 
-    final augmont = AugmontApi(ref.read(dioAugmontProvider));
-    final createResult = await augmont.createAugmontUserBank(
-      uniqueId: uniqueId,
-      request: {
-        'accountName': accountName,
-        'accountNumber': accountNumber,
-        'ifscCode': ifsc,
-      },
-    );
-
+    await _loadBanks();
     if (!mounted) return;
-    if (createResult['ok'] == true) {
-      await _loadBanks();
-      setState(() {
-        _submitting = false;
-        _showForm = false;
-        _editingBank = null;
-        _accountNameController.clear();
-        _accountNumberController.clear();
-        _ifscController.clear();
-        _formMessage = 'Bank account validated successfully.';
-      });
-      return;
-    }
-
     setState(() {
       _submitting = false;
-      _formMessage = createResult['message']?.toString() ?? 'Failed to add bank account.';
+      _showForm = false;
+      _editingBank = null;
+      _accountNameController.clear();
+      _accountNumberController.clear();
+      _ifscController.clear();
+      _formMessage = 'Bank account validated successfully.';
     });
   }
 
@@ -236,6 +244,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
       setState(() {
         _deleteMessage = 'Bank account removed.';
       });
+      _autoDismissBanner('delete');
     } else {
       setState(() {
         _deleteMessage = result['message']?.toString() ?? 'Failed to delete bank account.';
@@ -265,6 +274,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
       setState(() {
         _primaryMessage = 'Primary bank account changed.';
       });
+      _autoDismissBanner('primary');
     } else {
       setState(() {
         _primaryMessage = result['message']?.toString() ?? 'Failed to set primary bank.';
@@ -274,6 +284,17 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
     if (mounted) {
       setState(() => _primaryUpdatingId = null);
     }
+  }
+
+  void _autoDismissBanner(String type) {
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          if (type == 'delete') _deleteMessage = null;
+          if (type == 'primary') _primaryMessage = null;
+        });
+      }
+    });
   }
 
   String _maskAccount(String account) {
@@ -295,12 +316,12 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
       child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 88),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildStatusBar(),
-              const SizedBox(height: 18),
-              _buildHeader(context, 'Add your bank'),
+          child: DefaultTextStyle(
+            style: const TextStyle(decoration: TextDecoration.none),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context, 'Add your bank'),
               const SizedBox(height: 24),
               _buildSectionHeading('SAVED BANK ACCOUNTS'),
               const SizedBox(height: 12),
@@ -335,26 +356,9 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
               _buildSecurityBadge(),
             ],
           ),
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildStatusBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: const [
-        Text('9:30', style: TextStyle(fontSize: 12, color: Colors.white, height: 1.5)),
-        Row(
-          children: [
-            _StatusGlyph(width: 18, child: _SignalBars()),
-            SizedBox(width: 6),
-            _StatusGlyph(width: 14, child: _WifiGlyph()),
-            SizedBox(width: 6),
-            _StatusGlyph(width: 25, child: _BatteryGlyph()),
-          ],
-        ),
-      ],
     );
   }
 
@@ -365,7 +369,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
         Row(
           children: [
             GestureDetector(
-              onTap: () => Navigator.maybePop(context),
+              onTap: () => context.go(AppRoutes.profile),
               child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
             ),
             const SizedBox(width: 8),
@@ -378,7 +382,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: const Color(0xFF1D170D),
-            border: Border.all(color: const Color(0xFFE8B438)),
+            border: Border.all(color: const Color(0xFF7388A5)),
           ),
           child: IconButton(
             padding: EdgeInsets.zero,
@@ -405,20 +409,27 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
   Widget _buildInfoBanner() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D2818),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF1B5E20)),
+        color: const Color(0xFF15EE01).withOpacity(0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF15EE01).withOpacity(0.25)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1415EE01),
+            blurRadius: 28,
+            offset: Offset(0, 10),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, color: Color(0xFF4CAF50), size: 16),
+          const Icon(Icons.info_outline, color: Color(0xFF15EE01), size: 16),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Tap on any bank below to set it as your primary account',
-              style: TextStyle(fontSize: 11, color: Colors.green[300]),
+              'Tap on any bank below to set it as your primary account.',
+              style: TextStyle(fontSize: 11, color: const Color(0xFF15EE01)),
             ),
           ),
         ],
@@ -431,18 +442,30 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: success ? const Color(0xFF4CD676).withOpacity(0.08) : const Color(0xFFEF5350).withOpacity(0.08),
+        color: success ? const Color(0xFF4CD676).withOpacity(0.05) : const Color(0xFFEF5350).withOpacity(0.05),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: success ? const Color(0xFF4CD676).withOpacity(0.2) : const Color(0xFFEF5350).withOpacity(0.2),
         ),
       ),
-      child: Text(
-        message,
-        style: TextStyle(
-          fontSize: 10,
-          color: success ? const Color(0xFF4CD676) : const Color(0xFFEF5350),
-        ),
+      child: Row(
+        children: [
+          Icon(
+            success ? Icons.check_circle_outline : Icons.warning_amber_outlined,
+            color: success ? const Color(0xFF4CD676) : const Color(0xFFEF5350),
+            size: 13,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 10,
+                color: success ? const Color(0xFF4CD676) : const Color(0xFFEF5350),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -514,7 +537,17 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
                     ),
                     if (isPrimary) ...[
                       const SizedBox(width: 6),
-                      const Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF263938),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Text(
+                          'Primary',
+                          style: TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Color(0xFF6DD6FF)),
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -531,25 +564,32 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               GestureDetector(
-                onTap: _primaryUpdatingId == bankId ? null : () => _setPrimary(bank),
+                onTap: isPrimary || _primaryUpdatingId == bankId ? null : () => _setPrimary(bank),
                 child: Container(
-                  width: 30,
-                  height: 30,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
-                    color: isPrimary ? const Color(0xFF0D3320) : const Color(0xFF1D170D),
-                    borderRadius: BorderRadius.circular(8),
-                    border: isPrimary ? Border.all(color: const Color(0xFF4CAF50)) : null,
+                    shape: BoxShape.circle,
+                    color: isPrimary ? const Color(0xFF1A301E) : const Color(0xFF111416),
+                    border: Border.all(
+                      color: isPrimary ? const Color(0xFF15EE01) : const Color(0xFF5E5E5E),
+                    ),
                   ),
                   child: _primaryUpdatingId == bankId
                       ? const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF4CAF50)),
+                          padding: EdgeInsets.all(7),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF15EE01)),
                         )
-                      : Icon(
-                          isPrimary ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                          color: isPrimary ? const Color(0xFF4CAF50) : const Color(0xFF7E7E7E),
-                          size: 14,
-                        ),
+                      : isPrimary
+                          ? const Icon(Icons.check_circle, color: Color(0xFF15EE01), size: 16)
+                          : Container(
+                              width: 12,
+                              height: 12,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(0xFF2A2923),
+                              ),
+                            ),
                 ),
               ),
               const SizedBox(width: 6),
@@ -641,6 +681,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
             label: 'Account Number',
             hint: 'Enter 9-18 digit account number',
             keyboardType: TextInputType.number,
+            maxLength: 18,
             errorKey: 'accountNumber',
             onChanged: (value) {
               _accountNumberController.text = value.replaceAll(RegExp(r'\D'), '');
@@ -653,6 +694,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
             controller: _ifscController,
             label: 'IFSC Code',
             hint: 'e.g. SBIN0001234',
+            maxLength: 11,
             errorKey: 'ifscCode',
             onChanged: (value) {
               _ifscController.text = value.toUpperCase();
@@ -681,13 +723,13 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(15),
                       border: Border.all(color: const Color(0xFF2E2E2E)),
                     ),
                     child: const Center(
                       child: Text(
                         'Cancel',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF7E7E7E)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
                       ),
                     ),
                   ),
@@ -700,7 +742,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(15),
                       gradient: _submitting
                           ? null
                           : const LinearGradient(colors: [Color(0xFFFED75D), Color(0xFFD48D00)]),
@@ -735,6 +777,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
     required String errorKey,
     required ValueChanged<String> onChanged,
     TextInputType? keyboardType,
+    int? maxLength,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -745,13 +788,15 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
           controller: controller,
           keyboardType: keyboardType,
           onChanged: onChanged,
-          style: const TextStyle(fontSize: 14, color: Colors.white),
+          maxLength: maxLength,
+          style: const TextStyle(fontSize: 12, color: Colors.white),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF4E4E4E)),
+            hintStyle: const TextStyle(fontSize: 11, color: Color(0xFF4E4E4E)),
             filled: true,
             fillColor: const Color(0xFF0F1416),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            counterText: '',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: _errors[errorKey] == null ? const Color(0xFF2E2E2E) : const Color(0xFFEF5350)),
@@ -800,93 +845,4 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
       ),
     );
   }
-}
-
-class _StatusGlyph extends StatelessWidget {
-  final double width;
-  final Widget child;
-
-  const _StatusGlyph({required this.width, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(width: width, height: 12, child: child);
-  }
-}
-
-class _SignalBars extends StatelessWidget {
-  const _SignalBars();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: const [
-        _Bar(height: 4),
-        SizedBox(width: 2),
-        _Bar(height: 7),
-        SizedBox(width: 2),
-        _Bar(height: 10),
-      ],
-    );
-  }
-}
-
-class _Bar extends StatelessWidget {
-  final double height;
-  const _Bar({required this.height});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(width: 3, height: height, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(1)));
-  }
-}
-
-class _WifiGlyph extends StatelessWidget {
-  const _WifiGlyph();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(painter: _WifiPainter());
-  }
-}
-
-class _WifiPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white..style = PaintingStyle.fill;
-    final path = Path()
-      ..moveTo(size.width / 2, 0)
-      ..quadraticBezierTo(0, size.height * 0.1, 0, size.height * 0.7)
-      ..lineTo(size.width, size.height * 0.7)
-      ..quadraticBezierTo(size.width, size.height * 0.1, size.width / 2, 0)
-      ..close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _BatteryGlyph extends StatelessWidget {
-  const _BatteryGlyph();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(painter: _BatteryPainter());
-  }
-}
-
-class _BatteryPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final stroke = Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1;
-    final fill = Paint()..color = Colors.white..style = PaintingStyle.fill;
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(1, 1, size.width - 4, size.height - 2), const Radius.circular(3)), stroke);
-    canvas.drawRect(Rect.fromLTWH(3, 3, size.width * 0.6, size.height - 6), fill);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(size.width - 2, 4, 2, size.height - 8), const Radius.circular(1)), fill);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

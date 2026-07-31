@@ -271,7 +271,7 @@ class _DiamondCardState extends State<DiamondCard> {
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (_, _, _) => _buildPlaceholder(),
+        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
       );
     }
     return _buildPlaceholder();

@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../app/router.dart';
 
 class HowItWorksScreen extends StatelessWidget {
   const HowItWorksScreen({super.key});
+
+  static const _steps = [
+    _StepData('01', Icons.person_add_outlined, 'Create an Account', 'Sign up and verify your identity in minutes with a simple KYC process.'),
+    _StepData('02', Icons.account_balance_wallet_outlined, 'Add Funds', 'Securely add money through UPI, bank transfer, or digital payment methods.'),
+    _StepData('03', Icons.monetization_on_outlined, 'Buy Digital Gold', 'Purchase gold instantly at live market prices \u2014 start from as low as \u20b910.'),
+    _StepData('04', Icons.download_outlined, 'Sell Anytime', 'Sell your gold anytime and receive instant payouts directly to your bank.'),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -22,42 +31,20 @@ class HowItWorksScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16),
-                _buildHeader(context, 'How It Works'),
-                const SizedBox(height: 32),
-                _buildTitleSection(),
+                const SizedBox(height: 12),
+                _buildHeader(context),
                 const SizedBox(height: 24),
-                _buildStepCard(
-                  number: '01',
-                  icon: Icons.person_add_outlined,
-                  title: 'Create Account',
-                  description:
-                      'Sign up with your phone number and complete a quick KYC verification. It takes less than 2 minutes to get started.',
+                _buildTitle(),
+                const SizedBox(height: 8),
+                const Text(
+                  'Start investing in digital gold in just four simple steps',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF9E9E9E)),
                 ),
-                const SizedBox(height: 16),
-                _buildStepCard(
-                  number: '02',
-                  icon: Icons.account_balance_wallet_outlined,
-                  title: 'Add Funds',
-                  description:
-                      'Add money to your Karatly wallet using UPI, net banking, or debit card. Start investing with as little as ₹10.',
-                ),
-                const SizedBox(height: 16),
-                _buildStepCard(
-                  number: '03',
-                  icon: Icons.auto_awesome,
-                  title: 'Buy Digital Gold',
-                  description:
-                      'Purchase 24-karat gold at live market prices. Your gold is instantly credited to your account and stored securely.',
-                ),
-                const SizedBox(height: 16),
-                _buildStepCard(
-                  number: '04',
-                  icon: Icons.trending_up,
-                  title: 'Sell Anytime',
-                  description:
-                      'Sell your gold at any time at the current market rate. Withdraw proceeds directly to your bank account.',
-                ),
+                const SizedBox(height: 24),
+                ..._steps.map((step) => Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: _buildStepCard(step),
+                )),
                 const SizedBox(height: 32),
               ],
             ),
@@ -67,134 +54,112 @@ class HowItWorksScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, String title) {
+  Widget _buildHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
             GestureDetector(
-              onTap: () => Navigator.pop(context),
+              onTap: () => context.go(AppRoutes.dashboard),
               child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
             ),
             const SizedBox(width: 8),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 14, color: Color(0xFFF7CD57)),
-            ),
+            const Text('How It Works', style: TextStyle(fontSize: 14, color: Color(0xFFF7CD57))),
           ],
         ),
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: const Color(0xFF1D170D),
-            border: Border.all(color: const Color(0xFFE8B438)),
+        GestureDetector(
+          onTap: () => context.go(AppRoutes.notifications),
+          child: Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF1D170D),
+              border: Border.all(color: const Color(0xFFE8B438)),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(Icons.notifications_outlined, color: Colors.grey[400], size: 14),
+                const Positioned(right: 4, top: 4, child: SizedBox(width: 5, height: 5, child: DecoratedBox(decoration: BoxDecoration(color: Color(0xFFEE0105), shape: BoxShape.circle)))),
+              ],
+            ),
           ),
-          child: Icon(Icons.notifications_outlined, color: Colors.grey[400], size: 16),
         ),
       ],
     );
   }
 
-  Widget _buildTitleSection() {
+  Widget _buildTitle() {
     return RichText(
       text: const TextSpan(
         children: [
-          TextSpan(
-            text: 'How Karatly ',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          TextSpan(
-            text: 'Works',
-            style: TextStyle(
-              color: Color(0xFFF7CD57),
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          TextSpan(text: 'How It ', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+          TextSpan(text: 'Works', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFF7CD57))),
         ],
       ),
     );
   }
 
-  Widget _buildStepCard({
-    required String number,
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1D170D), Color(0xFF0F1416)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7CD57).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFF7CD57).withOpacity(0.3)),
+  Widget _buildStepCard(_StepData step) {
+    return Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF141414), Color(0xFF0B0B0B)],
             ),
-            child: Center(
-              child: Text(
-                number,
-                style: const TextStyle(
-                  color: Color(0xFFF7CD57),
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFF2E2E2E)),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7CD57),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(step.icon, color: Colors.black, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(icon, color: const Color(0xFFF7CD57), size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text(step.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                    const SizedBox(height: 8),
+                    Text(step.description, style: const TextStyle(fontSize: 12, color: Color(0xFF9E9E9E), height: 1.5)),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    color: Color(0xFF7E7E7E),
-                    fontSize: 12,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Positioned(
+          right: 24,
+          top: 16,
+          child: Text(
+            step.number,
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF2E2E2E)),
+          ),
+        ),
+      ],
     );
   }
+}
+
+class _StepData {
+  final String number;
+  final IconData icon;
+  final String title;
+  final String description;
+  const _StepData(this.number, this.icon, this.title, this.description);
 }

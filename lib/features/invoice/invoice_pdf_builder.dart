@@ -70,6 +70,7 @@ const _cBluT = 0xFF143C8C;
 
 late pw.Font _regFont;
 late pw.Font _boldFont;
+pw.MemoryImage? _logoImage;
 
 pw.TextStyle _s(double size, {bool bold = false, int color = _cBlack, double? ls}) {
   return pw.TextStyle(
@@ -137,6 +138,9 @@ Future<Uint8List> generateInvoicePdf(InvoiceData data, String type) async {
   _regFont = pw.Font.ttf(reg);
   _boldFont = pw.Font.ttf(bld);
 
+  final logoBytes = await rootBundle.load('assets/images/KaratlyLOGO-removebg-preview.png');
+  _logoImage = pw.MemoryImage(logoBytes.buffer.asUint8List());
+
   final doc = pw.Document();
 
   if (type == 'buy') {
@@ -175,15 +179,25 @@ pw.Widget _goldBar() {
 
 pw.Widget _karatlyHeader() {
   return pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-    pw.Text(_karatlyName, style: _s(14, bold: true, color: _cGold)),
-    pw.SizedBox(height: 1),
-    pw.Text(_karatlyFullName, style: _s(7.5)),
-    pw.SizedBox(height: 1),
-    pw.Text(_karatlyAddress, style: _s(7.5)),
-    pw.SizedBox(height: 1),
-    pw.Text('GSTIN: $_karatlyGstin  |  PAN: $_karatlyPan', style: _s(7.5)),
-    pw.SizedBox(height: 1),
-    pw.Text('$_karatlyEmail  |  $_karatlyWeb', style: _s(7.5)),
+    pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+      pw.Expanded(child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+        pw.Text(_karatlyName, style: _s(14, bold: true, color: _cGold)),
+        pw.SizedBox(height: 1),
+        pw.Text(_karatlyFullName, style: _s(7.5)),
+        pw.SizedBox(height: 1),
+        pw.Text(_karatlyAddress, style: _s(7.5)),
+        pw.SizedBox(height: 1),
+        pw.Text('GSTIN: $_karatlyGstin  |  PAN: $_karatlyPan', style: _s(7.5)),
+        pw.SizedBox(height: 1),
+        pw.Text('$_karatlyEmail  |  $_karatlyWeb', style: _s(7.5)),
+      ])),
+      if (_logoImage != null)
+        pw.Container(
+          width: 70.9,
+          height: 70.9,
+          child: pw.Image(_logoImage!),
+        ),
+    ]),
     pw.SizedBox(height: 5),
     pw.Container(height: 0.7, color: PdfColor.fromInt(_cGold)),
     pw.SizedBox(height: 4),

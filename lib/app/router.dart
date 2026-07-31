@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/auth/lock_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/otp_screen.dart';
 import '../features/auth/signup_screen.dart';
@@ -38,6 +39,7 @@ import '../features/commerce/bank_verify_screen.dart';
 import '../features/commerce/bank_verify_loading_screen.dart';
 import '../features/notifications/notifications_screen.dart';
 import '../features/kyc/kyc_verification_screen.dart';
+import '../features/gift360/gift360_webview_screen.dart';
 import '../features/payment/payment_methods_screen.dart';
 import '../features/buy_flow/buy_selection_screen.dart';
 import '../features/sell_flow/sell_selection_screen.dart';
@@ -52,6 +54,7 @@ class AppRoutes {
   AppRoutes._();
 
   // Auth
+  static const lock = '/lock';
   static const splash = '/splash';
   static const login = '/login';
   static const otp = '/otp';
@@ -162,6 +165,7 @@ class AppRoutes {
   static const nearby = '/nearby';
   static const bankVerify = '/bank-verify';
   static const bankVerifyLoading = '/bank-verify-loading';
+  static const gift360 = '/gift360';
 }
 
 
@@ -174,7 +178,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 
   return GoRouter(
-    initialLocation: AppRoutes.splash,
+    initialLocation: AppRoutes.lock,
     debugLogDiagnostics: false,
     redirect: (context, state) {
       final isLoggedIn = authState.isAuthenticated;
@@ -185,7 +189,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         return location == AppRoutes.login ||
             location == AppRoutes.signup ||
             location == AppRoutes.otp ||
-            location == AppRoutes.splash;
+            location == AppRoutes.splash ||
+            location == AppRoutes.lock;
       }
 
       if (isLoading) return null;
@@ -201,6 +206,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      GoRoute(path: AppRoutes.lock, builder: (_, __) => const LockScreen()),
       GoRoute(path: AppRoutes.splash, builder: (_, __) => const SplashController()),
       GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginScreen()),
       GoRoute(path: AppRoutes.otp, builder: (_, state) {
@@ -292,19 +298,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Gold coin sell/redeem flow
       GoRoute(path: AppRoutes.sellGoldCoin1, builder: (_, state) {
         final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return GoldCoinScreen(step: 1, metalType: metalType);
+        final backRoute = state.uri.queryParameters['back'] ?? AppRoutes.market;
+        return GoldCoinScreen(step: 1, metalType: metalType, backRoute: backRoute);
       }),
       GoRoute(path: AppRoutes.sellGoldCoinReview, builder: (_, state) {
         final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return GoldCoinScreen(step: 2, metalType: metalType);
+        final backRoute = state.uri.queryParameters['back'] ?? AppRoutes.market;
+        return GoldCoinScreen(step: 2, metalType: metalType, backRoute: backRoute);
       }),
       GoRoute(path: AppRoutes.sellGoldCoin2, builder: (_, state) {
         final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return GoldCoinScreen(step: 3, metalType: metalType);
+        final backRoute = state.uri.queryParameters['back'] ?? AppRoutes.market;
+        return GoldCoinScreen(step: 3, metalType: metalType, backRoute: backRoute);
       }),
       GoRoute(path: AppRoutes.sellGoldCoin3, builder: (_, state) {
         final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return GoldCoinScreen(step: 4, metalType: metalType);
+        final backRoute = state.uri.queryParameters['back'] ?? AppRoutes.market;
+        return GoldCoinScreen(step: 4, metalType: metalType, backRoute: backRoute);
       }),
 
       GoRoute(path: AppRoutes.sip1, builder: (_, __) => const SipScreen(step: 1)),
@@ -318,6 +328,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         return PaymentGatewayScreen(
           paymentSessionId: extras['paymentSessionId'] as String? ?? '',
           orderId: extras['orderId'] as String? ?? '',
+          paymentAmount: (extras['amount'] as num?)?.toDouble() ?? 0,
+          paymentRequest: extras['paymentRequest'] as Map<String, dynamic>?,
         );
       }),
       GoRoute(path: AppRoutes.paymentReturn, builder: (_, state) {
@@ -357,6 +369,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.howItWorks, builder: (_, __) => const HowItWorksScreen()),
       GoRoute(path: AppRoutes.why, builder: (_, __) => const WhyKaratlyScreen()),
       GoRoute(path: AppRoutes.notifications, builder: (_, __) => const NotificationsScreen()),
+      GoRoute(path: AppRoutes.gift360, builder: (_, __) => const Gift360WebViewScreen()),
 
       GoRoute(path: '/', redirect: (_, __) => AppRoutes.splash),
     ],

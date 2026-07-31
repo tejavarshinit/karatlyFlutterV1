@@ -127,7 +127,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: () => context.pop(),
+                      onTap: () => Navigator.maybePop(context),
                       child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
                     ),
                     const SizedBox(width: 8),

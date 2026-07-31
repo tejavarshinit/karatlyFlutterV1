@@ -8,7 +8,9 @@ import '../../core/services/auth_provider.dart';
 import '../../core/services/home_provider.dart';
 import '../../core/services/rate_provider.dart';
 import '../../core/storage/local_storage.dart';
-import 'package:dio/dio.dart';
+import 'dart:io';
+import 'package:share_plus/share_plus.dart';
+import '../../features/certificate/download_helper.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -17,25 +19,40 @@ class ProfileScreen extends ConsumerStatefulWidget {
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
+class _AadhaarAddress {
+  final String addressId;
+  final String providerAddressId;
+  final String name;
+  final String addressLine;
+  const _AadhaarAddress({
+    required this.addressId,
+    required this.providerAddressId,
+    required this.name,
+    required this.addressLine,
+  });
+}
+
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _notificationsEnabled = true;
-  String? _aadhaarAddress;
+  _AadhaarAddress? _aadhaarAddress;
   double _goldGrams = 0;
   double _silverGrams = 0;
+  DateTime? _statementFromDate;
+  DateTime? _statementToDate;
+  String? _downloadingStatement;
+  String? _statementError;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(homeProvider.notifier).fetchInvestmentData();
-      _loadProfileData();
       _loadAadhaarAddressFromApi();
       _loadPassbookData();
     });
   }
 
   String _resolveUniqueId() {
-    final authState = ref.read(authProvider);
     final storedUniqueId = LocalStorageService.getUserUniqueId();
     if (storedUniqueId != null && storedUniqueId.isNotEmpty) return storedUniqueId;
     final profile = LocalStorageService.getUserProfile() ?? {};
@@ -60,18 +77,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     } catch (_) {}
   }
 
-  void _loadProfileData() {
-    final profile = LocalStorageService.getUserProfile();
-    final address = profile?['aadhaarAddress']?.toString().trim();
-    if (address != null && address.isNotEmpty) {
-      setState(() => _aadhaarAddress = address);
-    }
-  }
-
   Future<void> _loadAadhaarAddressFromApi() async {
     try {
-      final authState = ref.read(authProvider);
-      final uniqueId = authState.user?.augmontUniqueId ?? LocalStorageService.getUserUniqueId();
+      final uniqueId = ref.read(authProvider).user?.augmontUniqueId ?? LocalStorageService.getUserUniqueId();
       if (uniqueId == null || uniqueId.isEmpty) return;
       final api = AugmontApi(ref.read(augmontDioProvider));
       final response = await api.fetchAadhaarAddress(uniqueId: uniqueId);
@@ -80,12 +88,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         if (data != null) {
           final payload = data['payload'] as Map<String, dynamic>?;
           final result = payload?['result'] as Map<String, dynamic>?;
-          final addressData = result?['data'] as Map<String, dynamic>? ?? result;
+          final addressData = (result?['data'] as Map<String, dynamic>?) ??
+              result ??
+              payload ??
+              data;
+          final addressId = addressData?['addressId']?.toString() ?? '';
+          final providerAddressId = addressData?['providerAddressId']?.toString() ?? '';
           final name = addressData?['name']?.toString() ?? '';
           final addressLine = addressData?['addressLine']?.toString() ?? addressData?['address']?.toString() ?? '';
-          final fullAddress = [name, addressLine].where((s) => s.isNotEmpty).join('\n');
-          if (fullAddress.isNotEmpty && mounted) {
-            setState(() => _aadhaarAddress = fullAddress);
+          if (name.isNotEmpty && addressLine.isNotEmpty && mounted) {
+            setState(() => _aadhaarAddress = _AadhaarAddress(
+              addressId: addressId,
+              providerAddressId: providerAddressId,
+              name: name,
+              addressLine: addressLine,
+            ));
           }
         }
       }
@@ -105,7 +122,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final name = authState.fullName ?? authState.user?.name ?? 'User';
     final phone = authState.phoneNumber ?? '';
     final email = authState.email ?? '';
-    final profileStatus = _kycStatusLabel(authState.user?.kycStatus);
+    final isPanVerified = authState.user?.panVerified ?? false;
+    final profileStatus = isPanVerified ? 'Verified' : _kycStatusLabel(authState.user?.kycStatus);
 
     return Container(
       decoration: const BoxDecoration(
@@ -121,26 +139,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildStatusBar(),
-              const SizedBox(height: 18),
               _buildHeader(context, 'Profile'),
               const SizedBox(height: 22),
-              _buildAvatar(authState, name),
-              const SizedBox(height: 16),
-              _buildUserInfo(name: name, phone: phone, email: email),
+              Center(
+                child: Column(
+                  children: [
+                    _buildAvatar(authState, name),
+                    const SizedBox(height: 14),
+                    _buildUserInfo(name: name, email: email),
+                  ],
+                ),
+              ),
               const SizedBox(height: 24),
               _buildMetricsRow(
                 goldGrams: _goldGrams,
                 silverGrams: _silverGrams,
                 portfolioValue: portfolioValue,
               ),
-              const SizedBox(height: 22),
-              _buildBoostTierBanner(context),
-              if (_aadhaarAddress != null) ...[
-                const SizedBox(height: 22),
-                _buildDeliveryAddress(),
-              ],
-              const SizedBox(height: 22),
+              const SizedBox(height: 24),
+              _buildAadhaarSection(),
+              SizedBox(height: _aadhaarAddress != null ? 22 : 24),
               _buildSectionHeading('ACCOUNT'),
               const SizedBox(height: 12),
               _buildKycRow(context, authState, profileStatus),
@@ -149,6 +167,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 title: 'Add your bank',
                 onTap: () => context.go(AppRoutes.paymentMethods),
               ),
+              _buildLockedRewardsRow(),
+              _buildTransactionStatement(),
               const SizedBox(height: 20),
               _buildSectionHeading('PREFERENCES'),
               const SizedBox(height: 12),
@@ -185,52 +205,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildStatusBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(
-          '9:30',
-          style: TextStyle(fontSize: 12, color: Colors.white, height: 1.5),
-        ),
-        Row(
-          children: [
-            _statusIcon(width: 18, height: 12, child: const _SignalBars()),
-            const SizedBox(width: 6),
-            _statusIcon(width: 14, height: 12, child: const _WifiGlyph()),
-            const SizedBox(width: 6),
-            _statusIcon(width: 25, height: 12, child: const _BatteryGlyph()),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _statusIcon({
-    required double width,
-    required double height,
-    required Widget child,
-  }) {
-    return SizedBox(
-      width: width,
-      height: height,
-      child: child,
-    );
-  }
-
   Widget _buildHeader(BuildContext context, String title) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.maybePop(context),
-              child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
-            ),
-            const SizedBox(width: 8),
-            Text(title, style: const TextStyle(fontSize: 14, color: Color(0xFFF7CD57))),
-          ],
+        GestureDetector(
+          onTap: () => context.go(AppRoutes.home),
+          child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
+        ),
+        Image.asset(
+          'assets/images/KaratlyLOGO-removebg-preview.png',
+          width: 32,
+          height: 32,
+          fit: BoxFit.contain,
         ),
         Container(
           width: 32,
@@ -309,7 +296,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildUserInfo({
     required String name,
-    required String phone,
     required String email,
   }) {
     return Column(
@@ -319,8 +305,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
         ),
         const SizedBox(height: 4),
-        Text(phone, style: const TextStyle(fontSize: 12, color: Color(0xFF7E7E7E))),
-        const SizedBox(height: 2),
         Text(email, style: const TextStyle(fontSize: 12, color: Color(0xFF7E7E7E))),
       ],
     );
@@ -338,7 +322,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             icon: Icons.circle,
             iconColor: const Color(0xFFF7CD57),
             label: 'Gold',
-            value: '${goldGrams.toStringAsFixed(2)} g',
+            value: '${goldGrams.toStringAsFixed(4)} g',
             accentColor: const Color(0xFFF7CD57),
           ),
         ),
@@ -348,7 +332,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             icon: Icons.circle,
             iconColor: const Color(0xFF90CAF9),
             label: 'Silver',
-            value: '${silverGrams.toStringAsFixed(2)} g',
+            value: '${silverGrams.toStringAsFixed(4)} g',
             accentColor: const Color(0xFF90CAF9),
           ),
         ),
@@ -396,88 +380,66 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildBoostTierBanner(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1D170D), Color(0xFF0F1416)],
-        ),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.rocket_launch, color: Color(0xFFF7CD57), size: 28),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Boost Your Tier',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Invest more to unlock exclusive benefits',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF7E7E7E)),
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () => context.go('/buy/buy/1?metal=gold'),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                gradient: const LinearGradient(colors: [Color(0xFFFED75D), Color(0xFFD48D00)]),
-              ),
-              child: const Text(
-                'Invest Now',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildAadhaarSection() {
+    final addr = _aadhaarAddress;
+    if (addr == null) return const SizedBox.shrink();
 
-  Widget _buildDeliveryAddress() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F1416),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
-      ),
-      child: Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.location_on_outlined, color: Color(0xFFF7CD57), size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Delivery Address',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFBFBFBF)),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _aadhaarAddress ?? '',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF7E7E7E)),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+          const Text(
+            'AADHAAR',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              height: 17 / 14,
+              color: Color(0xFF9E9E9E),
+            ),
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F1416),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF2E2E2E)),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF202326),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFFE8B438)),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          addr.name.isNotEmpty ? addr.name : 'Aadhaar Address',
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          addr.addressLine,
+                          style: const TextStyle(fontSize: 11, height: 16 / 11, color: Color(0xFF7E7E7E)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -501,9 +463,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildKycRow(BuildContext context, AuthState authState, String profileStatus) {
-    final isVerified = authState.user?.kycApproved ?? false;
-    final badgeBg = isVerified ? const Color(0xFF0D3320) : const Color(0xFF3D2E00);
-    final badgeColor = isVerified ? const Color(0xFF4CAF50) : const Color(0xFFF7CD57);
+    final isVerified = profileStatus == 'Verified';
+    final badgeBg = isVerified ? const Color(0xFF1A301E) : const Color(0xFF2D2513);
+    final badgeColor = isVerified ? const Color(0xFF15EE01) : const Color(0xFFF7CD57);
 
     return _buildMenuRow(
       icon: Icons.verified_user_outlined,
@@ -518,6 +480,305 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       onTap: () => context.go(AppRoutes.kycVerification),
     );
+  }
+
+  Widget _buildLockedRewardsRow() {
+    return Opacity(
+      opacity: 0.6,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F1416),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF2E2E2E)),
+        ),
+        child: Stack(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFF2D2513),
+                  ),
+                  child: const Icon(Icons.card_giftcard, color: Color(0xFFF7CD57), size: 18),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Rewards & Referrals',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      SizedBox(height: 3),
+                      Text(
+                        "You've earned Rs.420",
+                        style: TextStyle(fontSize: 10, color: Color(0xFF7E7E7E)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 70),
+              ],
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFFE8B438).withOpacity(0.2)),
+                    borderRadius: BorderRadius.circular(12),
+                    color: const Color(0xFF2A2010),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.lock_outline, size: 10, color: Color(0xFFF7CD57)),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Locked',
+                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Color(0xFFF7CD57)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTransactionStatement() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F1416),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF2E2E2E)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.description_outlined, color: Color(0xFFF7CD57), size: 16),
+              const SizedBox(width: 8),
+              const Text(
+                'Transaction Statement',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Download your buy, sell, or redeem transaction statements as PDF.',
+            style: TextStyle(fontSize: 10, color: Color(0xFF7E7E7E)),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildDateField(
+                  label: 'From Date',
+                  value: _statementFromDate,
+                  onTap: () => _pickDate(true),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildDateField(
+                  label: 'To Date',
+                  value: _statementToDate,
+                  onTap: () => _pickDate(false),
+                ),
+              ),
+            ],
+          ),
+          if (_statementError != null) ...[
+            const SizedBox(height: 8),
+            Text(_statementError!, style: const TextStyle(fontSize: 10, color: Color(0xFFFF4D4D))),
+          ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _buildStatementButton('buy', 'BUY'),
+              const SizedBox(width: 6),
+              _buildStatementButton('sell', 'SELL'),
+              const SizedBox(width: 6),
+              _buildStatementButton('redeem', 'REDEEM'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateField({required String label, required DateTime? value, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 9, color: Color(0xFF7E7E7E))),
+          const SizedBox(height: 4),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF16181A),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF2E2E2E)),
+            ),
+            child: Text(
+              value != null
+                  ? '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}'
+                  : 'Select',
+              style: TextStyle(
+                fontSize: 11,
+                color: value != null ? Colors.white : const Color(0xFF7E7E7E),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickDate(bool isFrom) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: isFrom ? (_statementFromDate ?? now.subtract(const Duration(days: 30))) : (_statementToDate ?? now),
+      firstDate: DateTime(2020),
+      lastDate: now,
+    );
+    if (picked != null) {
+      setState(() {
+        if (isFrom) {
+          _statementFromDate = picked;
+        } else {
+          _statementToDate = picked;
+        }
+        _statementError = null;
+      });
+    }
+  }
+
+  Widget _buildStatementButton(String type, String label) {
+    final isDownloading = _downloadingStatement == type;
+    final hasDates = _statementFromDate != null && _statementToDate != null;
+    return Expanded(
+      child: GestureDetector(
+        onTap: hasDates && !isDownloading ? () => _downloadStatement(type) : null,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            gradient: isDownloading
+                ? null
+                : const LinearGradient(colors: [Color(0xFFF7CD57), Color(0xFFE5AF35)]),
+            color: isDownloading ? const Color(0xFF2A2010) : null,
+          ),
+          child: Center(
+            child: Text(
+              isDownloading ? '...' : label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isDownloading ? const Color(0xFFF7CD57) : const Color(0xFF1A1710),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _downloadStatement(String type) async {
+    if (_statementFromDate == null || _statementToDate == null) return;
+    setState(() {
+      _downloadingStatement = type;
+      _statementError = null;
+    });
+    try {
+      final uniqueId = _resolveUniqueId();
+      if (uniqueId.isEmpty) {
+        setState(() { _statementError = 'User not found.'; _downloadingStatement = null; });
+        return;
+      }
+      final api = AugmontApi(ref.read(dioAugmontProvider));
+      final result = await api.downloadTransactionPdf(
+        type: type,
+        uniqueId: uniqueId,
+        fromDate: '${_statementFromDate!.year}-${_statementFromDate!.month.toString().padLeft(2, '0')}-${_statementFromDate!.day.toString().padLeft(2, '0')}',
+        toDate: '${_statementToDate!.year}-${_statementToDate!.month.toString().padLeft(2, '0')}-${_statementToDate!.day.toString().padLeft(2, '0')}',
+      );
+      if (!mounted) return;
+      if (result['ok'] == true && result['bytes'] != null) {
+        final bytes = result['bytes'] as List<int>;
+        final fileName = result['fileName'] as String;
+        await _savePdf(bytes, fileName);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white, size: 18),
+                  SizedBox(width: 8),
+                  Text('Transaction Statement has Downloaded', style: TextStyle(fontSize: 13)),
+                ],
+              ),
+              backgroundColor: const Color(0xFF1B5E20),
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } else {
+        setState(() { _statementError = result['message']?.toString() ?? 'Failed to download.'; });
+      }
+    } catch (e) {
+      if (mounted) setState(() { _statementError = 'Failed to download $type statement.'; });
+    }
+    if (mounted) setState(() => _downloadingStatement = null);
+  }
+
+  Future<void> _savePdf(List<int> bytes, String fileName) async {
+    try {
+      await downloadPdf(bytes, fileName);
+    } catch (_) {
+      // Fallback
+      try {
+        final tempDir = await _getTempDir();
+        final file = File('${tempDir.path}/$fileName');
+        await file.writeAsBytes(bytes);
+        await Share.shareXFiles([XFile(file.path)], subject: fileName);
+      } catch (e) {
+        if (mounted) setState(() { _statementError = 'Failed to save PDF.'; });
+      }
+    }
+  }
+
+  Future<Directory> _getTempDir() async {
+    try {
+      return Directory.systemTemp;
+    } catch (_) {
+      return Directory('/tmp');
+    }
   }
 
   Widget _buildNotificationToggle() {
@@ -641,94 +902,4 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
     return '₹${amount.toStringAsFixed(2)}';
   }
-}
-
-class _SignalBars extends StatelessWidget {
-  const _SignalBars();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: const [
-        _Bar(height: 4),
-        SizedBox(width: 2),
-        _Bar(height: 7),
-        SizedBox(width: 2),
-        _Bar(height: 10),
-      ],
-    );
-  }
-}
-
-class _Bar extends StatelessWidget {
-  final double height;
-
-  const _Bar({required this.height});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(width: 3, height: height, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(1)));
-  }
-}
-
-class _WifiGlyph extends StatelessWidget {
-  const _WifiGlyph();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _WifiPainter(),
-    );
-  }
-}
-
-class _WifiPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    final path = Path()
-      ..moveTo(size.width / 2, 0)
-      ..quadraticBezierTo(0, size.height * 0.15, 0, size.height * 0.7)
-      ..lineTo(size.width, size.height * 0.7)
-      ..quadraticBezierTo(size.width, size.height * 0.15, size.width / 2, 0)
-      ..close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _BatteryGlyph extends StatelessWidget {
-  const _BatteryGlyph();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _BatteryPainter(),
-    );
-  }
-}
-
-class _BatteryPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final stroke = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    final fill = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    final body = RRect.fromRectAndRadius(Rect.fromLTWH(1, 1, size.width - 4, size.height - 2), const Radius.circular(3));
-    canvas.drawRRect(body, stroke);
-    canvas.drawRect(Rect.fromLTWH(3, 3, size.width * 0.6, size.height - 6), fill);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(size.width - 2, 4, 2, size.height - 8), const Radius.circular(1)), fill);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

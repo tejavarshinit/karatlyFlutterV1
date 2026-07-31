@@ -6,6 +6,7 @@ import '../../core/api/gold_user_registration_api.dart';
 import '../../core/services/auth_provider.dart';
 import '../../core/storage/local_storage.dart';
 import 'package:dio/dio.dart';
+import 'widgets/animated_ring_logo.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -219,24 +220,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 ),
                 const SizedBox(height: 20),
                 // Logo
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: SweepGradient(colors: [Color(0xFF3D2600), Color(0xFFB17B21), Color(0xFF3D2600)]),
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 72,
-                      height: 72,
-                      decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black),
-                      child: const Center(
-                        child: Text('K', style: TextStyle(fontFamily: 'Georgia', fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFF7CD57))),
-                      ),
-                    ),
-                  ),
-                ),
+                const AnimatedRingLogo(),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:share_plus/share_plus.dart';
+import '../../app/router.dart';
 import '../certificate/audit_certificate_pdf.dart';
+import '../certificate/download_helper.dart';
 
 class AuditCertificateScreen extends StatefulWidget {
   const AuditCertificateScreen({super.key});
@@ -34,10 +34,7 @@ class _AuditCertificateScreenState extends State<AuditCertificateScreen> {
     setState(() => _downloading = true);
     try {
       final pdfBytes = await generateAuditCertificatePdf();
-      final dir = Directory.systemTemp;
-      final file = File('${dir.path}/Audit-Certificate.pdf');
-      await file.writeAsBytes(pdfBytes);
-      await Share.shareXFiles([XFile(file.path)], text: 'Audit Certificate');
+      await downloadPdf(pdfBytes, 'Audit-Certificate.pdf');
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to download certificate')));
@@ -66,7 +63,7 @@ class _AuditCertificateScreenState extends State<AuditCertificateScreen> {
                 child: Row(
                   children: [
                     GestureDetector(
-                      onTap: () => context.pop(),
+                      onTap: () => context.go(AppRoutes.home),
                       child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 24),
                     ),
                     const SizedBox(width: 12),

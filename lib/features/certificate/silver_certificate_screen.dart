@@ -89,14 +89,16 @@ class _SilverCertificateScreenState extends State<SilverCertificateScreen> {
         const SizedBox(height: 12),
         _infoRow(d),
         const SizedBox(height: 12),
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(child: _customerInfo(d)), const SizedBox(width: 8),
-          Expanded(child: _portfolioBadges(d)),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _customerInfo(d),
+          const SizedBox(height: 8),
+          _portfolioBadges(d),
         ]),
         const SizedBox(height: 12),
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(child: _latestPurchaseCard(d)), const SizedBox(width: 8),
-          Expanded(child: _holdingSummaryCard(d)),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _latestPurchaseCard(d),
+          const SizedBox(height: 8),
+          _holdingSummaryCard(d),
         ]),
         const SizedBox(height: 12), _historyTable(d), const SizedBox(height: 12),
         Row(children: [
@@ -107,11 +109,12 @@ class _SilverCertificateScreenState extends State<SilverCertificateScreen> {
           Expanded(child: _hlCard('Fully Insured', 'Your holdings are fully insured at every stage')),
         ]),
         const SizedBox(height: 12),
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(flex: 3, child: _noteCard(d.certificateNote)), const SizedBox(width: 8),
-          Expanded(flex: 2, child: Column(children: [
-            _verificationCard(d), const SizedBox(height: 8), _authorizedCard(),
-          ])),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _noteCard(d.certificateNote),
+          const SizedBox(height: 8),
+          _verificationCard(d),
+          const SizedBox(height: 8),
+          _authorizedCard(),
         ]),
         const SizedBox(height: 16), _signatureStamp(), const SizedBox(height: 8), _footerLine(),
       ]),

@@ -10,6 +10,7 @@ import '../../core/models/payment_model.dart';
 import '../../core/services/auth_provider.dart';
 import '../../core/services/rate_provider.dart';
 import '../../core/storage/local_storage.dart';
+import '../../core/utils/money.dart';
 
 class EmbeddedPaymentGateway extends ConsumerStatefulWidget {
   final double amount;
@@ -52,12 +53,29 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
   String get _accent => _isSilver ? '#FFFFFF' : (_isDiamond ? '#0084FF' : '#F7CD57');
   String get _accentDark => _isSilver ? '#9EA7B3' : (_isDiamond ? '#004D96' : '#C49012');
   String get _buttonText => _isSilver ? '#111111' : (_isDiamond ? '#FFFFFF' : '#1A1710');
+  double get _paymentAmount => MoneyHelper.truncateMoney(widget.amount);
+
+  String _sanitizeMobile(String mobile) {
+    return mobile.replaceAll(RegExp(r'\D'), '').length >= 10
+        ? mobile.replaceAll(RegExp(r'\D'), '').substring(mobile.replaceAll(RegExp(r'\D'), '').length - 10)
+        : mobile.replaceAll(RegExp(r'\D'), '');
+  }
 
   String _resolveUniqueId() {
     final stored = LocalStorageService.getUserUniqueId();
     if (stored != null && stored.isNotEmpty) return stored;
+    final augmontUserRaw = LocalStorageService.getAugmontUser();
+    if (augmontUserRaw != null && augmontUserRaw.isNotEmpty) {
+      try {
+        final augmontUser = jsonDecode(augmontUserRaw) as Map<String, dynamic>;
+        final uniqueId = augmontUser['uniqueId']?.toString();
+        if (uniqueId != null && uniqueId.isNotEmpty) return uniqueId;
+      } catch (_) {}
+    }
     final profile = LocalStorageService.getUserProfile() ?? {};
-    return profile['uniqueId']?.toString() ?? '';
+    final uniqueId = profile['uniqueId']?.toString() ?? profile['augmontUniqueId']?.toString() ?? '';
+    if (uniqueId.isNotEmpty) return uniqueId;
+    return '';
   }
 
   final double _nonKycFyLimit = 1000;
@@ -77,8 +95,8 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
         api.fetchInvestmentSummary(uniqueId: uniqueId, metalType: 'gold'),
         api.fetchInvestmentSummary(uniqueId: uniqueId, metalType: 'silver'),
       ]);
-      final goldUsed = (results[0]['totalBuyPreTaxAmount'] as num?)?.toDouble() ?? 0;
-      final silverUsed = (results[1]['totalBuyPreTaxAmount'] as num?)?.toDouble() ?? 0;
+      final goldUsed = (results[0]['totalBuyPostTaxAmount'] as num?)?.toDouble() ?? 0;
+      final silverUsed = (results[1]['totalBuyPostTaxAmount'] as num?)?.toDouble() ?? 0;
       final fyTotal = goldUsed + silverUsed;
       final fyLimit = _nonKycFyLimit;
       final remaining = (fyLimit - fyTotal).clamp(0, fyLimit);
@@ -92,11 +110,12 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
   }
 
   Future<void> _startPayment() async {
+    debugPrint('[FLOW] EmbeddedPaymentGateway._startPayment | flow=${widget.flowType} amount=${_paymentAmount} metal=${widget.metalType}');
     setState(() { _loading = true; _error = ''; _isKycError = false; });
 
     // Check KYC purchase limit for digital buys
     if (widget.flowType == 'DIGITAL_BUY') {
-      final limitMsg = await _checkPurchaseLimit(widget.amount);
+      final limitMsg = await _checkPurchaseLimit(_paymentAmount);
       if (limitMsg != null && mounted) {
         setState(() {
           _loading = false;
@@ -116,13 +135,13 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
 
       final cashfreeApi = CashfreeApi(ref.read(augmontDioProvider));
       final request = PaymentRequest(
-        amount: widget.amount,
+        amount: _paymentAmount,
         currency: 'INR',
         customer: PaymentCustomer(
           customerId: uniqueId,
           name: profile['fullName']?.toString() ?? '',
           email: profile['email']?.toString() ?? '',
-          mobile: profile['mobileNumber']?.toString() ?? '',
+          mobile: _sanitizeMobile(profile['mobileNumber']?.toString() ?? ''),
         ),
         business: PaymentBusiness(
           flowType: widget.flowType,
@@ -137,6 +156,7 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
       );
 
       final response = await cashfreeApi.createCashfreePayment(request);
+      debugPrint('[FLOW] createCashfreePayment response | sabbpeOrderId=${response.sabbpeOrderId} merchantOrderId=${response.merchantOrderId} session=${response.paymentSessionId} status=${response.paymentStatus}');
 
       if (response.paymentSessionId.isEmpty) {
         throw Exception(response.message.isNotEmpty ? response.message : 'Payment session ID is missing');
@@ -149,9 +169,8 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
       }
       merged.addAll({
         'metalType': widget.metalType,
-        'amount': widget.amount,
+        'amount': _paymentAmount,
         'sabbpeOrderId': response.sabbpeOrderId,
-        'merchantOrderId': response.merchantOrderId,
         if (widget.sku != null) 'sku': widget.sku,
         if (widget.addressId != null) 'addressId': widget.addressId,
         'flowType': widget.flowType,
@@ -161,7 +180,9 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
       if (!mounted) return;
       context.go(AppRoutes.paymentGateway, extra: {
         'paymentSessionId': response.paymentSessionId,
-        'orderId': response.merchantOrderId.isNotEmpty ? response.merchantOrderId : response.sabbpeOrderId,
+        'orderId': response.sabbpeOrderId,
+        'amount': _paymentAmount,
+        'paymentRequest': request.toJson(),
       });
     } catch (e) {
       final msg = e.toString().replaceAll('Exception: ', '');
@@ -172,14 +193,16 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFF2E2E2E)),
-            color: const Color(0xFF1A2332),
+        Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFF2E2E2E)),
+                color: const Color(0xFF1A2332),
           ),
           child: Column(
             children: [
@@ -213,7 +236,7 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
                   children: [
                     const Text('Amount payable', style: TextStyle(fontSize: 11, color: Color(0xFF7E7E7E))),
                     Text(
-                      '₹${widget.amount.toStringAsFixed(2)}',
+                      '₹${_paymentAmount.toStringAsFixed(2)}',
                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ],
@@ -309,9 +332,11 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
             ],
           ),
         ),
+        ], // end Column children
+        ), // end Column
         // KYC limit modal
         if (_showKycLimitModal) _buildKycLimitModal(),
-      ],
+      ], // end Stack
     );
   }
 
@@ -325,56 +350,69 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(26),
               border: Border.all(color: const Color(0x4DF7CD57)),
-              gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+              gradient: const LinearGradient(begin: Alignment(0.145, -0.3939), end: Alignment.bottomRight,
                 colors: [Color(0xFF503B15), Color(0xFF1C1408), Color(0xFF080603)]),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.65), blurRadius: 80, offset: const Offset(0, 28))],
             ),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Align(alignment: Alignment.topRight, child: GestureDetector(
-                onTap: () => setState(() => _showKycLimitModal = false),
-                child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), shape: BoxShape.circle),
-                  child: const Icon(Icons.close, size: 16, color: Colors.white70)),
-              )),
-              Container(width: 56, height: 56,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(17),
-                  gradient: const LinearGradient(colors: [Color(0xFFFFE784), Color(0xFFC88912)])),
-                child: Icon(_kycLimitNeedsKyc ? Icons.lock : Icons.verified_user, color: const Color(0xFF11130F), size: 23)),
-              const SizedBox(height: 16),
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                Container(width: 6, height: 6, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFF7CD57))),
-                const SizedBox(width: 6),
-                Text(_kycLimitNeedsKyc ? 'KYC APPROVAL REQUIRED' : 'PURCHASE LIMIT REACHED',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1.4, color: Color(0xFFF7CD57))),
-              ]),
-              const SizedBox(height: 8),
-              Text(_kycLimitTitle, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Colors.white)),
-              const SizedBox(height: 8),
-              Text(_kycLimitMessage, style: const TextStyle(fontSize: 12, color: Color(0xFFB8B4AD)), textAlign: TextAlign.center),
-              const SizedBox(height: 20),
-              GestureDetector(
-                onTap: () {
-                  setState(() => _showKycLimitModal = false);
-                  if (_kycLimitNeedsKyc) {
-                    context.go('/kyc-verification');
-                  } else {
-                    Navigator.pop(context);
-                  }
-                },
-                child: Container(width: double.infinity, height: 48,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(15),
-                    gradient: const LinearGradient(colors: [Color(0xFFFED75D), Color(0xFFECB000), Color(0xFFD48D00)])),
-                  child: Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Text(_kycLimitNeedsKyc ? 'Complete KYC' : 'Go Back',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-                    Icon(_kycLimitNeedsKyc ? Icons.arrow_forward : Icons.arrow_back, size: 16, color: Colors.black),
-                  ])),
+            child: Stack(
+              children: [
+                Positioned(right: -48, top: -64,
+                  child: Container(width: 144, height: 144,
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFF7CD57).withValues(alpha: 0.15), boxShadow: [BoxShadow(color: const Color(0xFFF7CD57).withValues(alpha: 0.15), blurRadius: 60)])),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () { setState(() => _showKycLimitModal = false); context.go('/home'); },
-                child: const Text('I will do it later', style: TextStyle(fontSize: 11, color: Colors.white54)),
-              ),
-            ]),
+                Column(mainAxisSize: MainAxisSize.min, children: [
+                  Align(alignment: Alignment.topRight, child: GestureDetector(
+                    onTap: () => setState(() => _showKycLimitModal = false),
+                    child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), shape: BoxShape.circle),
+                      child: const Icon(Icons.close, size: 16, color: Colors.white70)),
+                  )),
+                  Align(alignment: Alignment.centerLeft, child: Container(width: 56, height: 56,
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(17),
+                      gradient: const LinearGradient(colors: [Color(0xFFFFE784), Color(0xFFC88912)])),
+                    child: Icon(_kycLimitNeedsKyc ? Icons.lock : Icons.verified_user, color: const Color(0xFF11130F), size: 23))),
+                  const SizedBox(height: 16),
+                  Align(alignment: Alignment.centerLeft, child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(_kycLimitNeedsKyc ? Icons.shield : Icons.verified_user, size: 14, color: const Color(0xFFF7CD57)),
+                    const SizedBox(width: 6),
+                    Text(_kycLimitNeedsKyc ? 'KYC APPROVAL REQUIRED' : 'PURCHASE LIMIT REACHED',
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1.4, color: Color(0xFFF7CD57))),
+                  ])),
+                  const SizedBox(height: 8),
+                  Align(alignment: Alignment.centerLeft, child: Text(_kycLimitTitle, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Colors.white))),
+                  const SizedBox(height: 8),
+                  Text(_kycLimitMessage, style: const TextStyle(fontSize: 12, color: Color(0xFFB8B4AD)), textAlign: TextAlign.center),
+                  const SizedBox(height: 20),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() => _showKycLimitModal = false);
+                      if (_kycLimitNeedsKyc) {
+                        context.go('/kyc-verification');
+                      } else {
+                        if (context.mounted) Navigator.maybePop(context);
+                      }
+                    },
+                    child: Container(width: double.infinity, height: 48,
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(15),
+                        gradient: const LinearGradient(colors: [Color(0xFFFED75D), Color(0xFFECB000), Color(0xFFD48D00)])),
+                      child: Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Text(_kycLimitNeedsKyc ? 'Complete KYC' : 'Go Back',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward, size: 16, color: Colors.black),
+                      ])),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () { setState(() => _showKycLimitModal = false); context.go('/home'); },
+                    child: Container(width: double.infinity, height: 40,
+                      alignment: Alignment.center,
+                      child: const Text('I will do it later', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0x8CFFFFFF))),
+                    ),
+                  ),
+                ]),
+              ],
+            ),
           ),
         ),
       ],

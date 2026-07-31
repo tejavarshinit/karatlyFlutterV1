@@ -56,6 +56,7 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
   bool _showCaratError = false;
   Timer? _caratErrorDebounce;
   Timer? _caratErrorClear;
+  Timer? _bannerTimer;
 
   bool get _isCaratValid {
     final min = double.tryParse(_minCaratCtrl.text);
@@ -148,11 +149,20 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat();
+    _startBannerTimer();
     _fetchCart();
+  }
+
+  void _startBannerTimer() {
+    _bannerTimer?.cancel();
+    _bannerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted && _step == 'cart') setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _bannerTimer?.cancel();
     _processingAnimController.dispose();
     _caratErrorDebounce?.cancel();
     _caratErrorClear?.cancel();
@@ -594,7 +604,7 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
   // ─── Header ───────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
-    final showBack = _step != 'filters' && _step != 'processing' && _step != 'success';
+    final showBack = _step != 'processing' && _step != 'success';
     final showCart = _step == 'filters' || _step == 'products';
 
     String title;
@@ -685,7 +695,7 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
       case 'payment':
         setState(() => _step = 'cart');
       default:
-        Navigator.of(context).pop();
+        context.go(AppRoutes.home);
     }
   }
 
@@ -2220,6 +2230,7 @@ class _DiamondPayNowCardState extends ConsumerState<_DiamondPayNowCard> {
       context.go(AppRoutes.paymentGateway, extra: {
         'paymentSessionId': response.paymentSessionId,
         'orderId': response.merchantOrderId.isNotEmpty ? response.merchantOrderId : response.sabbpeOrderId,
+        'amount': widget.amount,
       });
     } catch (e) {
       final msg = e.toString().replaceAll('Exception: ', '');

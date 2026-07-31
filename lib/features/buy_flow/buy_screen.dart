@@ -1,10 +1,15 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/router.dart';
 import '../../app/theme.dart';
+import '../../core/api/augmont_api.dart';
+import '../../core/services/auth_provider.dart';
+import '../../core/services/kyc_limit_provider.dart';
 import '../../core/services/rate_provider.dart';
 import '../../core/services/gold_flow_provider.dart';
+import '../../core/utils/money.dart';
 import '../../core/storage/local_storage.dart';
 import '../../core/utils/unique_id.dart';
 import '../shared/step_rail.dart';
@@ -12,6 +17,7 @@ import '../shared/rate_card.dart';
 import '../shared/karatly_circle.dart';
 import '../shared/feature_chip.dart';
 import '../shared/embedded_payment_gateway.dart';
+import '../shared/kyc_limit_modal.dart';
 
 /// Buy flow screen with 5 steps matching reference BuyFlow.tsx
 class BuyScreen extends ConsumerStatefulWidget {
@@ -24,7 +30,7 @@ class BuyScreen extends ConsumerStatefulWidget {
   ConsumerState<BuyScreen> createState() => _BuyScreenState();
 }
 
-class _BuyScreenState extends ConsumerState<BuyScreen> {
+class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateMixin {
   // Flow state
   String _mode = 'amount';
   final TextEditingController _amountController = TextEditingController(text: '');
@@ -39,9 +45,29 @@ class _BuyScreenState extends ConsumerState<BuyScreen> {
   double _storedRate = 0;
   bool _hasStoredValues = false;
 
+  // KYC limit state
+  bool _kycLimitExceeded = false;
+  late AnimationController _shakeController;
+  late AnimationController _wiggleController;
+  late Animation<double> _shakeAnimation;
+
   @override
   void initState() {
     super.initState();
+    _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 350));
+    _shakeAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: -4), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -4, end: 4), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 4, end: -4), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -4, end: 4), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 4, end: 0), weight: 1),
+    ]).animate(_shakeController);
+    _wiggleController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    if (widget.step == 1) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.read(kycLimitProvider.notifier).fetchKycLimit();
+      });
+    }
     if (widget.step > 1) {
       final buyState = ref.read(goldFlowProvider).buyState;
       if (buyState.amount > 0) {
@@ -75,14 +101,14 @@ class _BuyScreenState extends ConsumerState<BuyScreen> {
     final liveRate = _getLiveRate();
     if (_mode == 'weight') {
       final weight = double.tryParse(_weightController.text) ?? 0;
-      return weight * liveRate;
+      return MoneyHelper.truncateMoney(weight * liveRate);
     }
-    return double.tryParse(_amountController.text) ?? 0;
+    return MoneyHelper.truncateMoney(double.tryParse(_amountController.text) ?? 0);
   }
 
-  double get _amount => _hasStoredValues ? _storedPreTaxAmount : _baseAmount * _itemCount;
-  double get _gst => _hasStoredValues ? _storedGst : _amount * 0.03;
-  double get _payableNow => _hasStoredValues ? _storedTotalPaid : _amount + _gst;
+  double get _amount => _hasStoredValues ? _storedPreTaxAmount : MoneyHelper.truncateMoney(_baseAmount * _itemCount);
+  double get _gst => _hasStoredValues ? _storedGst : MoneyHelper.truncateMoney(_amount * 0.03);
+  double get _payableNow => _hasStoredValues ? _storedTotalPaid : MoneyHelper.truncateMoney(_amount + _gst);
   double get _quantity {
     if (_hasStoredValues) return _storedGrams;
     final liveRate = _getLiveRate();
@@ -107,8 +133,27 @@ class _BuyScreenState extends ConsumerState<BuyScreen> {
   void dispose() {
     _amountController.dispose();
     _weightController.dispose();
+    _shakeController.dispose();
+    _wiggleController.dispose();
     super.dispose();
   }
+
+  void _onAmountChanged(String value) {
+    final parsed = double.tryParse(value) ?? 0;
+    final state = ref.read(kycLimitProvider);
+    final exceeded = !state.isKycVerified && parsed > 0 && parsed > state.remainingLimitPreTax;
+    setState(() {
+      _kycLimitExceeded = exceeded;
+    });
+    if (exceeded) {
+      _shakeController.forward(from: 0);
+      _wiggleController.repeat(reverse: true);
+    } else {
+      _wiggleController.stop();
+    }
+  }
+
+  double get _wiggleValue => math.sin(_wiggleController.value * 2 * math.pi);
 
   void _onPresetTap(dynamic value) {
     setState(() {
@@ -120,7 +165,103 @@ class _BuyScreenState extends ConsumerState<BuyScreen> {
     });
   }
 
-  void _continueToNext() {
+  void _continueToNext() async {
+    // KYC limit check only in Step 1 (Buy1)
+    if (widget.step == 1) {
+      final authState = ref.read(authProvider);
+      final isKycDone = authState.user?.kycApproved == true;
+      final kycState = ref.read(kycLimitProvider);
+      if (!isKycDone && _payableNow > kycState.remainingLimit) {
+        final uniqueId = _resolveUniqueId();
+        if (uniqueId.isNotEmpty) {
+          try {
+            final api = AugmontApi(ref.read(augmontDioProvider));
+            final results = await Future.wait([
+              api.fetchInvestmentSummary(uniqueId: uniqueId, metalType: 'gold'),
+              api.fetchInvestmentSummary(uniqueId: uniqueId, metalType: 'silver'),
+            ]);
+            final goldUsed = (results[0]['totalBuyPostTaxAmount'] as num?)?.toDouble() ?? 0;
+            final silverUsed = (results[1]['totalBuyPostTaxAmount'] as num?)?.toDouble() ?? 0;
+            final fyTotal = goldUsed + silverUsed;
+            final remaining = (1000 - fyTotal).clamp(0, 1000);
+            if (_payableNow > remaining) {
+              if (!mounted) return;
+              await showDialog(
+                context: context,
+                barrierDismissible: true,
+                barrierColor: Colors.black.withValues(alpha: 0.7),
+                builder: (ctx) => Dialog(
+                  backgroundColor: Colors.transparent,
+                  insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Container(
+                    width: 340,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(26),
+                      border: Border.all(color: const Color(0x4DE8B438)),
+                      gradient: const LinearGradient(begin: Alignment(0.145, -0.3939), end: Alignment.bottomRight,
+                        colors: [Color(0xFF503B15), Color(0xFF1C1408), Color(0xFF080603)]),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.65), blurRadius: 80, offset: const Offset(0, 28))],
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          right: 4, top: 4,
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(ctx),
+                            child: const Icon(Icons.close, size: 18, color: Color(0xFF7E7E7E)),
+                          ),
+                        ),
+                        Column(mainAxisSize: MainAxisSize.min, children: [
+                          Container(width: 56, height: 56,
+                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(17),
+                              gradient: const LinearGradient(colors: [Color(0xFFFFE784), Color(0xFFC88912)])),
+                            child: const Icon(Icons.lock, color: Color(0xFF11130F), size: 25)),
+                          const SizedBox(height: 16),
+                          const Text('Purchase limit reached',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white)),
+                          const SizedBox(height: 12),
+                          Text(
+                            'This purchase exceeds your ₹${remaining.toInt()} non-KYC limit (incl. GST). Complete KYC to proceed.',
+                            style: const TextStyle(fontSize: 13, color: Color(0xFFD5C7A8)),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              context.go('/kyc-verification');
+                            },
+                            child: Container(width: double.infinity, height: 48,
+                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(15),
+                                gradient: const LinearGradient(colors: [Color(0xFFFED75D), Color(0xFFECB000), Color(0xFFD48D00)])),
+                              child: Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                const Text('Complete KYC',
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.arrow_forward, size: 14, color: Colors.black),
+                              ])),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(ctx),
+                            child: const Text('I will do it later',
+                              style: TextStyle(fontSize: 12, color: Color(0xFF7E7E7E))),
+                          ),
+                        ]),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+              return;
+            }
+          } catch (_) {}
+        }
+      }
+    }
+
     final nextStep = widget.step + 1;
     final preTax = _hasStoredValues ? _storedPreTaxAmount : _baseAmount;
     final grams = _hasStoredValues ? _storedGrams : _quantity;
@@ -137,6 +278,7 @@ class _BuyScreenState extends ConsumerState<BuyScreen> {
       metalType: _metalType,
     );
 
+    if (!mounted) return;
     if (nextStep <= 5) {
       context.go('/buy/buy/$nextStep?metal=$_metalType');
     } else {
@@ -161,9 +303,11 @@ class _BuyScreenState extends ConsumerState<BuyScreen> {
     ref.watch(rateProvider);
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Container(
+      body: Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
         constraints: BoxConstraints(
-          minHeight: MediaQuery.of(context).size.height * 0.86,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         decoration: BoxDecoration(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(60)),
@@ -203,16 +347,18 @@ class _BuyScreenState extends ConsumerState<BuyScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildDragHandle(),
                     _buildHeader(),
                     const SizedBox(height: 8),
-                    Expanded(child: _buildStepContent()),
+                    Flexible(child: _buildStepContent()),
                   ],
                 ),
               ),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -495,72 +641,87 @@ class _BuyScreenState extends ConsumerState<BuyScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Container(
-            height: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF5E5E5E)),
-              color: const Color(0xFF37372E),
+          AnimatedBuilder(
+            animation: _shakeController,
+            builder: (context, child) => Transform.translate(
+              offset: Offset(_shakeAnimation.value, 0),
+              child: child,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (_mode == 'weight')
-                  SizedBox(
-                    width: 100,
-                    child: TextField(
-                      controller: _weightController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        foreground: Paint()
-                          ..shader = const LinearGradient(
-                            colors: [Color(0xFFF7CD57), Color(0xFF917833)],
-                          ).createShader(const Rect.fromLTWH(0, 0, 200, 36)),
+            child: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _kycLimitExceeded ? Colors.red : const Color(0xFF5E5E5E)),
+                color: const Color(0xFF37372E),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_mode == 'weight')
+                    SizedBox(
+                      width: 100,
+                      child: TextField(
+                        controller: _weightController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          foreground: Paint()
+                            ..shader = const LinearGradient(
+                              colors: [Color(0xFFF7CD57), Color(0xFF917833)],
+                            ).createShader(const Rect.fromLTWH(0, 0, 200, 36)),
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onChanged: (_) => setState(() {}),
                       ),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
+                    )
+                  else
+                    SizedBox(
+                      width: 130,
+                      child: TextField(
+                        controller: _amountController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          foreground: Paint()
+                            ..shader = const LinearGradient(
+                              colors: [Color(0xFFF7CD57), Color(0xFF917833)],
+                            ).createShader(const Rect.fromLTWH(0, 0, 200, 36)),
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onChanged: _onAmountChanged,
                       ),
-                      onChanged: (_) => setState(() {}),
                     ),
-                  )
-                else
-                  SizedBox(
-                    width: 130,
-                    child: TextField(
-                      controller: _amountController,
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        foreground: Paint()
-                          ..shader = const LinearGradient(
-                            colors: [Color(0xFFF7CD57), Color(0xFF917833)],
-                          ).createShader(const Rect.fromLTWH(0, 0, 200, 36)),
-                      ),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      onChanged: (_) => setState(() {}),
+                  const SizedBox(width: 4),
+                  Text(
+                    _mode == 'weight' ? 'g' : '',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFBCBCBC),
                     ),
                   ),
-                const SizedBox(width: 4),
-                Text(
-                  _mode == 'weight' ? 'g' : '',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFBCBCBC),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
+          if (_kycLimitExceeded)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'KYC limit exceeded',
+                style: TextStyle(color: Colors.red[400], fontSize: 10),
+              ),
+            ),
           const SizedBox(height: 16),
           // Counter
           Row(
@@ -586,6 +747,8 @@ class _BuyScreenState extends ConsumerState<BuyScreen> {
                 icon: '+',
                 onTap: () => setState(() => _itemCount++),
               ),
+              if (_kycLimitExceeded) const SizedBox(width: 8),
+              if (_kycLimitExceeded) _buildVerifyKycButton(),
             ],
           ),
           const SizedBox(height: 12),
@@ -625,6 +788,31 @@ class _BuyScreenState extends ConsumerState<BuyScreen> {
               fontWeight: FontWeight.w500,
               color: onTap != null ? Colors.white : Colors.white.withOpacity(0.5),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerifyKycButton() {
+    return GestureDetector(
+      onTap: () => context.go('/kyc-verification'),
+      child: AnimatedBuilder(
+        animation: _wiggleController,
+        builder: (context, child) => Transform.rotate(
+          angle: _wiggleValue * 0.05,
+          child: child,
+        ),
+        child: Container(
+          margin: const EdgeInsets.only(left: 8),
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFFF7CD57), Color(0xFFE5AF35), Color(0xFFB57F23)]),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Center(
+            child: Text('Verify KYC', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black)),
           ),
         ),
       ),

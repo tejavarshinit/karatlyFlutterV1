@@ -200,7 +200,7 @@ class SellSelectionScreen extends ConsumerWidget {
 
                     // Coin option
                     GestureDetector(
-                      onTap: () => context.go('/sell/gold-coin/1?metal=$metalType'),
+                      onTap: () => context.go('/sell/gold-coin/1?metal=$metalType&back=${Uri.encodeComponent(AppRoutes.home)}'),
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(

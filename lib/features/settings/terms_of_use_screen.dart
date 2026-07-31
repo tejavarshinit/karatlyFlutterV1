@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../app/router.dart';
 
 class TermsOfUseScreen extends StatelessWidget {
@@ -8,62 +7,55 @@ class TermsOfUseScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: RadialGradient(
-          center: Alignment(0.9755, -0.3792),
-          radius: 1.04,
-          colors: [Color(0xFF4A3A1E), Colors.black],
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(0.9755, -0.3792),
+            radius: 1.04,
+            colors: [Color(0xFF4A3A1E), Colors.black],
+          ),
         ),
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 88),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildStatusBar(),
-              const SizedBox(height: 18),
-              _buildHeader(context),
-              const SizedBox(height: 24),
-              _buildMetadataGrid(),
-              const SizedBox(height: 20),
-              _buildBlockquote(),
-              const SizedBox(height: 24),
-              _buildSection(
-                'About Karatly',
-                'Karatly is a digital platform that enables users to buy, sell, hold, and manage 24-karat gold through a transparent, technology-driven approach.',
+        child: SafeArea(
+          child: DefaultTextStyle(
+            style: const TextStyle(decoration: TextDecoration.none),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+                  _buildHeader(context),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    height: 400,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTitle(),
+                          SizedBox(height: 24),
+                          _buildBlockquote(),
+                          SizedBox(height: 24),
+                          _section('1 ABOUT KARATLY', _aboutKaratly),
+                          SizedBox(height: 20),
+                          _section('2 WHO CAN USE THE PLATFORM \u2014 ELIGIBILITY', ''),
+                          _eligibilityList(),
+                          SizedBox(height: 20),
+                          _section('3 KARATLY\'S ROLE \u2014 INTERMEDIARY ONLY', _intermediaryRole),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
               ),
-              _buildSection(
-                'Who Can Use',
-                'Karatly is available to Indian citizens and residents who are at least 18 years of age and have a valid PAN card and Aadhaar number for KYC verification.',
-              ),
-              _buildSection(
-                "Karatly's Role",
-                'Karatly acts as a technology platform and intermediary connecting users with gold storage and transaction services. Karatly is not a bank, NBFC, or financial advisor.',
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildStatusBar() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: const [
-        Text('9:30', style: TextStyle(fontSize: 12, color: Colors.white, height: 1.5)),
-        Row(
-          children: [
-            _StatusGlyph(width: 18, child: _SignalBars()),
-            SizedBox(width: 6),
-            _StatusGlyph(width: 14, child: _WifiGlyph()),
-            SizedBox(width: 6),
-            _StatusGlyph(width: 25, child: _BatteryGlyph()),
-          ],
-        ),
-      ],
     );
   }
 
@@ -74,7 +66,7 @@ class TermsOfUseScreen extends StatelessWidget {
         Row(
           children: [
             GestureDetector(
-              onTap: () => Navigator.maybePop(context),
+              onTap: () => context.go(AppRoutes.dashboard),
               child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
             ),
             const SizedBox(width: 8),
@@ -84,8 +76,8 @@ class TermsOfUseScreen extends StatelessWidget {
         GestureDetector(
           onTap: () => context.go(AppRoutes.notifications),
           child: Container(
-            width: 24,
-            height: 24,
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: const Color(0xFF1D170D),
@@ -95,11 +87,7 @@ class TermsOfUseScreen extends StatelessWidget {
               alignment: Alignment.center,
               children: [
                 Icon(Icons.notifications_outlined, color: Colors.grey[400], size: 14),
-                const Positioned(
-                  right: 4,
-                  top: 4,
-                  child: SizedBox(width: 5, height: 5, child: DecoratedBox(decoration: BoxDecoration(color: Color(0xFFEE0105), shape: BoxShape.circle))),
-                ),
+                const Positioned(right: 4, top: 4, child: SizedBox(width: 5, height: 5, child: DecoratedBox(decoration: BoxDecoration(color: Color(0xFFEE0105), shape: BoxShape.circle)))),
               ],
             ),
           ),
@@ -108,146 +96,133 @@ class TermsOfUseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMetadataGrid() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F1416),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
-      ),
-      child: const Column(
-        children: [
-          _MetaRow(label: 'Effective Date', value: 'June 1, 2026'),
-          SizedBox(height: 8),
-          _MetaRow(label: 'Version', value: '2.6'),
-          SizedBox(height: 8),
-          _MetaRow(label: 'Platform', value: 'Karatly Mobile & Web'),
-          SizedBox(height: 8),
-          _MetaRow(label: 'Contact', value: 'support@karatly.net'),
-        ],
-      ),
+  static const _aboutKaratly = '''Karatly Finvest Technology India Private Limited (CIN: U70200KA2026PTC219560) is a digital financial technology company registered under the Companies Act, 2013. Karatly operates the Karatly Platform that enables the purchase, accumulation, sale-back, and physical redemption of digital Gold, Silver, Ornaments, Diamonds, and related savings products through a Gold Accumulation Plan (GAP) and Systematic Investment Plan (SIP).
+Karatly''s Registered Office: BBMP Khata No. 41/2, 6 SEC, GVR Spaces, Site No. 2, HSR Layout, Bangalore South, Karnataka \u2013 560102. Authorised signatory: Mr. Hemanth Veeramalla, Director.''';
+
+  static const _eligibilityItems = [
+    'You are at least 18 years of age. Persons under 18 are strictly prohibited from registering or transacting.',
+    'You are a resident of India and are accessing the Platform from within India.',
+    'You have the legal capacity to enter into binding contracts under Indian law and are not under any legal disability.',
+    'You are not prohibited from using financial, investment, or precious metal services under any applicable Indian or international law.',
+    'You hold a valid Indian bank account, a registered Indian mobile number, and a valid PAN Card.',
+    'You have successfully completed Karatly\'s mandatory KYC verification process.',
+    'Your use of the Platform is for lawful personal, non-commercial purposes only.',
+  ];
+
+  static const _intermediaryRole = '''Karatly is a digital intermediary platform and technology service provider operating under Section 79 of the Information Technology Act, 2000. KARATLY IS NOT THE SELLER, MANUFACTURER, CUSTODIAN, OR GUARANTOR of any Gold, Silver, Ornament, Diamond, or precious metal product offered through the Platform.
+Gold and Silver transactions are executed directly between the Customer and Karatly''s empanelled Bullion Partner \u2014 currently Augmont Goldtech Private Limited ('Augmont-Bullion'). The legal contract for purchase is formed directly between you and Augmont-Bullion at the moment of Sale Confirmation.''';
+
+  static Widget _buildTitle() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Terms of Use', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFF7CD57))),
+        const SizedBox(height: 4),
+        const Text('Rules governing access to and use of the Karatly Platform', style: TextStyle(fontSize: 12, color: Color(0x80FFFFFF))),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white.withOpacity(0.05),
+          ),
+          child: const Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Effective Date:', style: TextStyle(fontSize: 10, color: Color(0x66FFFFFF))),
+                    SizedBox(height: 4),
+                    Text('June 2026', style: TextStyle(fontSize: 10, color: Color(0x99FFFFFF))),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Version:', style: TextStyle(fontSize: 10, color: Color(0x66FFFFFF))),
+                    SizedBox(height: 4),
+                    Text('1.0', style: TextStyle(fontSize: 10, color: Color(0x99FFFFFF))),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Platform:', style: TextStyle(fontSize: 10, color: Color(0x66FFFFFF))),
+                    SizedBox(height: 4),
+                    Text('Karatly App', style: TextStyle(fontSize: 10, color: Color(0x99FFFFFF))),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Contact:', style: TextStyle(fontSize: 10, color: Color(0x66FFFFFF))),
+                    SizedBox(height: 4),
+                    Text('legal@karatly.net', style: TextStyle(fontSize: 10, color: Color(0x99FFFFFF))),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildBlockquote() {
+  static Widget _buildBlockquote() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1416).withOpacity(0.5),
-        border: Border(left: BorderSide(color: const Color(0xFFF7CD57).withOpacity(0.6), width: 3)),
+        border: Border(left: BorderSide(color: const Color(0xFFF7CD57).withOpacity(0.5), width: 4)),
       ),
       child: const Text(
-        '"By using Karatly, you agree to these Terms of Use and our Privacy Policy. These terms constitute a legally binding agreement between you and Karatly."',
-        style: TextStyle(color: Color(0xFF7E7E7E), fontSize: 12, fontStyle: FontStyle.italic, height: 1.6),
+        'These Terms of Use (\'TOU\') constitute a legally binding agreement between you (\'User\', \'you\', \'your\') and Karatly Finvest Technology India Private Limited (\'Karatly\') under the Indian Contract Act, 1872. By accessing or using the Karatly Platform in any way, you unconditionally agree to these Terms of Use. If you do not agree, you must immediately stop using the Platform.',
+        style: TextStyle(fontSize: 12, color: Color(0x99FFFFFF), fontStyle: FontStyle.italic, height: 1.5),
       ),
     );
   }
 
-  Widget _buildSection(String title, String body) {
+  static Widget _section(String title, String body) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white, height: 1.5)),
+        if (body.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(body, style: const TextStyle(fontSize: 12, color: Color(0xB3FFFFFF), height: 1.6)),
+        ],
+      ],
+    );
+  }
+
+  static Widget _eligibilityList() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.only(left: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text(body, style: const TextStyle(color: Color(0xFF7E7E7E), fontSize: 12, height: 1.6)),
-        ],
+        children: _eligibilityItems.map((item) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('\u2022 ', style: TextStyle(fontSize: 12, color: Color(0xB3FFFFFF))),
+                Expanded(
+                  child: Text(item, style: const TextStyle(fontSize: 12, color: Color(0xB3FFFFFF), height: 1.5)),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }
-}
-
-class _MetaRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _MetaRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(color: Color(0xFF7E7E7E), fontSize: 12)),
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-      ],
-    );
-  }
-}
-
-class _StatusGlyph extends StatelessWidget {
-  final double width;
-  final Widget child;
-  const _StatusGlyph({required this.width, required this.child});
-  @override
-  Widget build(BuildContext context) => SizedBox(width: width, height: 12, child: child);
-}
-
-class _SignalBars extends StatelessWidget {
-  const _SignalBars();
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: const [
-        _Bar(height: 4),
-        SizedBox(width: 2),
-        _Bar(height: 7),
-        SizedBox(width: 2),
-        _Bar(height: 10),
-      ],
-    );
-  }
-}
-
-class _Bar extends StatelessWidget {
-  final double height;
-  const _Bar({required this.height});
-  @override
-  Widget build(BuildContext context) => Container(width: 3, height: height, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(1)));
-}
-
-class _WifiGlyph extends StatelessWidget {
-  const _WifiGlyph();
-  @override
-  Widget build(BuildContext context) => CustomPaint(painter: _WifiPainter());
-}
-
-class _WifiPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white..style = PaintingStyle.fill;
-    final path = Path()
-      ..moveTo(size.width / 2, 0)
-      ..quadraticBezierTo(0, size.height * 0.15, 0, size.height * 0.7)
-      ..lineTo(size.width, size.height * 0.7)
-      ..quadraticBezierTo(size.width, size.height * 0.15, size.width / 2, 0)
-      ..close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _BatteryGlyph extends StatelessWidget {
-  const _BatteryGlyph();
-  @override
-  Widget build(BuildContext context) => CustomPaint(painter: _BatteryPainter());
-}
-
-class _BatteryPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final stroke = Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1;
-    final fill = Paint()..color = Colors.white..style = PaintingStyle.fill;
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(1, 1, size.width - 4, size.height - 2), const Radius.circular(3)), stroke);
-    canvas.drawRect(Rect.fromLTWH(3, 3, size.width * 0.6, size.height - 6), fill);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(size.width - 2, 4, 2, size.height - 8), const Radius.circular(1)), fill);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -110,7 +110,7 @@ class BuySelectionScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  isSilver ? 'Purchased Silver' : 'Purchased Golds',
+                                  isSilver ? 'Silver Live Rate' : 'Gold Live Rate',
                                   style: const TextStyle(fontSize: 12, color: Color(0xFFA1A1A1)),
                                 ),
                                 const SizedBox(height: 4),

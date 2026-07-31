@@ -171,6 +171,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     return response;
   }
 
+  void restoreFromToken(String token) {
+    state = state.copyWith(
+      isAuthenticated: true,
+      token: token,
+      loading: false,
+    );
+    _syncStoredProfile();
+  }
+
   void logout() {
     LocalStorageService.clearAuthSession();
     state = const AuthState(loading: false);

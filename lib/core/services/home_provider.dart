@@ -11,22 +11,30 @@ class InvestmentData {
   final double goldHoldingWithMultiplier;
   final double goldTotalInvested;
   final double goldTotalBuyPreTaxAmount;
+  final double goldBuyPostTax;
   final double silverHoldingGrams;
   final double silverHoldingWithMultiplier;
   final double silverTotalInvested;
   final double silverTotalBuyPreTaxAmount;
+  final double silverBuyPostTax;
   final double totalInvested;
+  final double passbookGoldGrms;
+  final double passbookSilverGrms;
 
   const InvestmentData({
     this.goldHoldingGrams = 0,
     this.goldHoldingWithMultiplier = 0,
     this.goldTotalInvested = 0,
     this.goldTotalBuyPreTaxAmount = 0,
+    this.goldBuyPostTax = 0,
     this.silverHoldingGrams = 0,
     this.silverHoldingWithMultiplier = 0,
     this.silverTotalInvested = 0,
     this.silverTotalBuyPreTaxAmount = 0,
+    this.silverBuyPostTax = 0,
     this.totalInvested = 0,
+    this.passbookGoldGrms = 0,
+    this.passbookSilverGrms = 0,
   });
 }
 
@@ -98,21 +106,34 @@ class HomeNotifier extends StateNotifier<HomeState> {
       final results = await Future.wait([
         _api.fetchInvestmentSummary(uniqueId: uniqueId, metalType: 'gold'),
         _api.fetchInvestmentSummary(uniqueId: uniqueId, metalType: 'silver'),
+        _api.fetchAugmontPassbook(uniqueId),
       ]);
 
       final goldRes = results[0];
       final silverRes = results[1];
+      final passbookRes = results[2];
+
+      double passbookGold = 0, passbookSilver = 0;
+      if (passbookRes['ok'] == true) {
+        final pb = passbookRes['passbook'] as Map<String, dynamic>? ?? {};
+        passbookGold = double.tryParse((pb['goldGrms'] ?? pb['goldBalance'] ?? pb['gold'] ?? pb['balance'] ?? '0').toString()) ?? 0;
+        passbookSilver = double.tryParse((pb['silverGrms'] ?? pb['silverBalance'] ?? pb['silver'] ?? '0').toString()) ?? 0;
+      }
 
       final investment = InvestmentData(
         goldHoldingGrams: (goldRes['currentHoldingGrams'] as num?)?.toDouble() ?? 0,
         goldHoldingWithMultiplier: (goldRes['currentHoldingWithMultiplier'] as num?)?.toDouble() ?? 0,
         goldTotalInvested: (goldRes['totalInvestedOfGold'] as num?)?.toDouble() ?? (goldRes['totalInvested'] as num?)?.toDouble() ?? 0,
         goldTotalBuyPreTaxAmount: (goldRes['totalBuyPreTaxAmount'] as num?)?.toDouble() ?? 0,
+        goldBuyPostTax: (goldRes['totalBuyPostTaxAmount'] as num?)?.toDouble() ?? 0,
         silverHoldingGrams: (silverRes['currentHoldingGrams'] as num?)?.toDouble() ?? 0,
         silverHoldingWithMultiplier: (silverRes['currentHoldingWithMultiplier'] as num?)?.toDouble() ?? 0,
         silverTotalInvested: (silverRes['totalInvestedOfSilver'] as num?)?.toDouble() ?? (silverRes['totalInvested'] as num?)?.toDouble() ?? 0,
         silverTotalBuyPreTaxAmount: (silverRes['totalBuyPreTaxAmount'] as num?)?.toDouble() ?? 0,
+        silverBuyPostTax: (silverRes['totalBuyPostTaxAmount'] as num?)?.toDouble() ?? 0,
         totalInvested: (goldRes['totalInvested'] as num?)?.toDouble() ?? (silverRes['totalInvested'] as num?)?.toDouble() ?? 0,
+        passbookGoldGrms: passbookGold,
+        passbookSilverGrms: passbookSilver,
       );
 
       state = state.copyWith(investment: investment, loading: false);
@@ -127,3 +148,6 @@ final homeProvider = StateNotifierProvider<HomeNotifier, HomeState>((ref) {
   final api = AugmontApi(ref.read(augmontDioProvider));
   return HomeNotifier(api);
 });
+
+// Active metal type selected on the home screen (gold | silver | diamond).
+final activeMetalProvider = StateProvider<String>((ref) => 'gold');
