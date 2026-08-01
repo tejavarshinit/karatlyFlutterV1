@@ -3,5 +3,7 @@
 -keep class * extends FlutterActivity
 -keep class io.flutter.** { *; }
 -keep class com.karatly.** { *; }
+-keep class io.flutter.plugins.webviewflutter.** { *; }
+-keep class io.flutter.plugin.** { *; }
 -dontwarn io.flutter.embedding.**
 -keep class kotlin.Metadata { *; }

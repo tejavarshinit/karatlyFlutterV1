@@ -46,6 +46,7 @@ dependencies:
 
   # WebView (for payment gateway)
   webview_flutter: ^4.10.0
+  webview_flutter_android: ^4.13.0
 
   # Web support (for diamond 360° viewer iframe) - web only via conditional import
   web: ^1.1.1

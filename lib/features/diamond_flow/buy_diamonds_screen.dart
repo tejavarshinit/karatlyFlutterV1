@@ -583,7 +583,7 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen>
       backgroundColor: const Color(0xFF1A1918),
       body: Container(
         constraints: BoxConstraints(
-          minHeight: MediaQuery.of(context).size.height * 0.92,
+          minHeight: MediaQuery.of(context).size.height * 0.86,
         ),
         decoration: const BoxDecoration(
           borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
@@ -1775,7 +1775,7 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen>
                   child: Text(
                     anyExpired
                         ? 'Reserve Again'
-                        : 'Proceed to Pay${_selectedCartItemIds.isNotEmpty ? ' (\$${_formatPrice(_selectedTotal)})' : ''}',
+                        : 'Proceed to Pay${_selectedCartItemIds.isNotEmpty ? ' (₹${_formatPrice(_selectedTotal)})' : ''}',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

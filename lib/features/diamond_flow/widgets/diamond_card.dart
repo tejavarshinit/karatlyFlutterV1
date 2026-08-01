@@ -30,11 +30,13 @@ class _DiamondCardState extends State<DiamondCard> {
   DateTime? _lastTap;
   bool _addedToCart = false;
   late String _iframeViewType;
+  late String _iframeUrl;
 
   @override
   void initState() {
     super.initState();
-    _iframeViewType = 'diamond-card-${widget.product.productId}-${DateTime.now().millisecondsSinceEpoch}';
+    _iframeViewType =
+        'diamond-card-${widget.product.productId}-${DateTime.now().millisecondsSinceEpoch}';
     _registerIframe();
   }
 
@@ -55,12 +57,14 @@ class _DiamondCardState extends State<DiamondCard> {
       url = imageResult.url;
     }
 
+    _iframeUrl = url;
     DiamondIframeHelper.register(_iframeViewType, url);
   }
 
   void _handleTap() {
     final now = DateTime.now();
-    if (_lastTap != null && now.difference(_lastTap!) < const Duration(milliseconds: 300)) {
+    if (_lastTap != null &&
+        now.difference(_lastTap!) < const Duration(milliseconds: 300)) {
       _handleDoubleTap();
       _lastTap = null;
     } else {
@@ -69,13 +73,15 @@ class _DiamondCardState extends State<DiamondCard> {
   }
 
   void _handleDoubleTap() {
-    final videoUrl = DiamondImageResolver.resolveVideoUrl(widget.product.videoUrl);
+    final videoUrl =
+        DiamondImageResolver.resolveVideoUrl(widget.product.videoUrl);
     if (videoUrl.isNotEmpty) {
       showDialog(
         context: context,
         builder: (ctx) => DiamondViewerModal(
           url: videoUrl,
-          title: '${widget.product.shape} ${widget.product.carat}ct ${widget.product.color} ${widget.product.clarity}',
+          title:
+              '${widget.product.shape} ${widget.product.carat}ct ${widget.product.color} ${widget.product.clarity}',
         ),
       );
     }
@@ -151,14 +157,18 @@ class _DiamondCardState extends State<DiamondCard> {
                   // Certificate badge with cert number
                   if (product.certificate.isNotEmpty)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: const Color(0xFF0084FF).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         '${product.certificate} ${product.certNumber}',
-                        style: const TextStyle(fontSize: 9, color: Color(0xFF3AC7FF), fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                            fontSize: 9,
+                            color: Color(0xFF3AC7FF),
+                            fontWeight: FontWeight.w500),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -168,7 +178,10 @@ class _DiamondCardState extends State<DiamondCard> {
                   // Title
                   Text(
                     '${product.shape} ${product.carat.toStringAsFixed(2)}ct ${product.color} ${product.clarity}',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -178,13 +191,15 @@ class _DiamondCardState extends State<DiamondCard> {
                   if (product.cut.isNotEmpty)
                     Text(
                       '${product.cut} · ${product.polish} · ${product.symmetry}',
-                      style: const TextStyle(fontSize: 9, color: Color(0xFF9E9E9E)),
+                      style: const TextStyle(
+                          fontSize: 9, color: Color(0xFF9E9E9E)),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
 
                   // Shade and Luster Tags
-                  if (product.shade.isNotEmpty || product.luster.isNotEmpty) ...[
+                  if (product.shade.isNotEmpty ||
+                      product.luster.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 4,
@@ -192,28 +207,38 @@ class _DiamondCardState extends State<DiamondCard> {
                       children: [
                         if (product.shade.isNotEmpty)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF006CD2).withValues(alpha: 0.1),
+                              color: const Color(0xFF006CD2)
+                                  .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFF006CD2).withValues(alpha: 0.2)),
+                              border: Border.all(
+                                  color: const Color(0xFF006CD2)
+                                      .withValues(alpha: 0.2)),
                             ),
                             child: Text(
                               product.shade,
-                              style: const TextStyle(fontSize: 9, color: Color(0xFF3AC7FF)),
+                              style: const TextStyle(
+                                  fontSize: 9, color: Color(0xFF3AC7FF)),
                             ),
                           ),
                         if (product.luster.isNotEmpty)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF006CD2).withValues(alpha: 0.1),
+                              color: const Color(0xFF006CD2)
+                                  .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFF006CD2).withValues(alpha: 0.2)),
+                              border: Border.all(
+                                  color: const Color(0xFF006CD2)
+                                      .withValues(alpha: 0.2)),
                             ),
                             child: Text(
                               product.luster,
-                              style: const TextStyle(fontSize: 9, color: Color(0xFF3AC7FF)),
+                              style: const TextStyle(
+                                  fontSize: 9, color: Color(0xFF3AC7FF)),
                             ),
                           ),
                       ],
@@ -232,14 +257,18 @@ class _DiamondCardState extends State<DiamondCard> {
                   // Price in bordered box
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       border: Border.all(color: const Color(0xFF2E2E2E)),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '₹${_formatPrice(product.finalPrice)}',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                       textAlign: TextAlign.right,
                     ),
                   ),
@@ -261,8 +290,9 @@ class _DiamondCardState extends State<DiamondCard> {
 
   // ─── Iframe area (for viewmydiamonds.com + video — no CORS) ──────────────
 
-  Widget _buildIframeArea(DiamondProduct product, DiamondImageResult imageResult) {
-    return DiamondIframeWidget(viewType: _iframeViewType, url: imageResult.url);
+  Widget _buildIframeArea(
+      DiamondProduct product, DiamondImageResult imageResult) {
+    return DiamondIframeWidget(viewType: _iframeViewType, url: _iframeUrl);
   }
 
   // ─── Static image area (for direct image URLs) ───────────────────────────
@@ -293,7 +323,8 @@ class _DiamondCardState extends State<DiamondCard> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          gradient: const LinearGradient(colors: [Color(0xFF0084FF), Color(0xFF004F99)]),
+          gradient: const LinearGradient(
+              colors: [Color(0xFF0084FF), Color(0xFF004F99)]),
         ),
         child: Material(
           color: Colors.transparent,
@@ -303,7 +334,10 @@ class _DiamondCardState extends State<DiamondCard> {
             child: const Center(
               child: Text(
                 'Add to Cart',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white),
               ),
             ),
           ),
@@ -323,14 +357,19 @@ class _DiamondCardState extends State<DiamondCard> {
         children: [
           _buildCircleButton(
             icon: widget.quantity == 1 ? Icons.delete_outline : Icons.remove,
-            color: widget.quantity == 1 ? const Color(0xFFEF4444) : const Color(0xFF3AC7FF),
+            color: widget.quantity == 1
+                ? const Color(0xFFEF4444)
+                : const Color(0xFF3AC7FF),
             onTap: widget.quantity == 1 ? _handleRemove : widget.onRemove,
           ),
           Expanded(
             child: Center(
               child: Text(
                 '${widget.quantity}',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white),
               ),
             ),
           ),
@@ -344,7 +383,8 @@ class _DiamondCardState extends State<DiamondCard> {
     );
   }
 
-  Widget _buildCircleButton({required IconData icon, required Color color, VoidCallback? onTap}) {
+  Widget _buildCircleButton(
+      {required IconData icon, required Color color, VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
