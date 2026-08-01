@@ -12,6 +12,7 @@ import '../../core/models/diamond_model.dart';
 import '../../core/services/rate_provider.dart';
 import '../../core/storage/local_storage.dart';
 import 'widgets/diamond_card.dart';
+import 'widgets/diamond_cart_thumb.dart';
 
 class BuyDiamondsScreen extends ConsumerStatefulWidget {
   const BuyDiamondsScreen({super.key});
@@ -20,7 +21,8 @@ class BuyDiamondsScreen extends ConsumerStatefulWidget {
   ConsumerState<BuyDiamondsScreen> createState() => _BuyDiamondsScreenState();
 }
 
-class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with SingleTickerProviderStateMixin {
+class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen>
+    with SingleTickerProviderStateMixin {
   // ── Step state ────────────────────────────────────────────────────────────
   String _step = 'filters';
   String _activeFilterTab = 'main';
@@ -68,20 +70,32 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
   // ── Advanced filter state ─────────────────────────────────────────────────
   final TextEditingController _advMinLenCtrl = TextEditingController(text: '0');
   final TextEditingController _advMaxLenCtrl = TextEditingController(text: '0');
-  final TextEditingController _advMinWidthCtrl = TextEditingController(text: '0');
-  final TextEditingController _advMaxWidthCtrl = TextEditingController(text: '0');
-  final TextEditingController _advMinDepthCtrl = TextEditingController(text: '0');
-  final TextEditingController _advMaxDepthCtrl = TextEditingController(text: '0');
+  final TextEditingController _advMinWidthCtrl =
+      TextEditingController(text: '0');
+  final TextEditingController _advMaxWidthCtrl =
+      TextEditingController(text: '0');
+  final TextEditingController _advMinDepthCtrl =
+      TextEditingController(text: '0');
+  final TextEditingController _advMaxDepthCtrl =
+      TextEditingController(text: '0');
   final TextEditingController _advMinLwCtrl = TextEditingController(text: '0');
   final TextEditingController _advMaxLwCtrl = TextEditingController(text: '0');
-  final TextEditingController _advMinCrownCtrl = TextEditingController(text: '0');
-  final TextEditingController _advMaxCrownCtrl = TextEditingController(text: '0');
-  final TextEditingController _advMinTableCtrl = TextEditingController(text: '0');
-  final TextEditingController _advMaxTableCtrl = TextEditingController(text: '0');
-  final TextEditingController _advMinPavilionCtrl = TextEditingController(text: '0');
-  final TextEditingController _advMaxPavilionCtrl = TextEditingController(text: '0');
-  final TextEditingController _advMinPriceUsdCtrl = TextEditingController(text: '0');
-  final TextEditingController _advMaxPriceUsdCtrl = TextEditingController(text: '0');
+  final TextEditingController _advMinCrownCtrl =
+      TextEditingController(text: '0');
+  final TextEditingController _advMaxCrownCtrl =
+      TextEditingController(text: '0');
+  final TextEditingController _advMinTableCtrl =
+      TextEditingController(text: '0');
+  final TextEditingController _advMaxTableCtrl =
+      TextEditingController(text: '0');
+  final TextEditingController _advMinPavilionCtrl =
+      TextEditingController(text: '0');
+  final TextEditingController _advMaxPavilionCtrl =
+      TextEditingController(text: '0');
+  final TextEditingController _advMinPriceUsdCtrl =
+      TextEditingController(text: '0');
+  final TextEditingController _advMaxPriceUsdCtrl =
+      TextEditingController(text: '0');
 
   // ── Products ──────────────────────────────────────────────────────────────
   List<DiamondProduct> _products = [];
@@ -110,31 +124,91 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
 
   // ── Filter option lists (matching React constants) ────────────────────────
   static const List<String> _shapeOptions = [
-    'Round', 'Oval', 'Pear', 'Radiant', 'Cushion', 'Sq.Cushion',
-    'Emerald', 'Heart', 'Princess', 'Marquise', 'Asscher',
+    'Round',
+    'Oval',
+    'Pear',
+    'Radiant',
+    'Cushion',
+    'Sq.Cushion',
+    'Emerald',
+    'Heart',
+    'Princess',
+    'Marquise',
+    'Asscher',
   ];
   static const List<String> _clarityOptions = [
-    'FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'I1', 'I2', 'I3',
+    'FL',
+    'IF',
+    'VVS1',
+    'VVS2',
+    'VS1',
+    'VS2',
+    'SI1',
+    'SI2',
+    'I1',
+    'I2',
+    'I3',
   ];
   static const List<String> _colorOptions = [
-    'White', 'Yellow', 'Pink', 'Blue', 'Red', 'Green', 'Purple',
-    'Orange', 'Violet', 'Grey', 'Black', 'Brown', 'Cognac',
-    'Chameleon', 'Champagne', 'Salt & Pepper', 'Others',
+    'White',
+    'Yellow',
+    'Pink',
+    'Blue',
+    'Red',
+    'Green',
+    'Purple',
+    'Orange',
+    'Violet',
+    'Grey',
+    'Black',
+    'Brown',
+    'Cognac',
+    'Chameleon',
+    'Champagne',
+    'Salt & Pepper',
+    'Others',
   ];
   static const List<String> _cutOptions = [
-    '8X', 'Ideal', 'Excellent', 'Very Good', 'Good', 'Fair', 'Poor', 'None',
+    '8X',
+    'Ideal',
+    'Excellent',
+    'Very Good',
+    'Good',
+    'Fair',
+    'Poor',
+    'None',
   ];
   static const List<String> _polishOptions = [
-    '8X', 'Ideal', 'Excellent', 'Very Good', 'Good', 'Fair', 'Poor', 'None',
+    '8X',
+    'Ideal',
+    'Excellent',
+    'Very Good',
+    'Good',
+    'Fair',
+    'Poor',
+    'None',
   ];
   static const List<String> _symmetryOptions = [
-    '8X', 'Ideal', 'Excellent', 'Very Good', 'Good', 'Fair', 'Poor', 'None',
+    '8X',
+    'Ideal',
+    'Excellent',
+    'Very Good',
+    'Good',
+    'Fair',
+    'Poor',
+    'None',
   ];
   static const List<String> _fluorescenceOptions = [
-    'None', 'Faint', 'Medium', 'Strong', 'Very Strong',
+    'None',
+    'Faint',
+    'Medium',
+    'Strong',
+    'Very Strong',
   ];
   static const List<String> _certificateOptions = [
-    'GIA', 'IGI', 'NO-Cert',
+    'GIA',
+    'IGI',
+    'NO-Cert',
   ];
 
   DiamondApi _diamondApi() {
@@ -223,35 +297,45 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
     };
 
     // Shape
-    final shapeFilters = _selectedFilters.where((f) => _shapeOptions.contains(f)).toList();
+    final shapeFilters =
+        _selectedFilters.where((f) => _shapeOptions.contains(f)).toList();
     if (shapeFilters.length == 1) params['shape'] = shapeFilters[0];
 
     // Clarity
-    final clarityFilters = _selectedFilters.where((f) => _clarityOptions.contains(f)).toList();
+    final clarityFilters =
+        _selectedFilters.where((f) => _clarityOptions.contains(f)).toList();
     if (clarityFilters.length == 1) params['clarity'] = clarityFilters[0];
 
     // Color
-    final colorFilters = _selectedFilters.where((f) => _colorOptions.contains(f)).toList();
+    final colorFilters =
+        _selectedFilters.where((f) => _colorOptions.contains(f)).toList();
     if (colorFilters.length == 1) params['color'] = colorFilters[0];
 
     // Cut
-    final cutFilters = _selectedFilters.where((f) => _cutOptions.contains(f)).toList();
+    final cutFilters =
+        _selectedFilters.where((f) => _cutOptions.contains(f)).toList();
     if (cutFilters.length == 1) params['cut'] = cutFilters[0];
 
     // Polish
-    final polishFilters = _selectedFilters.where((f) => _polishOptions.contains(f)).toList();
+    final polishFilters =
+        _selectedFilters.where((f) => _polishOptions.contains(f)).toList();
     if (polishFilters.length == 1) params['polish'] = polishFilters[0];
 
     // Symmetry
-    final symmetryFilters = _selectedFilters.where((f) => _symmetryOptions.contains(f)).toList();
+    final symmetryFilters =
+        _selectedFilters.where((f) => _symmetryOptions.contains(f)).toList();
     if (symmetryFilters.length == 1) params['symmetry'] = symmetryFilters[0];
 
     // Fluorescence
-    final fluorescenceFilters = _selectedFilters.where((f) => _fluorescenceOptions.contains(f)).toList();
-    if (fluorescenceFilters.length == 1) params['fluorescence'] = fluorescenceFilters[0];
+    final fluorescenceFilters = _selectedFilters
+        .where((f) => _fluorescenceOptions.contains(f))
+        .toList();
+    if (fluorescenceFilters.length == 1)
+      params['fluorescence'] = fluorescenceFilters[0];
 
     // Certificate
-    final certFilters = _selectedFilters.where((f) => _certificateOptions.contains(f)).toList();
+    final certFilters =
+        _selectedFilters.where((f) => _certificateOptions.contains(f)).toList();
     if (certFilters.length == 1) params['certificate'] = certFilters[0];
 
     // Sort
@@ -261,12 +345,16 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
     }
 
     // Price
-    if (_minPriceCtrl.text.isNotEmpty) params['minFinalPrice'] = double.tryParse(_minPriceCtrl.text);
-    if (_maxPriceCtrl.text.isNotEmpty) params['maxFinalPrice'] = double.tryParse(_maxPriceCtrl.text);
+    if (_minPriceCtrl.text.isNotEmpty)
+      params['minFinalPrice'] = double.tryParse(_minPriceCtrl.text);
+    if (_maxPriceCtrl.text.isNotEmpty)
+      params['maxFinalPrice'] = double.tryParse(_maxPriceCtrl.text);
 
     // Carat
-    if (_minCaratCtrl.text.isNotEmpty) params['minCarat'] = double.tryParse(_minCaratCtrl.text);
-    if (_maxCaratCtrl.text.isNotEmpty) params['maxCarat'] = double.tryParse(_maxCaratCtrl.text);
+    if (_minCaratCtrl.text.isNotEmpty)
+      params['minCarat'] = double.tryParse(_minCaratCtrl.text);
+    if (_maxCaratCtrl.text.isNotEmpty)
+      params['maxCarat'] = double.tryParse(_maxCaratCtrl.text);
 
     // Buyback (tri-state: true/false/null)
     if (_buyback == true) {
@@ -393,7 +481,9 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
 
         if (append) {
           final existingIds = _products.map((p) => p.productId).toSet();
-          final deduped = newProducts.where((p) => !existingIds.contains(p.productId)).toList();
+          final deduped = newProducts
+              .where((p) => !existingIds.contains(p.productId))
+              .toList();
           _products = [..._products, ...deduped];
         } else {
           final seen = <String>{};
@@ -490,7 +580,7 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF1A1918),
       body: Container(
         constraints: BoxConstraints(
           minHeight: MediaQuery.of(context).size.height * 0.92,
@@ -638,14 +728,18 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                 child: const SizedBox(
                   width: 24,
                   height: 24,
-                  child: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.white),
+                  child: Icon(Icons.arrow_back_ios_new_rounded,
+                      size: 20, color: Colors.white),
                 ),
               ),
             ),
           Center(
             child: Text(
               title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white),
             ),
           ),
           if (showCart)
@@ -662,17 +756,22 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      const Icon(Icons.shopping_cart_outlined, size: 22, color: Colors.white),
+                      const Icon(Icons.shopping_cart_outlined,
+                          size: 22, color: Colors.white),
                       if (_cartItems.isNotEmpty)
                         Positioned(
                           right: -2,
                           top: -2,
                           child: Container(
                             padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(color: _primary, shape: BoxShape.circle),
+                            decoration: const BoxDecoration(
+                                color: _primary, shape: BoxShape.circle),
                             child: Text(
                               '${_cartItems.length}',
-                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
+                              style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white),
                             ),
                           ),
                         ),
@@ -733,7 +832,9 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
           child: CustomScrollView(
             slivers: [
               SliverToBoxAdapter(
-                child: _activeFilterTab == 'main' ? _buildMainFilters() : _buildAdvancedFilters(),
+                child: _activeFilterTab == 'main'
+                    ? _buildMainFilters()
+                    : _buildAdvancedFilters(),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
               SliverToBoxAdapter(child: _buildSearchButton()),
@@ -794,7 +895,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           gradient: isValid
-              ? const LinearGradient(colors: [Color(0xFF0084FF), _primary, Color(0xFF005BB5)])
+              ? const LinearGradient(
+                  colors: [Color(0xFF0084FF), _primary, Color(0xFF005BB5)])
               : null,
           color: isValid ? null : const Color(0xFF2A2A2A),
           boxShadow: isValid
@@ -822,7 +924,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
                     )
                   : Text(
                       'Search Diamonds',
@@ -851,9 +954,13 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
           const SizedBox(height: 6),
           Row(
             children: [
-              Expanded(child: _buildFilterInput(hint: 'Min', controller: _minPriceCtrl)),
+              Expanded(
+                  child: _buildFilterInput(
+                      hint: 'Min', controller: _minPriceCtrl)),
               const SizedBox(width: 12),
-              Expanded(child: _buildFilterInput(hint: 'Max', controller: _maxPriceCtrl)),
+              Expanded(
+                  child: _buildFilterInput(
+                      hint: 'Max', controller: _maxPriceCtrl)),
             ],
           ),
           const SizedBox(height: 12),
@@ -974,27 +1081,35 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildAdvancedMinMaxRow('Length (mm)', _advMinLenCtrl, _advMaxLenCtrl),
+          _buildAdvancedMinMaxRow(
+              'Length (mm)', _advMinLenCtrl, _advMaxLenCtrl),
           const SizedBox(height: 12),
-          _buildAdvancedMinMaxRow('Width (mm)', _advMinWidthCtrl, _advMaxWidthCtrl),
+          _buildAdvancedMinMaxRow(
+              'Width (mm)', _advMinWidthCtrl, _advMaxWidthCtrl),
           const SizedBox(height: 12),
-          _buildAdvancedMinMaxRow('Depth (mm)', _advMinDepthCtrl, _advMaxDepthCtrl),
+          _buildAdvancedMinMaxRow(
+              'Depth (mm)', _advMinDepthCtrl, _advMaxDepthCtrl),
           const SizedBox(height: 12),
           _buildAdvancedMinMaxRow('L/W (Ratio)', _advMinLwCtrl, _advMaxLwCtrl),
           const SizedBox(height: 12),
-          _buildAdvancedMinMaxRow('Crown (deg)', _advMinCrownCtrl, _advMaxCrownCtrl),
+          _buildAdvancedMinMaxRow(
+              'Crown (deg)', _advMinCrownCtrl, _advMaxCrownCtrl),
           const SizedBox(height: 12),
-          _buildAdvancedMinMaxRow('Table (%)', _advMinTableCtrl, _advMaxTableCtrl),
+          _buildAdvancedMinMaxRow(
+              'Table (%)', _advMinTableCtrl, _advMaxTableCtrl),
           const SizedBox(height: 12),
-          _buildAdvancedMinMaxRow('Pavilion (deg)', _advMinPavilionCtrl, _advMaxPavilionCtrl),
+          _buildAdvancedMinMaxRow(
+              'Pavilion (deg)', _advMinPavilionCtrl, _advMaxPavilionCtrl),
           const SizedBox(height: 12),
-          _buildAdvancedMinMaxRow('Price (USD)', _advMinPriceUsdCtrl, _advMaxPriceUsdCtrl),
+          _buildAdvancedMinMaxRow(
+              'Price (USD)', _advMinPriceUsdCtrl, _advMaxPriceUsdCtrl),
         ],
       ),
     );
   }
 
-  Widget _buildAdvancedMinMaxRow(String label, TextEditingController minCtrl, TextEditingController maxCtrl) {
+  Widget _buildAdvancedMinMaxRow(String label, TextEditingController minCtrl,
+      TextEditingController maxCtrl) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1002,9 +1117,11 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
         const SizedBox(height: 6),
         Row(
           children: [
-            Expanded(child: _buildFilterInput(hint: 'Min', controller: minCtrl)),
+            Expanded(
+                child: _buildFilterInput(hint: 'Min', controller: minCtrl)),
             const SizedBox(width: 12),
-            Expanded(child: _buildFilterInput(hint: 'Max', controller: maxCtrl)),
+            Expanded(
+                child: _buildFilterInput(hint: 'Max', controller: maxCtrl)),
           ],
         ),
       ],
@@ -1048,7 +1165,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF5E5E5E)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           border: InputBorder.none,
         ),
       ),
@@ -1062,11 +1180,13 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: _textSecondary),
+          style: const TextStyle(
+              fontSize: 12, fontWeight: FontWeight.w500, color: _textSecondary),
         ),
         if (required_) ...[
           const SizedBox(width: 4),
-          const Text('*', style: TextStyle(fontSize: 12, color: Colors.redAccent)),
+          const Text('*',
+              style: TextStyle(fontSize: 12, color: Colors.redAccent)),
         ],
       ],
     );
@@ -1088,7 +1208,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
           value: _sortOrder,
           isExpanded: true,
           dropdownColor: const Color(0xFF1E1E1E),
-          icon: const Icon(Icons.keyboard_arrow_down, color: _textSecondary, size: 20),
+          icon: const Icon(Icons.keyboard_arrow_down,
+              color: _textSecondary, size: 20),
           style: const TextStyle(fontSize: 13, color: Colors.white),
           items: ['Low to high', 'High to low'].map((e) {
             return DropdownMenuItem(value: e, child: Text(e));
@@ -1103,14 +1224,18 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
 
   // ─── Toggle Row ───────────────────────────────────────────────────────────
 
-  Widget _buildToggleRow(String label, bool yesSelected, ValueChanged<bool> onChanged) {
+  Widget _buildToggleRow(
+      String label, bool yesSelected, ValueChanged<bool> onChanged) {
     return Row(
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: _textSecondary)),
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: _textSecondary)),
         const Spacer(),
-        _buildTogglePill(text: 'Yes', isActive: yesSelected, onTap: () => onChanged(true)),
+        _buildTogglePill(
+            text: 'Yes', isActive: yesSelected, onTap: () => onChanged(true)),
         const SizedBox(width: 6),
-        _buildTogglePill(text: 'No', isActive: !yesSelected, onTap: () => onChanged(false)),
+        _buildTogglePill(
+            text: 'No', isActive: !yesSelected, onTap: () => onChanged(false)),
       ],
     );
   }
@@ -1120,24 +1245,30 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
   Widget _buildBuybackToggle() {
     return Row(
       children: [
-        const Text('Buyback', style: TextStyle(fontSize: 12, color: _textSecondary)),
+        const Text('Buyback',
+            style: TextStyle(fontSize: 12, color: _textSecondary)),
         const Spacer(),
         _buildTogglePill(
           text: 'Yes',
           isActive: _buyback == true,
-          onTap: () => setState(() => _buyback = _buyback == true ? null : true),
+          onTap: () =>
+              setState(() => _buyback = _buyback == true ? null : true),
         ),
         const SizedBox(width: 6),
         _buildTogglePill(
           text: 'No',
           isActive: _buyback == false,
-          onTap: () => setState(() => _buyback = _buyback == false ? null : false),
+          onTap: () =>
+              setState(() => _buyback = _buyback == false ? null : false),
         ),
       ],
     );
   }
 
-  Widget _buildTogglePill({required String text, required bool isActive, required VoidCallback onTap}) {
+  Widget _buildTogglePill(
+      {required String text,
+      required bool isActive,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1178,7 +1309,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
             return GestureDetector(
               onTap: () => _toggleFilter(option),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   color: isActive
@@ -1220,13 +1352,20 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 40, color: Colors.redAccent.withValues(alpha: 0.7)),
+            Icon(Icons.error_outline,
+                size: 40, color: Colors.redAccent.withValues(alpha: 0.7)),
             const SizedBox(height: 12),
-            Text(_error, style: const TextStyle(fontSize: 13, color: _textSecondary), textAlign: TextAlign.center),
+            Text(_error,
+                style: const TextStyle(fontSize: 13, color: _textSecondary),
+                textAlign: TextAlign.center),
             const SizedBox(height: 16),
             GestureDetector(
               onTap: () => _fetchProducts(page: 0),
-              child: const Text('Retry', style: TextStyle(fontSize: 13, color: _primary, fontWeight: FontWeight.w600)),
+              child: const Text('Retry',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: _primary,
+                      fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -1238,17 +1377,21 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.diamond_outlined, size: 48, color: Color(0xFF3E3E3E)),
+            const Icon(Icons.diamond_outlined,
+                size: 48, color: Color(0xFF3E3E3E)),
             const SizedBox(height: 12),
-            const Text('No diamonds found', style: TextStyle(fontSize: 14, color: _textSecondary)),
+            const Text('No diamonds found',
+                style: TextStyle(fontSize: 14, color: _textSecondary)),
             const SizedBox(height: 4),
-            const Text('Try adjusting filters', style: TextStyle(fontSize: 12, color: Color(0xFF6E6E6E))),
+            const Text('Try adjusting filters',
+                style: TextStyle(fontSize: 12, color: Color(0xFF6E6E6E))),
             const SizedBox(height: 16),
             GestureDetector(
               onTap: () => setState(() => _step = 'filters'),
               child: const Text(
                 'Edit Filters',
-                style: TextStyle(fontSize: 13, color: _primary, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                    fontSize: 13, color: _primary, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -1275,7 +1418,9 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
             itemCount: _products.length,
             itemBuilder: (context, index) {
               final product = _products[index];
-              final inCartItem = _cartItems.where((c) => c.productId == product.productId).firstOrNull;
+              final inCartItem = _cartItems
+                  .where((c) => c.productId == product.productId)
+                  .firstOrNull;
               final quantity = inCartItem?.quantity ?? 0;
 
               return DiamondCard(
@@ -1308,17 +1453,22 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                     borderRadius: BorderRadius.circular(18),
                     onTap: _loadingProducts
                         ? null
-                        : () => _fetchProducts(page: _currentPage + 1, append: true),
+                        : () => _fetchProducts(
+                            page: _currentPage + 1, append: true),
                     child: Center(
                       child: _loadingProducts
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: _primary),
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: _primary),
                             )
                           : const Text(
                               'Load More',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _primary),
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: _primary),
                             ),
                     ),
                   ),
@@ -1342,24 +1492,28 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
       final created = item.createdAt;
       if (created == null) continue;
       final expiry = created.add(_reservationDuration);
-      if (earliest == null || expiry.isBefore(earliest.add(_reservationDuration))) {
+      if (earliest == null ||
+          expiry.isBefore(earliest.add(_reservationDuration))) {
         earliest = created;
       }
     }
     if (earliest == null) {
-      return const _ReservationInfo(display: '30:00', progress: 1.0, expired: false);
+      return const _ReservationInfo(
+          display: '30:00', progress: 1.0, expired: false);
     }
     final expiry = earliest.add(_reservationDuration);
     final remaining = expiry.difference(DateTime.now());
     if (remaining.isNegative) {
-      return const _ReservationInfo(display: '00:00', progress: 0.0, expired: true);
+      return const _ReservationInfo(
+          display: '00:00', progress: 0.0, expired: true);
     }
     final totalMs = _reservationDuration.inMilliseconds;
     final remainingMs = remaining.inMilliseconds;
     final minutes = remaining.inMinutes;
     final seconds = remaining.inSeconds % 60;
     return _ReservationInfo(
-      display: '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+      display:
+          '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
       progress: remainingMs / totalMs,
       expired: false,
     );
@@ -1369,7 +1523,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
     for (final item in _cartItems) {
       final created = item.createdAt;
       if (created == null) continue;
-      if (DateTime.now().isAfter(created.add(_reservationDuration))) return true;
+      if (DateTime.now().isAfter(created.add(_reservationDuration)))
+        return true;
     }
     return false;
   }
@@ -1384,15 +1539,18 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.shopping_cart_outlined, size: 48, color: _textSecondary.withValues(alpha: 0.5)),
+            Icon(Icons.shopping_cart_outlined,
+                size: 48, color: _textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 12),
-            const Text('Your cart is empty', style: TextStyle(fontSize: 14, color: _textSecondary)),
+            const Text('Your cart is empty',
+                style: TextStyle(fontSize: 14, color: _textSecondary)),
             const SizedBox(height: 16),
             GestureDetector(
               onTap: () => setState(() => _step = 'products'),
               child: const Text(
                 'Browse Diamonds',
-                style: TextStyle(fontSize: 13, color: _primary, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                    fontSize: 13, color: _primary, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -1421,7 +1579,9 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                           : [const Color(0xFF0A2A3B), const Color(0xFF0A1520)],
                     ),
                     border: Border.all(
-                      color: reservation.expired ? const Color(0xFF5C2020) : const Color(0xFF0067B8),
+                      color: reservation.expired
+                          ? const Color(0xFF5C2020)
+                          : const Color(0xFF0067B8),
                     ),
                   ),
                   child: Row(
@@ -1431,11 +1591,15 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              reservation.expired ? 'Reservation Expired' : 'Complete your payment',
+                              reservation.expired
+                                  ? 'Reservation Expired'
+                                  : 'Complete your payment',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: reservation.expired ? const Color(0xFFFF6B6B) : _accent,
+                                color: reservation.expired
+                                    ? const Color(0xFFFF6B6B)
+                                    : _accent,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -1446,7 +1610,9 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                               style: TextStyle(
                                 fontSize: 8,
                                 height: 1.4,
-                                color: reservation.expired ? const Color(0xFFFF9E9E) : _textSecondary,
+                                color: reservation.expired
+                                    ? const Color(0xFFFF9E9E)
+                                    : _textSecondary,
                               ),
                             ),
                           ],
@@ -1488,7 +1654,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                         setState(() {
                           _allSelected = !_allSelected;
                           if (_allSelected) {
-                            _selectedCartItemIds = _cartItems.map((i) => i.id).toSet();
+                            _selectedCartItemIds =
+                                _cartItems.map((i) => i.id).toSet();
                           } else {
                             _selectedCartItemIds.clear();
                           }
@@ -1502,13 +1669,17 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                color: _allSelected ? _primary : const Color(0xFF515151),
+                                color: _allSelected
+                                    ? _primary
+                                    : const Color(0xFF515151),
                                 width: 2,
                               ),
-                              color: _allSelected ? _primary : Colors.transparent,
+                              color:
+                                  _allSelected ? _primary : Colors.transparent,
                             ),
                             child: _allSelected
-                                ? const Icon(Icons.check, size: 10, color: Colors.white)
+                                ? const Icon(Icons.check,
+                                    size: 10, color: Colors.white)
                                 : null,
                           ),
                           const SizedBox(width: 8),
@@ -1526,7 +1697,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                     const Spacer(),
                     Text(
                       '${_selectedCartItemIds.length} of ${_cartItems.length} selected',
-                      style: const TextStyle(fontSize: 10, color: _textSecondary),
+                      style:
+                          const TextStyle(fontSize: 10, color: _textSecondary),
                     ),
                   ],
                 ),
@@ -1559,12 +1731,16 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
             children: [
               const Text(
                 'Total Payable',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _textSecondary),
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: _textSecondary),
               ),
               const Spacer(),
               Text(
                 '₹${_formatPrice(_selectedTotal)}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _accent),
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.w700, color: _accent),
               ),
             ],
           ),
@@ -1580,8 +1756,11 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
               borderRadius: BorderRadius.circular(30),
               gradient: anyExpired || _selectedCartItemIds.isEmpty
                   ? null
-                  : const LinearGradient(colors: [Color(0xFF006FC7), Color(0xFF00457C)]),
-              color: anyExpired || _selectedCartItemIds.isEmpty ? const Color(0xFF2A2A2A) : null,
+                  : const LinearGradient(
+                      colors: [Color(0xFF006FC7), Color(0xFF00457C)]),
+              color: anyExpired || _selectedCartItemIds.isEmpty
+                  ? const Color(0xFF2A2A2A)
+                  : null,
             ),
             child: Material(
               color: Colors.transparent,
@@ -1600,7 +1779,9 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: anyExpired || _selectedCartItemIds.isEmpty ? _textSecondary : Colors.white,
+                      color: anyExpired || _selectedCartItemIds.isEmpty
+                          ? _textSecondary
+                          : Colors.white,
                     ),
                   ),
                 ),
@@ -1615,8 +1796,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
   Widget _buildCartItemCard(DiamondCartItem item) {
     final isSelected = _selectedCartItemIds.contains(item.id);
     final created = item.createdAt;
-    final isExpired = created != null && DateTime.now().isAfter(created.add(_reservationDuration));
-    final imgUrl = item.imageUrl;
+    final isExpired = created != null &&
+        DateTime.now().isAfter(created.add(_reservationDuration));
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -1629,7 +1810,12 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
         ),
         color: const Color(0xFF26313B),
         boxShadow: isSelected && !isExpired
-            ? [BoxShadow(color: _primary.withValues(alpha: 0.25), blurRadius: 4, spreadRadius: 4)]
+            ? [
+                BoxShadow(
+                    color: _primary.withValues(alpha: 0.25),
+                    blurRadius: 4,
+                    spreadRadius: 4)
+              ]
             : null,
       ),
       child: Column(
@@ -1646,7 +1832,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                     } else {
                       _selectedCartItemIds.add(item.id);
                     }
-                    _allSelected = _selectedCartItemIds.length == _cartItems.length;
+                    _allSelected =
+                        _selectedCartItemIds.length == _cartItems.length;
                   });
                 },
                 child: Container(
@@ -1660,28 +1847,15 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                     ),
                     color: isSelected ? _primary : Colors.transparent,
                   ),
-                  child: isSelected ? const Icon(Icons.check, size: 12, color: Colors.white) : null,
+                  child: isSelected
+                      ? const Icon(Icons.check, size: 12, color: Colors.white)
+                      : null,
                 ),
               ),
               const SizedBox(width: 10),
 
               // Thumbnail
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: const Color(0xFF1A1A1A),
-                ),
-                child: imgUrl.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: imgUrl.contains('viewmydiamonds.com')
-                            ? const Center(child: Icon(Icons.diamond_outlined, size: 24, color: _accent))
-                            : Image.network(imgUrl, fit: BoxFit.cover),
-                      )
-                    : const Center(child: Icon(Icons.diamond_outlined, size: 24, color: Color(0xFF3E3E3E))),
-              ),
+              DiamondCartThumb(item: item, placeholderColor: _accent),
               const SizedBox(width: 10),
 
               // Details
@@ -1690,20 +1864,29 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.productName.isNotEmpty ? item.productName : 'Diamond',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                      item.productName.isNotEmpty
+                          ? item.productName
+                          : 'Diamond',
+                      style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Qty: ${item.quantity}',
-                      style: const TextStyle(fontSize: 9, color: Color(0xFF7E7E7E)),
+                      style: const TextStyle(
+                          fontSize: 9, color: Color(0xFF7E7E7E)),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '₹${item.unitPrice.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _accent),
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: _accent),
                     ),
                   ],
                 ),
@@ -1713,7 +1896,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
               GestureDetector(
                 onTap: () => _removeFromCart(item.id),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.redAccent.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -1766,11 +1950,15 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                   const SizedBox(width: 8),
                   const Text(
                     'Order Summary',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white),
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: _success.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
@@ -1780,7 +1968,11 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                       children: [
                         Icon(Icons.lock, size: 12, color: _success),
                         SizedBox(width: 4),
-                        Text('Secure', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _success)),
+                        Text('Secure',
+                            style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: _success)),
                       ],
                     ),
                   ),
@@ -1794,20 +1986,27 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                     children: [
                       Expanded(
                         child: Text(
-                          item.productName.isNotEmpty ? item.productName : 'Diamond',
-                          style: const TextStyle(fontSize: 11, color: _textSecondary),
+                          item.productName.isNotEmpty
+                              ? item.productName
+                              : 'Diamond',
+                          style: const TextStyle(
+                              fontSize: 11, color: _textSecondary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Text(
                         '×${item.quantity}',
-                        style: const TextStyle(fontSize: 11, color: _textSecondary),
+                        style: const TextStyle(
+                            fontSize: 11, color: _textSecondary),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '₹${item.unitPrice.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white),
                       ),
                     ],
                   ),
@@ -1816,11 +2015,18 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
               const Divider(color: _cardBorder, height: 16),
               Row(
                 children: [
-                  const Text('Total Payable', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                  const Text('Total Payable',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white)),
                   const Spacer(),
                   Text(
                     '₹${_formatPrice(_selectedTotal)}',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: _accent),
+                    style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: _accent),
                   ),
                 ],
               ),
@@ -1832,11 +2038,13 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
         // Pay Now card (matching gold/silver EmbeddedPaymentGateway style)
         _DiamondPayNowCard(
           amount: _selectedTotal,
-          items: _selectedCartItems.map((e) => {
-            'id': e.id,
-            'productId': e.productId,
-            'amount': e.unitPrice,
-          }).toList(),
+          items: _selectedCartItems
+              .map((e) => {
+                    'id': e.id,
+                    'productId': e.productId,
+                    'amount': e.unitPrice,
+                  })
+              .toList(),
           onPaymentStarted: () {
             if (mounted) setState(() => _step = 'processing');
           },
@@ -1874,7 +2082,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
           const SizedBox(height: 32),
           const Text(
             'Payment Processing',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -1901,8 +2110,10 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
     } catch (_) {}
 
     final paidAmount = paymentCtx['amount'] ?? _selectedTotal;
-    final orderRef = paymentCtx['merchantOrderRef'] ?? paymentCtx['sabbpeOrderId'] ?? 'N/A';
-    final diamondName = _cartItems.isNotEmpty ? _cartItems.first.productName : 'Diamond';
+    final orderRef =
+        paymentCtx['merchantOrderRef'] ?? paymentCtx['sabbpeOrderId'] ?? 'N/A';
+    final diamondName =
+        _cartItems.isNotEmpty ? _cartItems.first.productName : 'Diamond';
 
     return Center(
       child: SingleChildScrollView(
@@ -1928,12 +2139,16 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                   ),
                 ],
               ),
-              child: const Icon(Icons.check_rounded, size: 50, color: Colors.white),
+              child: const Icon(Icons.check_rounded,
+                  size: 50, color: Colors.white),
             ),
             const SizedBox(height: 24),
             const Text(
               'Payment Successful',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white),
             ),
             const SizedBox(height: 4),
             const Text(
@@ -1982,12 +2197,16 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                         child: InkWell(
                           borderRadius: BorderRadius.circular(30),
                           onTap: () {
-                            Navigator.of(context).popUntil((route) => route.isFirst);
+                            Navigator.of(context)
+                                .popUntil((route) => route.isFirst);
                           },
                           child: const Center(
                             child: Text(
                               'Go Home',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
                             ),
                           ),
                         ),
@@ -2002,7 +2221,8 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
-                        gradient: const LinearGradient(colors: [Color(0xFF0073CE), Color(0xFF004175)]),
+                        gradient: const LinearGradient(
+                            colors: [Color(0xFF0073CE), Color(0xFF004175)]),
                       ),
                       child: Material(
                         color: Colors.transparent,
@@ -2024,7 +2244,10 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                           child: const Center(
                             child: Text(
                               'Buy More',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
                             ),
                           ),
                         ),
@@ -2040,11 +2263,13 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
     );
   }
 
-  Widget _buildOrderDetailRow(String label, String value, {bool isStatus = false}) {
+  Widget _buildOrderDetailRow(String label, String value,
+      {bool isStatus = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF7E7E7E))),
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF7E7E7E))),
         isStatus
             ? Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -2054,10 +2279,17 @@ class _BuyDiamondsScreenState extends ConsumerState<BuyDiamondsScreen> with Sing
                 ),
                 child: Text(
                   value,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _success),
+                  style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: _success),
                 ),
               )
-            : Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+            : Text(value,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white)),
       ],
     );
   }
@@ -2104,11 +2336,31 @@ class _ConcentricRingsPainter extends CustomPainter {
     final maxRadius = size.width / 2;
 
     final rings = [
-      _RingConfig(radiusFraction: 1.0, color: const Color(0xFF3AC7FF), strokeWidth: 2, speed: 1.0),
-      _RingConfig(radiusFraction: 0.82, color: const Color(0xFF0084FF), strokeWidth: 2, speed: -0.8),
-      _RingConfig(radiusFraction: 0.64, color: const Color(0xFF3AC7FF), strokeWidth: 1.5, speed: 1.2),
-      _RingConfig(radiusFraction: 0.46, color: const Color(0xFF0084FF), strokeWidth: 1.5, speed: -1.0),
-      _RingConfig(radiusFraction: 0.28, color: const Color(0xFF3AC7FF), strokeWidth: 1, speed: 0.6),
+      _RingConfig(
+          radiusFraction: 1.0,
+          color: const Color(0xFF3AC7FF),
+          strokeWidth: 2,
+          speed: 1.0),
+      _RingConfig(
+          radiusFraction: 0.82,
+          color: const Color(0xFF0084FF),
+          strokeWidth: 2,
+          speed: -0.8),
+      _RingConfig(
+          radiusFraction: 0.64,
+          color: const Color(0xFF3AC7FF),
+          strokeWidth: 1.5,
+          speed: 1.2),
+      _RingConfig(
+          radiusFraction: 0.46,
+          color: const Color(0xFF0084FF),
+          strokeWidth: 1.5,
+          speed: -1.0),
+      _RingConfig(
+          radiusFraction: 0.28,
+          color: const Color(0xFF3AC7FF),
+          strokeWidth: 1,
+          speed: 0.6),
     ];
 
     for (final ring in rings) {
@@ -2146,7 +2398,8 @@ class _ConcentricRingsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_ConcentricRingsPainter oldDelegate) => oldDelegate.progress != progress;
+  bool shouldRepaint(_ConcentricRingsPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
 
 class _RingConfig {
@@ -2199,7 +2452,10 @@ class _DiamondPayNowCardState extends ConsumerState<_DiamondPayNowCard> {
   }
 
   Future<void> _startPayment() async {
-    setState(() { _loading = true; _error = ''; });
+    setState(() {
+      _loading = true;
+      _error = '';
+    });
 
     try {
       if (_clientId.isEmpty) throw Exception('Please login again');
@@ -2212,7 +2468,9 @@ class _DiamondPayNowCardState extends ConsumerState<_DiamondPayNowCard> {
       );
 
       if (response.paymentSessionId.isEmpty) {
-        throw Exception(response.message.isNotEmpty ? response.message : 'Payment session ID is missing');
+        throw Exception(response.message.isNotEmpty
+            ? response.message
+            : 'Payment session ID is missing');
       }
 
       await LocalStorageService.setDiamondPaymentContext(jsonEncode({
@@ -2220,7 +2478,9 @@ class _DiamondPayNowCardState extends ConsumerState<_DiamondPayNowCard> {
         'amount': widget.amount,
         'items': widget.items,
         'sabbpeOrderId': response.sabbpeOrderId,
-        'merchantOrderRef': response.merchantOrderId.isNotEmpty ? response.merchantOrderId : response.sabbpeOrderId,
+        'merchantOrderRef': response.merchantOrderId.isNotEmpty
+            ? response.merchantOrderId
+            : response.sabbpeOrderId,
       }));
 
       if (!mounted) return;
@@ -2229,12 +2489,17 @@ class _DiamondPayNowCardState extends ConsumerState<_DiamondPayNowCard> {
 
       context.go(AppRoutes.paymentGateway, extra: {
         'paymentSessionId': response.paymentSessionId,
-        'orderId': response.merchantOrderId.isNotEmpty ? response.merchantOrderId : response.sabbpeOrderId,
+        'orderId': response.merchantOrderId.isNotEmpty
+            ? response.merchantOrderId
+            : response.sabbpeOrderId,
         'amount': widget.amount,
       });
     } catch (e) {
       final msg = e.toString().replaceAll('Exception: ', '');
-      setState(() { _error = msg; _loading = false; });
+      setState(() {
+        _error = msg;
+        _loading = false;
+      });
       widget.onPaymentError(msg);
     }
   }
@@ -2255,21 +2520,33 @@ class _DiamondPayNowCardState extends ConsumerState<_DiamondPayNowCard> {
               Row(
                 children: [
                   Container(
-                    width: 44, height: 44,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
-                      gradient: const LinearGradient(colors: [_accent, _accentDark]),
-                      boxShadow: [BoxShadow(color: _accent.withValues(alpha: 0.25), blurRadius: 22)],
+                      gradient:
+                          const LinearGradient(colors: [_accent, _accentDark]),
+                      boxShadow: [
+                        BoxShadow(
+                            color: _accent.withValues(alpha: 0.25),
+                            blurRadius: 22)
+                      ],
                     ),
-                    child: const Icon(Icons.credit_card, size: 21, color: Colors.white),
+                    child: const Icon(Icons.credit_card,
+                        size: 21, color: Colors.white),
                   ),
                   const SizedBox(width: 12),
-                  const Text('Pay Now', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                  const Text('Pay Now',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white)),
                 ],
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: const Color(0xFF2E2E2E)),
@@ -2278,10 +2555,15 @@ class _DiamondPayNowCardState extends ConsumerState<_DiamondPayNowCard> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Amount payable', style: TextStyle(fontSize: 11, color: Color(0xFF7E7E7E))),
+                    const Text('Amount payable',
+                        style:
+                            TextStyle(fontSize: 11, color: Color(0xFF7E7E7E))),
                     Text(
                       '₹${widget.amount.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                   ],
                 ),
@@ -2298,20 +2580,28 @@ class _DiamondPayNowCardState extends ConsumerState<_DiamondPayNowCard> {
                   child: Row(
                     children: [
                       Container(
-                        width: 36, height: 36,
+                        width: 36,
+                        height: 36,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           color: const Color(0xFF3A1515),
                         ),
-                        child: const Icon(Icons.close, size: 17, color: Color(0xFFFF6B6B)),
+                        child: const Icon(Icons.close,
+                            size: 17, color: Color(0xFFFF6B6B)),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Payment could not start', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
-                            Text(_error, style: const TextStyle(fontSize: 10, color: Color(0xFFD8B8B8))),
+                            const Text('Payment could not start',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white)),
+                            Text(_error,
+                                style: const TextStyle(
+                                    fontSize: 10, color: Color(0xFFD8B8B8))),
                           ],
                         ),
                       ),
@@ -2326,7 +2616,8 @@ class _DiamondPayNowCardState extends ConsumerState<_DiamondPayNowCard> {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(15),
-                    gradient: const LinearGradient(colors: [_accent, _accentDark]),
+                    gradient:
+                        const LinearGradient(colors: [_accent, _accentDark]),
                   ),
                   child: Material(
                     color: Colors.transparent,
@@ -2335,13 +2626,22 @@ class _DiamondPayNowCardState extends ConsumerState<_DiamondPayNowCard> {
                       onTap: _loading ? null : _startPayment,
                       child: Center(
                         child: _loading
-                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.black))
                             : const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.check_circle, size: 17, color: Colors.black),
+                                  Icon(Icons.check_circle,
+                                      size: 17, color: Colors.black),
                                   SizedBox(width: 8),
-                                  Text('Pay Now', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                                  Text('Pay Now',
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white)),
                                 ],
                               ),
                       ),
@@ -2365,7 +2665,8 @@ class _DiamondPayNowCardState extends ConsumerState<_DiamondPayNowCard> {
             children: [
               Icon(Icons.shield, size: 12, color: Color(0xFF15EE01)),
               SizedBox(width: 6),
-              Text('Secure checkout powered by Cashfree', style: TextStyle(fontSize: 9, color: Color(0xFF7E7E7E))),
+              Text('Secure checkout powered by Cashfree',
+                  style: TextStyle(fontSize: 9, color: Color(0xFF7E7E7E))),
             ],
           ),
         ),
@@ -2454,7 +2755,8 @@ class _CartItemTimerState extends State<_CartItemTimer> {
   void initState() {
     super.initState();
     _calculateRemaining();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _calculateRemaining());
+    _timer = Timer.periodic(
+        const Duration(seconds: 1), (_) => _calculateRemaining());
   }
 
   void _calculateRemaining() {
@@ -2509,11 +2811,13 @@ class _CartItemTimerState extends State<_CartItemTimer> {
               width: 36,
               height: 36,
               child: CustomPaint(
-                painter: _ReservationTimerPainter(progress: progress, color: color),
+                painter:
+                    _ReservationTimerPainter(progress: progress, color: color),
                 child: Center(
                   child: Text(
                     '$minutes:${seconds.toString().padLeft(2, '0')}',
-                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: color),
+                    style: TextStyle(
+                        fontSize: 9, fontWeight: FontWeight.bold, color: color),
                   ),
                 ),
               ),
@@ -2526,12 +2830,14 @@ class _CartItemTimerState extends State<_CartItemTimer> {
           ] else ...[
             Text(
               'Reservation expired',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: color),
+              style: TextStyle(
+                  fontSize: 10, fontWeight: FontWeight.w500, color: color),
             ),
             const SizedBox(width: 4),
             Text(
               '\u00B7 Reserve again',
-              style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.7)),
+              style:
+                  TextStyle(fontSize: 10, color: color.withValues(alpha: 0.7)),
             ),
           ],
         ],

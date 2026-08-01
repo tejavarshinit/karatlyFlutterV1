@@ -36,7 +36,7 @@ class AmountSelector extends StatelessWidget {
                   color: isSelected
                       ? const Color(0xFFF7CD57).withOpacity(0.2)
                       : const Color(0xFF242320),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isSelected ? const Color(0xFFF7CD57) : const Color(0xFF3D3B37),
                   ),
@@ -72,15 +72,15 @@ class AmountSelector extends StatelessWidget {
             filled: true,
             fillColor: const Color(0xFF242320),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFF3D3B37)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFF3D3B37)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFF7CD57), width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -440,17 +441,24 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       children: [
         Container(color: Colors.black.withValues(alpha: 0.7)),
         Center(
-          child: Container(
+            child: Container(
             width: 358, padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(26),
               border: Border.all(color: const Color(0x4DF7CD57)),
               gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
                 colors: [Color(0xFF503B15), Color(0xFF1C1408), Color(0xFF080603)])),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Container(width: 56, height: 56,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(17),
-                  gradient: const LinearGradient(colors: [Color(0xFFFFE784), Color(0xFFC88912)])),
-                child: const Icon(Icons.shield, color: Color(0xFF11130F), size: 25)),
+              Stack(clipBehavior: Clip.none, children: [
+                Positioned(right: -48, top: -64,
+                  child: ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                    child: Container(width: 144, height: 144,
+                      decoration: BoxDecoration(shape: BoxShape.circle,
+                        color: const Color(0xFFF7CD57).withOpacity(0.15))))),
+                Container(width: 56, height: 56,
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(17),
+                    gradient: const LinearGradient(colors: [Color(0xFFFFE784), Color(0xFFC88912)])),
+                  child: const Icon(Icons.shield, color: Color(0xFF11130F), size: 25)),
+              ]),
               const SizedBox(height: 16),
               Row(mainAxisSize: MainAxisSize.min, children: [
                 Container(width: 6, height: 6, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFF7CD57))),

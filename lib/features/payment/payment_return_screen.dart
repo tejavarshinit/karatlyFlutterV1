@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../app/router.dart';
 import '../../core/api/augmont_api.dart';
@@ -32,6 +33,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
   String _flowType = 'DIGITAL_BUY';
   String _uniqueId = '';
   bool _isRedemption = false;
+  double? _purchaseAmount;
 
   @override
   void initState() {
@@ -53,6 +55,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
         _sku = ctx['sku']?.toString() ?? '';
         _flowType = ctx['flowType']?.toString() ?? 'DIGITAL_BUY';
         _isRedemption = _flowType == 'PHYSICAL_REDEMPTION' || _sku.isNotEmpty;
+        _purchaseAmount = num.tryParse(ctx['amount']?.toString() ?? '')?.toDouble();
       }
     } catch (_) {}
     _orderId = widget.orderId.isNotEmpty ? widget.orderId : _sabbpeOrderId;
@@ -62,7 +65,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
   }
 
   Future<void> _check() async {
-    debugPrint('[FLOW] PaymentReturnScreen._check | orderId=$_orderId uniqueId=$_uniqueId');
+    /* debugPrint('[FLOW] PaymentReturnScreen._check | orderId=$_orderId uniqueId=$_uniqueId'); */
     if (_orderId.isEmpty) {
       if (!mounted) return;
       setState(() { _loading = false; _message = 'No order ID found.'; });
@@ -85,7 +88,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
         final status = await api.checkPaymentStatus(_orderId);
         if (!mounted) return;
 
-        debugPrint('[FLOW] return check attempt=$attempt | paymentStatus=${status.paymentStatus} orderStatus=${status.orderStatus}');
+        /* debugPrint('[FLOW] return check attempt=$attempt | paymentStatus=${status.paymentStatus} orderStatus=${status.orderStatus}'); */
 
         final ps = status.paymentStatus.toUpperCase();
         final os = status.orderStatus.toUpperCase();
@@ -99,12 +102,12 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
       }
 
       if (!mounted) return;
-      debugPrint('[FLOW] final status after poll loop | success=$_success pending=$_pending raw=$_paymentStatusRaw');
+      /* debugPrint('[FLOW] final status after poll loop | success=$_success pending=$_pending raw=$_paymentStatusRaw'); */
       if (_success) {
-        debugPrint('[FLOW] status SUCCESS → calling _verifyWithAugmont');
+        /* debugPrint('[FLOW] status SUCCESS → calling _verifyWithAugmont'); */
         await _verifyWithAugmont();
       } else {
-        debugPrint('[FLOW] status NOT success → showing result message=${_buildStatusMessage()}');
+        /* debugPrint('[FLOW] status NOT success → showing result message=${_buildStatusMessage()}'); */
         setState(() {
           _loading = false;
           _statusCode = _paymentStatusRaw;
@@ -118,7 +121,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
   }
 
   Future<void> _verifyWithAugmont() async {
-    debugPrint('[FLOW] _verifyWithAugmont | orderRef=$_orderId uniqueId=$_uniqueId isRedemption=$_isRedemption');
+    /* debugPrint('[FLOW] _verifyWithAugmont | orderRef=$_orderId uniqueId=$_uniqueId isRedemption=$_isRedemption'); */
     final orderRef = _orderId;
     if (orderRef.isEmpty || _uniqueId.isEmpty) {
       setState(() {
@@ -141,7 +144,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
         orderReference: orderRef,
         uniqueId: _uniqueId,
       );
-      debugPrint('[FLOW] verifyPaymentDetails attempt=$attempt ok=${detailsRes['ok']} status=${detailsRes['status']}');
+      /* debugPrint('[FLOW] verifyPaymentDetails attempt=$attempt ok=${detailsRes['ok']} status=${detailsRes['status']}'); */
       if (!mounted) return;
       if (detailsRes['ok'] == true) break;
     }
@@ -150,7 +153,9 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
 
     if (detailsRes != null && detailsRes['ok'] == true) {
       final normalized = _normalizePaymentDetails(detailsRes);
-      debugPrint('[FLOW] payment details verified | normalizedStatus=${normalized['status']} amount=${normalized['amount']} qty=${normalized['quantity']}');
+      final apiAmount = normalized['amount'] as double?;
+      if (apiAmount != null && apiAmount > 0) _purchaseAmount = apiAmount;
+      /* debugPrint('[FLOW] payment details verified | normalizedStatus=${normalized['status']} amount=${normalized['amount']} qty=${normalized['quantity']}'); */
       await LocalStorageService.setMobilePaymentResult(jsonEncode(normalized));
 
       if (_isRedemption) {
@@ -158,7 +163,7 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
       }
 
       final normalizedStatus = (normalized['status'] ?? '').toString().toUpperCase();
-      debugPrint('[FLOW] final result | success=$_success pending=$_pending status=$_paymentStatusRaw');
+      /* debugPrint('[FLOW] final result | success=$_success pending=$_pending status=$_paymentStatusRaw'); */
       setState(() {
         _loading = false;
         _success = normalizedStatus == 'SUCCESS';
@@ -201,7 +206,15 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
 
       final txnId = (buyData['transactionId'] ?? buyData['txnId'] ?? buyData['transactionID'] ?? '').toString();
       final merchantTxnId = (buyData['merchantTransactionId'] ?? buyData['merchant_order_ref'] ?? details?['merchant_order_ref'] ?? _orderId).toString();
-      final amount = num.tryParse(buyData['amount']?.toString() ?? buyData['totalAmount']?.toString() ?? details?['amount']?.toString() ?? '')?.toDouble();
+      final rawAmount = buyData['amount']
+          ?? buyData['totalAmount']
+          ?? buyData['orderAmount']
+          ?? buyData['payableAmount']
+          ?? details?['amount']
+          ?? details?['totalAmount']
+          ?? details?['orderAmount']
+          ?? details?['payableAmount'];
+      final amount = num.tryParse(rawAmount?.toString() ?? '')?.toDouble();
       final quantity = num.tryParse(buyData['quantity']?.toString() ?? '')?.toDouble();
       final rate = num.tryParse(buyData['rate']?.toString() ?? details?['rate']?.toString() ?? '')?.toDouble();
 
@@ -284,7 +297,13 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
   }
 
   String _getStatusTitle() {
-    if (_success) return 'Payment Successful!';
+    if (_success) {
+      if (_purchaseAmount != null && _purchaseAmount! > 0) {
+        final formatted = NumberFormat.currency(symbol: 'Rs.', locale: 'en_IN', decimalDigits: 0).format(_purchaseAmount);
+        return 'Purchase of $formatted Successful!';
+      }
+      return 'Payment Successful!';
+    }
     if (_paymentStatusRaw == 'USER_DROPPED') return 'Payment Incomplete';
     if (_pending) return 'Payment Pending';
     return 'Payment Failed';
@@ -364,8 +383,8 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: (_success ? _accent : const Color(0xFFB80101)).withValues(alpha: 0.4),
-                          blurRadius: 80, spreadRadius: 8,
+                          color: (_success ? _accent : const Color(0xFFB80101)).withValues(alpha: 0.18),
+                          blurRadius: 40, spreadRadius: 0,
                         ),
                       ],
                     ),

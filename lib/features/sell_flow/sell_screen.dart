@@ -363,7 +363,7 @@ class _SellScreenState extends ConsumerState<SellScreen> {
   Widget build(BuildContext context) {
     ref.watch(rateProvider);
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF1A1918),
       body: Align(
         alignment: Alignment.bottomCenter,
         child: Container(
@@ -619,7 +619,7 @@ class _SellScreenState extends ConsumerState<SellScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: borderColor, width: 1),
         gradient: cardBg,
       ),
@@ -1488,9 +1488,9 @@ class _SellScreenState extends ConsumerState<SellScreen> {
                     ),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.gold.withOpacity(0.4),
-                  blurRadius: 30,
-                  spreadRadius: 10,
+                  color: AppTheme.gold.withOpacity(0.18),
+                  blurRadius: 40,
+                  spreadRadius: 0,
                 ),
               ],
             ),

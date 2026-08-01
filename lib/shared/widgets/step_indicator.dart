@@ -27,11 +27,12 @@ class StepIndicator extends StatelessWidget {
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isActive
-                    ? const Color(0xFFF7CD57)
+                gradient: isActive
+                    ? const LinearGradient(colors: [Color(0xFFF7CD57), Color(0xFFB57F23)])
                     : isCompleted
-                        ? const Color(0xFFF7CD57)
-                        : const Color(0xFF2E2D2A),
+                        ? null
+                        : null,
+                color: isCompleted ? const Color(0xFF3D3B37) : null,
                 border: isActive || isCompleted
                     ? null
                     : Border.all(color: const Color(0xFF3D3B37)),

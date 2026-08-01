@@ -24,7 +24,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    debugPrint('[FLOW] DashboardScreen.initState | fetching investment + orders');
+    /* debugPrint('[FLOW] DashboardScreen.initState | fetching investment + orders'); */
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(homeProvider.notifier).fetchInvestmentData();
       ref.read(ordersProvider.notifier).fetchAllOrders();
@@ -57,7 +57,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final portfolioValue = goldValue + silverValue;
     final totalInvested = investment.totalInvested;
 
-    debugPrint('[FLOW] Dashboard build | goldHoldings=${investment.goldHoldingWithMultiplier} silverHoldings=${investment.silverHoldingWithMultiplier} goldRate=$goldRate silverRate=$silverRate portfolioValue=$portfolioValue');
+    /* debugPrint('[FLOW] Dashboard build | goldHoldings=${investment.goldHoldingWithMultiplier} silverHoldings=${investment.silverHoldingWithMultiplier} goldRate=$goldRate silverRate=$silverRate portfolioValue=$portfolioValue'); */
 
     final recentOrders = orders.orders.take(3).toList();
 
@@ -748,6 +748,7 @@ class _AnimatedLiveRatePillState extends State<_AnimatedLiveRatePill> with Ticke
                 boxShadow: [BoxShadow(color: (isGold ? const Color(0xFFF7CD57) : const Color(0xFFC6CDD7)).withValues(alpha: 0.1), blurRadius: 22)],
               ),
               child: Stack(
+                alignment: Alignment.center,
                 children: [
                   // Shimmer sweep
                   Positioned(

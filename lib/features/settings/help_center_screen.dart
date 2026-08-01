@@ -358,7 +358,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                               AnimatedRotation(
                                 turns: isOpen ? 0.5 : 0,
                                 duration: const Duration(milliseconds: 200),
-                                child: const Icon(Icons.chevron_left, color: Color(0xFFBCBCBC), size: 16),
+                                child: const Icon(Icons.expand_more, color: Color(0xFFBCBCBC), size: 16),
                               ),
                             ],
                           ),

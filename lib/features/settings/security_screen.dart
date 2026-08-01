@@ -65,12 +65,34 @@ class SecurityScreen extends ConsumerWidget {
                 title: 'Active Session',
                 subtitle: 'You are logged in on this device',
                 badge: const _Badge(label: 'Active', color: Color(0xFF15EE01), bg: Color(0xFF032101)),
-              ),
-              const SizedBox(height: 12),
-              _securityCard(
-                icon: Icons.access_time,
-                title: 'Session Policy',
-                subtitle: 'One active session per account',
+                bottomChild: Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    const Divider(color: Color(0xFF2E2E2E), height: 1),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF202326)),
+                          child: const Icon(Icons.access_time, color: Color(0xFFF7CD57), size: 18),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Session Policy', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                              SizedBox(height: 4),
+                              Text('One active session per account', style: TextStyle(color: Color(0xFF7E7E7E), fontSize: 10)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 28),
               GestureDetector(
@@ -129,7 +151,7 @@ class SecurityScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: const Color(0xFF1D170D),
-                border: Border.all(color: const Color(0xFF7388A5)),
+                border: Border.all(color: const Color(0xFFE8B438)),
               ),
             child: Stack(
               alignment: Alignment.center,
@@ -160,6 +182,7 @@ class SecurityScreen extends ConsumerWidget {
     required String title,
     required String subtitle,
     _Badge? badge,
+    Widget? bottomChild,
   }) {
     return Container(
       width: double.infinity,
@@ -169,45 +192,50 @@ class SecurityScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFF2E2E2E)),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF202326)),
-            child: Icon(icon, color: const Color(0xFFF7CD57), size: 18),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Row(
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF202326)),
+                child: Icon(icon, color: const Color(0xFFF7CD57), size: 18),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(subtitle, style: const TextStyle(color: Color(0xFF7E7E7E), fontSize: 10)),
+                    Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(subtitle, style: const TextStyle(color: Color(0xFF7E7E7E), fontSize: 10)),
+                        ),
+                        if (badge != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: badge.bg.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              badge.label,
+                              style: TextStyle(color: badge.color, fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                    if (badge != null) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: badge.bg.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          badge.label,
-                          style: TextStyle(color: badge.color, fontSize: 11, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+          if (bottomChild != null) bottomChild,
         ],
       ),
     );

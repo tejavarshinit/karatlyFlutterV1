@@ -39,7 +39,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
     final isSilver = market.metalType == 'silver';
 
     final accentColor = isSilver ? Colors.white : const Color(0xFFF7CD57);
-    final borderColor = isSilver ? const Color(0xFF7388A5) : const Color(0xFFB28A3B);
+    final borderColor = isSilver ? const Color(0xFF7388A5) : const Color(0xFF8E742F);
     final panelBg = isSilver ? const Color(0xFF111821) : const Color(0xFF1A1710);
 
     final goldBuyPrice = rateState.currentRate?.buyPrice ?? 0;
@@ -235,7 +235,10 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: isSelected ? accentColor : Colors.transparent,
+          gradient: isSelected
+              ? const LinearGradient(colors: [Color(0xFFFED55C), Color(0xFFDA9500)])
+              : null,
+          color: isSelected ? null : Colors.transparent,
           borderRadius: BorderRadius.circular(28),
         ),
         alignment: Alignment.center,

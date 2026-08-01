@@ -13,12 +13,16 @@ class DiamondViewerModal extends StatefulWidget {
 
 class _DiamondViewerModalState extends State<DiamondViewerModal> {
   late String _viewType;
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
     _viewType = 'diamond-viewer-${DateTime.now().millisecondsSinceEpoch}';
     DiamondIframeHelper.register(_viewType, widget.url);
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _loading = false);
+    });
   }
 
   @override
@@ -29,6 +33,16 @@ class _DiamondViewerModalState extends State<DiamondViewerModal> {
       child: Stack(
         children: [
           DiamondIframeWidget(viewType: _viewType, url: widget.url),
+          if (_loading)
+            const Positioned.fill(
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFFF7CD57),
+                  strokeWidth: 2,
+                  backgroundColor: Color(0xFF2E2E2E),
+                ),
+              ),
+            ),
           Positioned(
             top: 16,
             left: 16,

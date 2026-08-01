@@ -42,7 +42,7 @@ class HowItWorksScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 ..._steps.map((step) => Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.only(bottom: 24),
                   child: _buildStepCard(step),
                 )),
                 const SizedBox(height: 32),
@@ -117,29 +117,21 @@ class HowItWorksScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: const Color(0xFF2E2E2E)),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
             children: [
               Container(
                 width: 48,
                 height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7CD57),
-                  borderRadius: BorderRadius.circular(12),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(colors: [Color(0xFFEAB308), Color(0xFFCA8A04)]),
                 ),
                 child: Icon(step.icon, color: Colors.black, size: 24),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(step.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-                    const SizedBox(height: 8),
-                    Text(step.description, style: const TextStyle(fontSize: 12, color: Color(0xFF9E9E9E), height: 1.5)),
-                  ],
-                ),
-              ),
+              const SizedBox(height: 16),
+              Text(step.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white), textAlign: TextAlign.center),
+              const SizedBox(height: 8),
+              Text(step.description, style: const TextStyle(fontSize: 12, color: Color(0xFF9E9E9E), height: 1.5), textAlign: TextAlign.center),
             ],
           ),
         ),
@@ -148,7 +140,7 @@ class HowItWorksScreen extends StatelessWidget {
           top: 16,
           child: Text(
             step.number,
-            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF2E2E2E)),
+            style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Color(0x4D2E2E2E)),
           ),
         ),
       ],

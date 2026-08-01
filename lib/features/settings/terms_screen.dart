@@ -40,18 +40,22 @@ class TermsScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
+                height: 325,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0F1416),
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFF2E2E2E)),
                 ),
-                child: Text(
-                  _termsText,
-                  style: const TextStyle(
-                    color: Color(0xFFBFBFBF),
-                    fontSize: 12,
-                    height: 1.6,
-                    decoration: TextDecoration.none,
+                child: SingleChildScrollView(
+                  child: Text(
+                    _termsText,
+                    style: const TextStyle(
+                      color: Color(0xFFBFBFBF),
+                      fontSize: 12,
+                      height: 1.6,
+                      decoration: TextDecoration.none,
+                    ),
                   ),
                 ),
               ),
@@ -70,7 +74,7 @@ class TermsScreen extends StatelessWidget {
         Row(
           children: [
             GestureDetector(
-              onTap: () => context.go(AppRoutes.dashboard),
+              onTap: () => context.go(AppRoutes.profile),
               child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
             ),
             const SizedBox(width: 8),
@@ -109,7 +113,11 @@ class TermsScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1416),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A1710), Color(0xFF0D0902)],
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFF2E2E2E)),
       ),
@@ -120,12 +128,16 @@ class TermsScreen extends StatelessWidget {
             height: 60,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFF202326),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFF7CD57), Color(0xFFB98324)],
+              ),
             ),
             alignment: Alignment.center,
             child: const Text(
-              'K',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFF7CD57), letterSpacing: 0.5),
+              'KARATLY',
+              style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.black, letterSpacing: 0.5),
             ),
           ),
           const SizedBox(width: 16),

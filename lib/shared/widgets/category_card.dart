@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'glow_backdrop.dart';
 
 class CategoryCard extends StatelessWidget {
   final String name;
@@ -20,13 +21,18 @@ class CategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF242320),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF3D3B37)),
-        ),
+      child: GlowBackdrop(
+        clipBehavior: Clip.none,
+        glows: const [
+          GlowConfig(right: -8, top: -8, size: 80, color: Color(0xFFF7CD57), opacity: 0.05, blurSigma: 20),
+        ],
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF242320),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFF3D3B37)),
+          ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -47,7 +53,7 @@ class CategoryCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF7CD57).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(color: const Color(0xFFF7CD57).withOpacity(0.2)),
                   ),
                   child: Text(
@@ -78,6 +84,7 @@ class CategoryCard extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

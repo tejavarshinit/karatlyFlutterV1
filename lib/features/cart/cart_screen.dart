@@ -11,6 +11,7 @@ import '../../core/api/diamond_api.dart';
 import '../../core/models/diamond_model.dart';
 import '../../core/services/rate_provider.dart';
 import '../../core/storage/local_storage.dart';
+import '../diamond_flow/widgets/diamond_cart_thumb.dart';
 
 class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key});
@@ -24,6 +25,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   Set<String> _selectedCartItemIds = {};
   bool _loading = true;
   bool _paying = false;
+  Timer? _bannerTimer;
   String _payError = '';
 
   static const Duration _reservationDuration = Duration(minutes: 30);
@@ -36,6 +38,15 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   void initState() {
     super.initState();
     _fetchCart();
+    _bannerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _bannerTimer?.cancel();
+    super.dispose();
   }
 
   DiamondApi _diamondApi() {
@@ -99,24 +110,28 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       final created = item.createdAt;
       if (created == null) continue;
       final expiry = created.add(_reservationDuration);
-      if (earliest == null || expiry.isBefore(earliest.add(_reservationDuration))) {
+      if (earliest == null ||
+          expiry.isBefore(earliest.add(_reservationDuration))) {
         earliest = created;
       }
     }
     if (earliest == null) {
-      return const _ReservationInfo(display: '30:00', progress: 1.0, expired: false);
+      return const _ReservationInfo(
+          display: '30:00', progress: 1.0, expired: false);
     }
     final expiry = earliest.add(_reservationDuration);
     final remaining = expiry.difference(DateTime.now());
     if (remaining.isNegative) {
-      return const _ReservationInfo(display: '00:00', progress: 0.0, expired: true);
+      return const _ReservationInfo(
+          display: '00:00', progress: 0.0, expired: true);
     }
     final totalMs = _reservationDuration.inMilliseconds;
     final remainingMs = remaining.inMilliseconds;
     final minutes = remaining.inMinutes;
     final seconds = remaining.inSeconds % 60;
     return _ReservationInfo(
-      display: '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+      display:
+          '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
       progress: remainingMs / totalMs,
       expired: false,
     );
@@ -126,7 +141,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     for (final item in _cartItems) {
       final created = item.createdAt;
       if (created == null) continue;
-      if (DateTime.now().isAfter(created.add(_reservationDuration))) return true;
+      if (DateTime.now().isAfter(created.add(_reservationDuration)))
+        return true;
     }
     return false;
   }
@@ -157,17 +173,23 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
   Future<void> _proceedToPay() async {
     if (_selectedCartItemIds.isEmpty || _paying) return;
-    setState(() { _paying = true; _payError = ''; });
+    setState(() {
+      _paying = true;
+      _payError = '';
+    });
     try {
       final clientId = LocalStorageService.getDiamondClientId() ?? '';
       if (clientId.isEmpty) throw Exception('Please login again');
 
-      final selectedItems = _cartItems.where((i) => _selectedCartItemIds.contains(i.id)).toList();
-      final items = selectedItems.map((e) => {
-        'id': e.id,
-        'productId': e.productId,
-        'amount': e.unitPrice,
-      }).toList();
+      final selectedItems =
+          _cartItems.where((i) => _selectedCartItemIds.contains(i.id)).toList();
+      final items = selectedItems
+          .map((e) => {
+                'id': e.id,
+                'productId': e.productId,
+                'amount': e.unitPrice,
+              })
+          .toList();
 
       final api = CashfreeApi(ref.read(augmontDioProvider));
       final response = await api.createDiamondPayment(
@@ -177,7 +199,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       );
 
       if (response.paymentSessionId.isEmpty) {
-        throw Exception(response.message.isNotEmpty ? response.message : 'Payment session ID is missing');
+        throw Exception(response.message.isNotEmpty
+            ? response.message
+            : 'Payment session ID is missing');
       }
 
       await LocalStorageService.setDiamondPaymentContext(jsonEncode({
@@ -185,18 +209,26 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         'amount': _selectedTotal,
         'items': items,
         'sabbpeOrderId': response.sabbpeOrderId,
-        'merchantOrderRef': response.merchantOrderId.isNotEmpty ? response.merchantOrderId : response.sabbpeOrderId,
+        'merchantOrderRef': response.merchantOrderId.isNotEmpty
+            ? response.merchantOrderId
+            : response.sabbpeOrderId,
       }));
 
       if (!mounted) return;
       context.go(AppRoutes.paymentGateway, extra: {
         'paymentSessionId': response.paymentSessionId,
-        'orderId': response.merchantOrderId.isNotEmpty ? response.merchantOrderId : response.sabbpeOrderId,
+        'orderId': response.merchantOrderId.isNotEmpty
+            ? response.merchantOrderId
+            : response.sabbpeOrderId,
         'amount': _selectedTotal,
       });
     } catch (e) {
       final msg = e.toString().replaceAll('Exception: ', '');
-      if (mounted) setState(() { _payError = msg; _paying = false; });
+      if (mounted)
+        setState(() {
+          _payError = msg;
+          _paying = false;
+        });
     }
   }
 
@@ -222,12 +254,16 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   children: [
                     GestureDetector(
                       onTap: () => context.go(AppRoutes.home),
-                      child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+                      child: const Icon(Icons.arrow_back_ios_new_rounded,
+                          color: Colors.white, size: 18),
                     ),
                     const SizedBox(width: 12),
                     const Text(
                       'Your Cart',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white),
                     ),
                   ],
                 ),
@@ -237,7 +273,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               // Content
               Expanded(
                 child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: _primary))
+                    ? const Center(
+                        child: CircularProgressIndicator(color: _primary))
                     : _cartItems.isEmpty
                         ? _buildEmptyState()
                         : _buildCartContent(),
@@ -256,15 +293,18 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.shopping_cart_outlined, size: 48, color: _textSecondary.withValues(alpha: 0.5)),
+            Icon(Icons.shopping_cart_outlined,
+                size: 48, color: _textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 12),
-            const Text('Your cart is empty', style: TextStyle(fontSize: 14, color: _textSecondary)),
+            const Text('Your cart is empty',
+                style: TextStyle(fontSize: 14, color: _textSecondary)),
             const SizedBox(height: 16),
             GestureDetector(
               onTap: () => context.go(AppRoutes.buyDiamonds),
               child: const Text(
                 'Browse Diamonds',
-                style: TextStyle(fontSize: 13, color: _primary, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                    fontSize: 13, color: _primary, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -296,7 +336,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                           : [const Color(0xFF0A2A3B), const Color(0xFF0A1520)],
                     ),
                     border: Border.all(
-                      color: reservation.expired ? const Color(0xFF5C2020) : const Color(0xFF0067B8),
+                      color: reservation.expired
+                          ? const Color(0xFF5C2020)
+                          : const Color(0xFF0067B8),
                     ),
                   ),
                   child: Row(
@@ -306,11 +348,15 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              reservation.expired ? 'Reservation Expired' : 'Complete your payment',
+                              reservation.expired
+                                  ? 'Reservation Expired'
+                                  : 'Complete your payment',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: reservation.expired ? const Color(0xFFFF6B6B) : _accent,
+                                color: reservation.expired
+                                    ? const Color(0xFFFF6B6B)
+                                    : _accent,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -321,7 +367,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               style: TextStyle(
                                 fontSize: 8,
                                 height: 1.4,
-                                color: reservation.expired ? const Color(0xFFFF9E9E) : _textSecondary,
+                                color: reservation.expired
+                                    ? const Color(0xFFFF9E9E)
+                                    : _textSecondary,
                               ),
                             ),
                           ],
@@ -364,7 +412,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                           if (_allSelected) {
                             _selectedCartItemIds.clear();
                           } else {
-                            _selectedCartItemIds = _cartItems.map((i) => i.id).toSet();
+                            _selectedCartItemIds =
+                                _cartItems.map((i) => i.id).toSet();
                           }
                         });
                       },
@@ -376,19 +425,26 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                color: _allSelected ? _primary : const Color(0xFF515151),
+                                color: _allSelected
+                                    ? _primary
+                                    : const Color(0xFF515151),
                                 width: 2,
                               ),
-                              color: _allSelected ? _primary : Colors.transparent,
+                              color:
+                                  _allSelected ? _primary : Colors.transparent,
                             ),
                             child: _allSelected
-                                ? const Icon(Icons.check, size: 10, color: Colors.white)
+                                ? const Icon(Icons.check,
+                                    size: 10, color: Colors.white)
                                 : null,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             _allSelected ? 'Deselect All' : 'Select All',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: _primary),
+                            style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: _primary),
                           ),
                         ],
                       ),
@@ -396,7 +452,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     const Spacer(),
                     Text(
                       '${_selectedCartItemIds.length} of ${_cartItems.length} selected',
-                      style: const TextStyle(fontSize: 10, color: _textSecondary),
+                      style:
+                          const TextStyle(fontSize: 10, color: _textSecondary),
                     ),
                   ],
                 ),
@@ -423,7 +480,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             children: [
               // Total Payable
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: _cardBorder),
@@ -433,12 +491,18 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   children: [
                     const Text(
                       'Total Payable',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: _textSecondary),
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: _textSecondary),
                     ),
                     const Spacer(),
                     Text(
                       '₹${_formatPrice(_selectedTotal)}',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _accent),
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: _accent),
                     ),
                   ],
                 ),
@@ -447,7 +511,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               if (_payError.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(_payError, style: const TextStyle(fontSize: 11, color: Colors.redAccent), textAlign: TextAlign.center),
+                  child: Text(_payError,
+                      style: const TextStyle(
+                          fontSize: 11, color: Colors.redAccent),
+                      textAlign: TextAlign.center),
                 ),
               // Proceed to Pay button
               SizedBox(
@@ -456,10 +523,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(30),
-                    gradient: anyExpired || _selectedCartItemIds.isEmpty || _paying
-                        ? null
-                        : const LinearGradient(colors: [Color(0xFF006FC7), Color(0xFF00457C)]),
-                    color: anyExpired || _selectedCartItemIds.isEmpty || _paying ? const Color(0xFF2A2A2A) : null,
+                    gradient:
+                        anyExpired || _selectedCartItemIds.isEmpty || _paying
+                            ? null
+                            : const LinearGradient(
+                                colors: [Color(0xFF006FC7), Color(0xFF00457C)]),
+                    color: anyExpired || _selectedCartItemIds.isEmpty || _paying
+                        ? const Color(0xFF2A2A2A)
+                        : null,
                   ),
                   child: Material(
                     color: Colors.transparent,
@@ -472,7 +543,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               : _proceedToPay,
                       child: Center(
                         child: _paying
-                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white))
                             : Text(
                                 anyExpired
                                     ? 'Reserve Again'
@@ -480,7 +555,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: anyExpired || _selectedCartItemIds.isEmpty ? _textSecondary : Colors.white,
+                                  color:
+                                      anyExpired || _selectedCartItemIds.isEmpty
+                                          ? _textSecondary
+                                          : Colors.white,
                                 ),
                               ),
                       ),
@@ -498,8 +576,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   Widget _buildCartItemCard(DiamondCartItem item) {
     final isSelected = _selectedCartItemIds.contains(item.id);
     final created = item.createdAt;
-    final isExpired = created != null && DateTime.now().isAfter(created.add(_reservationDuration));
-    final imgUrl = item.imageUrl;
+    final isExpired = created != null &&
+        DateTime.now().isAfter(created.add(_reservationDuration));
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -512,7 +590,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         ),
         color: const Color(0xFF26313B),
         boxShadow: isSelected && !isExpired
-            ? [BoxShadow(color: _primary.withValues(alpha: 0.25), blurRadius: 4, spreadRadius: 4)]
+            ? [
+                BoxShadow(
+                    color: _primary.withValues(alpha: 0.25),
+                    blurRadius: 4,
+                    spreadRadius: 4)
+              ]
             : null,
       ),
       child: Column(
@@ -542,28 +625,15 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     ),
                     color: isSelected ? _primary : Colors.transparent,
                   ),
-                  child: isSelected ? const Icon(Icons.check, size: 12, color: Colors.white) : null,
+                  child: isSelected
+                      ? const Icon(Icons.check, size: 12, color: Colors.white)
+                      : null,
                 ),
               ),
               const SizedBox(width: 10),
 
               // Thumbnail
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: const Color(0xFF1A1A1A),
-                ),
-                child: imgUrl.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: imgUrl.contains('viewmydiamonds.com')
-                            ? const Center(child: Icon(Icons.diamond_outlined, size: 24, color: _accent))
-                            : Image.network(imgUrl, fit: BoxFit.cover),
-                      )
-                    : const Center(child: Icon(Icons.diamond_outlined, size: 24, color: Color(0xFF3E3E3E))),
-              ),
+              DiamondCartThumb(item: item, placeholderColor: _accent),
               const SizedBox(width: 10),
 
               // Details
@@ -572,20 +642,29 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.productName.isNotEmpty ? item.productName : 'Diamond',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                      item.productName.isNotEmpty
+                          ? item.productName
+                          : 'Diamond',
+                      style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Qty: ${item.quantity}',
-                      style: const TextStyle(fontSize: 9, color: Color(0xFF7E7E7E)),
+                      style: const TextStyle(
+                          fontSize: 9, color: Color(0xFF7E7E7E)),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '₹${item.unitPrice.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _accent),
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: _accent),
                     ),
                   ],
                 ),
@@ -595,7 +674,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               GestureDetector(
                 onTap: () => _removeFromCart(item.id),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.redAccent.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -697,7 +777,8 @@ class _CartItemTimerState extends State<_CartItemTimer> {
   void initState() {
     super.initState();
     _calculateRemaining();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _calculateRemaining());
+    _timer = Timer.periodic(
+        const Duration(seconds: 1), (_) => _calculateRemaining());
   }
 
   void _calculateRemaining() {
@@ -752,11 +833,13 @@ class _CartItemTimerState extends State<_CartItemTimer> {
               width: 36,
               height: 36,
               child: CustomPaint(
-                painter: _ReservationTimerPainter(progress: progress, color: color),
+                painter:
+                    _ReservationTimerPainter(progress: progress, color: color),
                 child: Center(
                   child: Text(
                     '$minutes:${seconds.toString().padLeft(2, '0')}',
-                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: color),
+                    style: TextStyle(
+                        fontSize: 9, fontWeight: FontWeight.bold, color: color),
                   ),
                 ),
               ),
@@ -769,12 +852,14 @@ class _CartItemTimerState extends State<_CartItemTimer> {
           ] else ...[
             Text(
               'Reservation expired',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: color),
+              style: TextStyle(
+                  fontSize: 10, fontWeight: FontWeight.w500, color: color),
             ),
             const SizedBox(width: 4),
             Text(
               '\u00B7 Reserve again',
-              style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.7)),
+              style:
+                  TextStyle(fontSize: 10, color: color.withValues(alpha: 0.7)),
             ),
           ],
         ],

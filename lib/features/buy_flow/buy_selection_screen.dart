@@ -22,7 +22,7 @@ class BuySelectionScreen extends ConsumerWidget {
     final isSilver = _isSilver;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF1A1918),
       body: Container(
         constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height * 0.86),
         decoration: BoxDecoration(
@@ -205,10 +205,10 @@ class BuySelectionScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+             ],
+           ),
+         ),
+       ),
+     );
+   }
 }

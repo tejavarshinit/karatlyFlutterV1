@@ -30,11 +30,14 @@ class BuyScreen extends ConsumerStatefulWidget {
   ConsumerState<BuyScreen> createState() => _BuyScreenState();
 }
 
-class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateMixin {
+class _BuyScreenState extends ConsumerState<BuyScreen>
+    with TickerProviderStateMixin {
   // Flow state
   String _mode = 'amount';
-  final TextEditingController _amountController = TextEditingController(text: '');
-  final TextEditingController _weightController = TextEditingController(text: '');
+  final TextEditingController _amountController =
+      TextEditingController(text: '');
+  final TextEditingController _weightController =
+      TextEditingController(text: '');
   int _itemCount = 1;
 
   // Stored values from previous steps (restored from GoldFlowProvider)
@@ -54,7 +57,8 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 350));
+    _shakeController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 350));
     _shakeAnimation = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 0, end: -4), weight: 1),
       TweenSequenceItem(tween: Tween(begin: -4, end: 4), weight: 1),
@@ -62,7 +66,8 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
       TweenSequenceItem(tween: Tween(begin: -4, end: 4), weight: 1),
       TweenSequenceItem(tween: Tween(begin: 4, end: 0), weight: 1),
     ]).animate(_shakeController);
-    _wiggleController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _wiggleController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 600));
     if (widget.step == 1) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) ref.read(kycLimitProvider.notifier).fetchKycLimit();
@@ -103,12 +108,18 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
       final weight = double.tryParse(_weightController.text) ?? 0;
       return MoneyHelper.truncateMoney(weight * liveRate);
     }
-    return MoneyHelper.truncateMoney(double.tryParse(_amountController.text) ?? 0);
+    return MoneyHelper.truncateMoney(
+        double.tryParse(_amountController.text) ?? 0);
   }
 
-  double get _amount => _hasStoredValues ? _storedPreTaxAmount : MoneyHelper.truncateMoney(_baseAmount * _itemCount);
-  double get _gst => _hasStoredValues ? _storedGst : MoneyHelper.truncateMoney(_amount * 0.03);
-  double get _payableNow => _hasStoredValues ? _storedTotalPaid : MoneyHelper.truncateMoney(_amount + _gst);
+  double get _amount => _hasStoredValues
+      ? _storedPreTaxAmount
+      : MoneyHelper.truncateMoney(_baseAmount * _itemCount);
+  double get _gst =>
+      _hasStoredValues ? _storedGst : MoneyHelper.truncateMoney(_amount * 0.03);
+  double get _payableNow => _hasStoredValues
+      ? _storedTotalPaid
+      : MoneyHelper.truncateMoney(_amount + _gst);
   double get _quantity {
     if (_hasStoredValues) return _storedGrams;
     final liveRate = _getLiveRate();
@@ -117,14 +128,16 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
 
   String _resolveUniqueId() {
     final storedUniqueId = LocalStorageService.getUserUniqueId();
-    if (storedUniqueId != null && storedUniqueId.isNotEmpty) return storedUniqueId;
+    if (storedUniqueId != null && storedUniqueId.isNotEmpty)
+      return storedUniqueId;
     final profile = LocalStorageService.getUserProfile() ?? {};
     final uniqueId = profile['uniqueId']?.toString();
     if (uniqueId != null && uniqueId.isNotEmpty) return uniqueId;
     final phone = LocalStorageService.getUserPhone();
     if (phone != null && phone.isNotEmpty) {
       final dob = profile['dateOfBirth']?.toString() ?? '';
-      return UniqueIdHelper.buildMobileDobUniqueId(mobileNumber: phone, dateOfBirth: dob);
+      return UniqueIdHelper.buildMobileDobUniqueId(
+          mobileNumber: phone, dateOfBirth: dob);
     }
     return '';
   }
@@ -141,7 +154,9 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
   void _onAmountChanged(String value) {
     final parsed = double.tryParse(value) ?? 0;
     final state = ref.read(kycLimitProvider);
-    final exceeded = !state.isKycVerified && parsed > 0 && parsed > state.remainingLimitPreTax;
+    final exceeded = !state.isKycVerified &&
+        parsed > 0 &&
+        parsed > state.remainingLimitPreTax;
     setState(() {
       _kycLimitExceeded = exceeded;
     });
@@ -178,10 +193,13 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
             final api = AugmontApi(ref.read(augmontDioProvider));
             final results = await Future.wait([
               api.fetchInvestmentSummary(uniqueId: uniqueId, metalType: 'gold'),
-              api.fetchInvestmentSummary(uniqueId: uniqueId, metalType: 'silver'),
+              api.fetchInvestmentSummary(
+                  uniqueId: uniqueId, metalType: 'silver'),
             ]);
-            final goldUsed = (results[0]['totalBuyPostTaxAmount'] as num?)?.toDouble() ?? 0;
-            final silverUsed = (results[1]['totalBuyPostTaxAmount'] as num?)?.toDouble() ?? 0;
+            final goldUsed =
+                (results[0]['totalBuyPostTaxAmount'] as num?)?.toDouble() ?? 0;
+            final silverUsed =
+                (results[1]['totalBuyPostTaxAmount'] as num?)?.toDouble() ?? 0;
             final fyTotal = goldUsed + silverUsed;
             final remaining = (1000 - fyTotal).clamp(0, 1000);
             if (_payableNow > remaining) {
@@ -199,31 +217,55 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(26),
                       border: Border.all(color: const Color(0x4DE8B438)),
-                      gradient: const LinearGradient(begin: Alignment(0.145, -0.3939), end: Alignment.bottomRight,
-                        colors: [Color(0xFF503B15), Color(0xFF1C1408), Color(0xFF080603)]),
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.65), blurRadius: 80, offset: const Offset(0, 28))],
+                      gradient: const LinearGradient(
+                          begin: Alignment(0.145, -0.3939),
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF503B15),
+                            Color(0xFF1C1408),
+                            Color(0xFF080603)
+                          ]),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.65),
+                            blurRadius: 80,
+                            offset: const Offset(0, 28))
+                      ],
                     ),
                     child: Stack(
                       children: [
                         Positioned(
-                          right: 4, top: 4,
+                          right: 4,
+                          top: 4,
                           child: GestureDetector(
                             onTap: () => Navigator.pop(ctx),
-                            child: const Icon(Icons.close, size: 18, color: Color(0xFF7E7E7E)),
+                            child: const Icon(Icons.close,
+                                size: 18, color: Color(0xFF7E7E7E)),
                           ),
                         ),
                         Column(mainAxisSize: MainAxisSize.min, children: [
-                          Container(width: 56, height: 56,
-                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(17),
-                              gradient: const LinearGradient(colors: [Color(0xFFFFE784), Color(0xFFC88912)])),
-                            child: const Icon(Icons.lock, color: Color(0xFF11130F), size: 25)),
+                          Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(17),
+                                  gradient: const LinearGradient(colors: [
+                                    Color(0xFFFFE784),
+                                    Color(0xFFC88912)
+                                  ])),
+                              child: const Icon(Icons.lock,
+                                  color: Color(0xFF11130F), size: 25)),
                           const SizedBox(height: 16),
                           const Text('Purchase limit reached',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white)),
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white)),
                           const SizedBox(height: 12),
                           Text(
                             'This purchase exceeds your ₹${remaining.toInt()} non-KYC limit (incl. GST). Complete KYC to proceed.',
-                            style: const TextStyle(fontSize: 13, color: Color(0xFFD5C7A8)),
+                            style: const TextStyle(
+                                fontSize: 13, color: Color(0xFFD5C7A8)),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 20),
@@ -232,22 +274,37 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
                               Navigator.pop(ctx);
                               context.go('/kyc-verification');
                             },
-                            child: Container(width: double.infinity, height: 48,
-                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(15),
-                                gradient: const LinearGradient(colors: [Color(0xFFFED75D), Color(0xFFECB000), Color(0xFFD48D00)])),
-                              child: Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                const Text('Complete KYC',
-                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-                                const SizedBox(width: 8),
-                                const Icon(Icons.arrow_forward, size: 14, color: Colors.black),
-                              ])),
+                            child: Container(
+                              width: double.infinity,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(15),
+                                  gradient: const LinearGradient(colors: [
+                                    Color(0xFFFED75D),
+                                    Color(0xFFECB000),
+                                    Color(0xFFD48D00)
+                                  ])),
+                              child: Center(
+                                  child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                    const Text('Complete KYC',
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black)),
+                                    const SizedBox(width: 8),
+                                    const Icon(Icons.arrow_forward,
+                                        size: 14, color: Colors.black),
+                                  ])),
                             ),
                           ),
                           const SizedBox(height: 12),
                           GestureDetector(
                             onTap: () => Navigator.pop(ctx),
                             child: const Text('I will do it later',
-                              style: TextStyle(fontSize: 12, color: Color(0xFF7E7E7E))),
+                                style: TextStyle(
+                                    fontSize: 12, color: Color(0xFF7E7E7E))),
                           ),
                         ]),
                       ],
@@ -270,13 +327,13 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
     final rate = _hasStoredValues ? _storedRate : _getLiveRate();
 
     ref.read(goldFlowProvider.notifier).updateBuyState(
-      amount: preTax,
-      grams: grams,
-      gst: gst,
-      totalPaid: totalPaid,
-      rate: rate,
-      metalType: _metalType,
-    );
+          amount: preTax,
+          grams: grams,
+          gst: gst,
+          totalPaid: totalPaid,
+          rate: rate,
+          metalType: _metalType,
+        );
 
     if (!mounted) return;
     if (nextStep <= 5) {
@@ -302,63 +359,63 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
   Widget build(BuildContext context) {
     ref.watch(rateProvider);
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF1A1918),
       body: Align(
         alignment: Alignment.bottomCenter,
         child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
-        ),
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(60)),
-          gradient: RadialGradient(
-            center: const Alignment(0.94, -0.95),
-            radius: 1.2,
-            colors: [_getGradientStart(), Colors.black],
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x80000000),
-              blurRadius: 60,
-              offset: Offset(0, -24),
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(60)),
+            gradient: RadialGradient(
+              center: const Alignment(0.94, -0.95),
+              radius: 1.2,
+              colors: [_getGradientStart(), Colors.black],
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(60)),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withOpacity(0.02),
-                        Colors.black.withOpacity(0.1),
-                        Colors.black.withOpacity(0.35),
-                      ],
-                      stops: const [0, 0.18, 1],
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildDragHandle(),
-                    _buildHeader(),
-                    const SizedBox(height: 8),
-                    Flexible(child: _buildStepContent()),
-                  ],
-                ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x80000000),
+                blurRadius: 60,
+                offset: Offset(0, -24),
               ),
             ],
           ),
-        ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(60)),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withOpacity(0.02),
+                          Colors.black.withOpacity(0.1),
+                          Colors.black.withOpacity(0.35),
+                        ],
+                        stops: const [0, 0.18, 1],
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildDragHandle(),
+                      _buildHeader(),
+                      const SizedBox(height: 8),
+                      Flexible(child: _buildStepContent()),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -455,9 +512,8 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
   // ─── Step 1: Amount Selection ────────────────────────────────────────────────
 
   Widget _buildStep1Amount() {
-    final presets = _mode == 'weight'
-        ? [0.5, 1.0, 2.0, 5.0]
-        : [100, 500, 1000, 5000];
+    final presets =
+        _mode == 'weight' ? [0.5, 1.0, 2.0, 5.0] : [100, 500, 1000, 5000];
 
     return SingleChildScrollView(
       child: Column(
@@ -465,14 +521,16 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
           // Step rails
           Row(
             children: [
-              Expanded(child: StepRail(label: 'Amount', active: true, metalType: _metalType)),
+              Expanded(
+                  child: StepRail(
+                      label: 'Amount', active: true, metalType: _metalType)),
               const SizedBox(width: 12),
               Expanded(child: StepRail(label: 'Review', metalType: _metalType)),
               const SizedBox(width: 12),
               Expanded(child: StepRail(label: 'Pay', metalType: _metalType)),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // Rate card
           RateCard(
@@ -481,19 +539,19 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
             subtitle: 'Live - from Augmont',
             metalType: _metalType,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // Amount/Weight toggle
           _buildModeToggle(),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // Pre-tax amount input
           _buildAmountInput(),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // Preset buttons
           _buildPresets(presets),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
 
           // Feature chips
           Row(
@@ -523,11 +581,11 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
 
           // Payable now bar
           _buildPayableBar(),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // Continue button
           _buildContinueButton(),
@@ -564,10 +622,16 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18),
                   gradient: _isSilver
-                      ? const LinearGradient(
-                          colors: [Color(0xFFFFFFFF), Color(0xFFB8B8B8), Color(0xFF8A8A8A)])
-                      : const LinearGradient(
-                          colors: [Color(0xFFF7CD57), Color(0xFFDCA520), Color(0xFFC49012)]),
+                      ? const LinearGradient(colors: [
+                          Color(0xFFFFFFFF),
+                          Color(0xFFB8B8B8),
+                          Color(0xFF8A8A8A)
+                        ])
+                      : const LinearGradient(colors: [
+                          Color(0xFFF7CD57),
+                          Color(0xFFDCA520),
+                          Color(0xFFC49012)
+                        ]),
                   boxShadow: [
                     BoxShadow(
                       color: AppTheme.gold.withOpacity(0.3),
@@ -588,7 +652,9 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
                         'Buy Amount (Rs.)',
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: _mode == 'amount' ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: _mode == 'amount'
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                           color: _mode == 'amount'
                               ? const Color(0xFF1A1710)
                               : const Color(0xFF8A8578),
@@ -605,7 +671,9 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
                         'By Weight (g)',
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: _mode == 'weight' ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: _mode == 'weight'
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                           color: _mode == 'weight'
                               ? const Color(0xFF1A1710)
                               : const Color(0xFF8A8578),
@@ -624,7 +692,7 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
 
   Widget _buildAmountInput() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFF4E4E4E)),
@@ -640,7 +708,7 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
               color: Color(0xFF7E7E7E),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           AnimatedBuilder(
             animation: _shakeController,
             builder: (context, child) => Transform.translate(
@@ -651,7 +719,10 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
               height: 40,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _kycLimitExceeded ? Colors.red : const Color(0xFF5E5E5E)),
+                border: Border.all(
+                    color: _kycLimitExceeded
+                        ? Colors.red
+                        : const Color(0xFF5E5E5E)),
                 color: const Color(0xFF37372E),
               ),
               child: Row(
@@ -662,7 +733,8 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
                       width: 100,
                       child: TextField(
                         controller: _weightController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
                         textAlign: TextAlign.right,
                         style: TextStyle(
                           fontSize: 24,
@@ -722,16 +794,15 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
                 style: TextStyle(color: Colors.red[400], fontSize: 10),
               ),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           // Counter
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildCounterButton(
                 icon: '-',
-                onTap: _itemCount > 1
-                    ? () => setState(() => _itemCount--)
-                    : null,
+                onTap:
+                    _itemCount > 1 ? () => setState(() => _itemCount--) : null,
               ),
               const SizedBox(width: 16),
               Text(
@@ -751,15 +822,19 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
               if (_kycLimitExceeded) _buildVerifyKycButton(),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           // Summary text
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
               style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E)),
               children: [
-                TextSpan(text: '$_itemCount x ${_mode == "weight" ? "Rs.${_baseAmount.toInt()}" : "Rs.${_baseAmount.toInt()}"} = Rs.${_amount.toInt()}\n'),
-                TextSpan(text: 'GST 3%: Rs.${_gst.toStringAsFixed(2)} · Payable: Rs.${_payableNow.toStringAsFixed(2)}\n'),
+                TextSpan(
+                    text:
+                        '$_itemCount x ${_mode == "weight" ? "Rs.${_baseAmount.toInt()}" : "Rs.${_baseAmount.toInt()}"} = Rs.${_amount.toInt()}\n'),
+                TextSpan(
+                    text:
+                        'GST 3%: Rs.${_gst.toStringAsFixed(2)} · Payable: Rs.${_payableNow.toStringAsFixed(2)}\n'),
                 TextSpan(text: 'Total: ~ ${_quantity.toStringAsFixed(4)} g'),
               ],
             ),
@@ -786,7 +861,8 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w500,
-              color: onTap != null ? Colors.white : Colors.white.withOpacity(0.5),
+              color:
+                  onTap != null ? Colors.white : Colors.white.withOpacity(0.5),
             ),
           ),
         ),
@@ -808,11 +884,19 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
           height: 32,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFFF7CD57), Color(0xFFE5AF35), Color(0xFFB57F23)]),
+            gradient: const LinearGradient(colors: [
+              Color(0xFFF7CD57),
+              Color(0xFFE5AF35),
+              Color(0xFFB57F23)
+            ]),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Center(
-            child: Text('Verify KYC', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black)),
+            child: Text('Verify KYC',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black)),
           ),
         ),
       ),
@@ -835,7 +919,9 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF5E5E5E) : const Color(0xFF4E4E4E),
+                    color: isSelected
+                        ? const Color(0xFF5E5E5E)
+                        : const Color(0xFF4E4E4E),
                   ),
                   color: const Color(0xFF262521),
                 ),
@@ -858,7 +944,7 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
 
   Widget _buildPayableBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFF2E2E2E)),
@@ -920,13 +1006,16 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
                 gradient: _isSilver
                     ? const LinearGradient(
                         colors: [Color(0xFFFFFFFF), Color(0xFF999999)])
-                    : const LinearGradient(
-                        colors: [Color(0xFFF7CD57), Color(0xFFE5AF35), Color(0xFFB57F23)]),
+                    : const LinearGradient(colors: [
+                        Color(0xFFF7CD57),
+                        Color(0xFFE5AF35),
+                        Color(0xFFB57F23)
+                      ]),
               ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(50),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(50),
                   onTap: _continueToNext,
                   child: Center(
                     child: Text(
@@ -956,9 +1045,13 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
           // Step rails
           Row(
             children: [
-              Expanded(child: StepRail(label: 'Amount', active: true, metalType: _metalType)),
+              Expanded(
+                  child: StepRail(
+                      label: 'Amount', active: true, metalType: _metalType)),
               const SizedBox(width: 12),
-              Expanded(child: StepRail(label: 'Review', active: true, metalType: _metalType)),
+              Expanded(
+                  child: StepRail(
+                      label: 'Review', active: true, metalType: _metalType)),
               const SizedBox(width: 12),
               Expanded(child: StepRail(label: 'Pay', metalType: _metalType)),
             ],
@@ -985,12 +1078,10 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
   }
 
   Widget _buildBuyingSummary() {
-    final borderColor = _isSilver
-        ? const Color(0xFF495C73)
-        : const Color(0xFF3E3522);
-    final bgColor = _isSilver
-        ? const Color(0xFF1C2633)
-        : const Color(0xFF302715);
+    final borderColor =
+        _isSilver ? const Color(0xFF495C73) : const Color(0xFF3E3522);
+    final bgColor =
+        _isSilver ? const Color(0xFF1C2633) : const Color(0xFF302715);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1052,12 +1143,10 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
   }
 
   Widget _buildOrderSummary() {
-    final borderColor = _isSilver
-        ? const Color(0xFF495C73)
-        : const Color(0xFF444135);
-    final bgColor = _isSilver
-        ? const Color(0xFF1C2633)
-        : const Color(0xFF191812);
+    final borderColor =
+        _isSilver ? const Color(0xFF495C73) : const Color(0xFF444135);
+    final bgColor =
+        _isSilver ? const Color(0xFF1C2633) : const Color(0xFF191812);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1068,7 +1157,8 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
       ),
       child: Column(
         children: [
-          _buildSummaryRow('Pre-tax amount', 'Rs.${_amount.toStringAsFixed(2)}'),
+          _buildSummaryRow(
+              'Pre-tax amount', 'Rs.${_amount.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
           _buildSummaryRow('GST (3%)', 'Rs.${_gst.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
@@ -1096,7 +1186,8 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, {bool isHighlight = false}) {
+  Widget _buildSummaryRow(String label, String value,
+      {bool isHighlight = false}) {
     final valueColor = isHighlight
         ? (_isSilver || _metalType == 'diamond'
             ? (_metalType == 'diamond' ? const Color(0xFF4593F9) : Colors.white)
@@ -1141,18 +1232,13 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
   }
 
   Widget _buildBisVaultInfo() {
-    final bgColor = _isSilver
-        ? const Color(0xFF1C2633)
-        : const Color(0xFF211D12);
-    final borderColor = _isSilver
-        ? const Color(0xFF495C73)
-        : const Color(0xFF3D3A2F);
-    final iconBg = _isSilver
-        ? const Color(0xFF606B7A)
-        : const Color(0xFF4A3C12);
-    final iconColor = _isSilver
-        ? Colors.white
-        : AppTheme.gold;
+    final bgColor =
+        _isSilver ? const Color(0xFF1C2633) : const Color(0xFF211D12);
+    final borderColor =
+        _isSilver ? const Color(0xFF495C73) : const Color(0xFF3D3A2F);
+    final iconBg =
+        _isSilver ? const Color(0xFF606B7A) : const Color(0xFF4A3C12);
+    final iconColor = _isSilver ? Colors.white : AppTheme.gold;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -1213,7 +1299,8 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Please login to continue', style: TextStyle(color: Colors.white54)),
+            const Text('Please login to continue',
+                style: TextStyle(color: Colors.white54)),
             const SizedBox(height: 12),
             _buildContinueButton(),
           ],
@@ -1227,11 +1314,17 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
           // Step rails
           Row(
             children: [
-              Expanded(child: StepRail(label: 'Amount', active: true, metalType: _metalType)),
+              Expanded(
+                  child: StepRail(
+                      label: 'Amount', active: true, metalType: _metalType)),
               const SizedBox(width: 12),
-              Expanded(child: StepRail(label: 'Review', active: true, metalType: _metalType)),
+              Expanded(
+                  child: StepRail(
+                      label: 'Review', active: true, metalType: _metalType)),
               const SizedBox(width: 12),
-              Expanded(child: StepRail(label: 'Pay', active: true, metalType: _metalType)),
+              Expanded(
+                  child: StepRail(
+                      label: 'Pay', active: true, metalType: _metalType)),
             ],
           ),
           const SizedBox(height: 12),
@@ -1250,20 +1343,31 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Total Payable', style: TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
+                      const Text('Total Payable',
+                          style: TextStyle(
+                              fontSize: 10, color: Color(0xFF7E7E7E))),
                       const SizedBox(height: 4),
                       ShaderMask(
                         shaderCallback: (b) => LinearGradient(
-                          colors: _isSilver ? [Colors.white, Colors.white70] : [const Color(0xFFF7CD57), const Color(0xFF917833)],
+                          colors: _isSilver
+                              ? [Colors.white, Colors.white70]
+                              : [
+                                  const Color(0xFFF7CD57),
+                                  const Color(0xFF917833)
+                                ],
                         ).createShader(b),
                         child: Text(
                           '₹${_payableNow.toInt()}',
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
                         ),
                       ),
                       Text(
                         '${_quantity.toStringAsFixed(4)} g of ${_isSilver ? "Silver" : "Gold"}',
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF7E7E7E)),
+                        style: const TextStyle(
+                            fontSize: 11, color: Color(0xFF7E7E7E)),
                       ),
                     ],
                   ),
@@ -1343,13 +1447,17 @@ class _BuyScreenState extends ConsumerState<BuyScreen> with TickerProviderStateM
                   : const RadialGradient(
                       center: Alignment(-0.15, -0.2),
                       radius: 1.2,
-                      colors: [Color(0xFFFFE27A), Color(0xFFF5BF31), Color(0xFFC98900)],
+                      colors: [
+                        Color(0xFFFFE27A),
+                        Color(0xFFF5BF31),
+                        Color(0xFFC98900)
+                      ],
                     ),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.gold.withOpacity(0.4),
-                  blurRadius: 30,
-                  spreadRadius: 10,
+                  color: AppTheme.gold.withOpacity(0.18),
+                  blurRadius: 40,
+                  spreadRadius: 0,
                 ),
               ],
             ),

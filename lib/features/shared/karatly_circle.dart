@@ -41,7 +41,7 @@ class KaratlyCircle extends StatelessWidget {
         ? const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF5C6A7B), Color(0xFF151B23)],
+            colors: [Color(0xFFE0E0E0), Color(0xFF7A7A7A)],
           )
         : isDiamond
             ? const LinearGradient(

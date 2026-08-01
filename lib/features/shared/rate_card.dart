@@ -48,12 +48,10 @@ class RateCard extends StatelessWidget {
                 colors: [Color(0xFF6C5123), Color(0xFF1E2A28)],
               );
 
-    final rateColor = isSilver || isDiamond
-        ? Colors.white
-        : null;
+    final rateColor = isSilver || isDiamond ? Colors.white : null;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor, width: 1),
@@ -104,7 +102,8 @@ class RateCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.bolt, size: 12, color: Color(0xFF0EA300)),
+                      const Icon(Icons.bolt,
+                          size: 12, color: Color(0xFF0EA300)),
                       const SizedBox(width: 4),
                       Text(
                         subtitle,
@@ -159,9 +158,7 @@ class RateCardCompact extends StatelessWidget {
             ? const Color(0xFF0D1F3D)
             : const Color(0xFF201B0F);
 
-    final valueColor = isSilver || isDiamond
-        ? Colors.white
-        : null;
+    final valueColor = isSilver || isDiamond ? Colors.white : null;
 
     return Container(
       padding: const EdgeInsets.all(20),

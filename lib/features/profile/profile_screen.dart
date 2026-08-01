@@ -247,7 +247,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         height: 80,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFF7CD57), width: 2),
+          border: Border.all(color: const Color(0xFFE8B438), width: 2),
         ),
         child: ClipOval(
           child: photoBase64 != null && photoBase64.isNotEmpty
@@ -279,16 +279,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       height: 80,
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFF7CD57), Color(0xFFB98324)],
-        ),
+        color: Color(0xFF1A1A1A),
       ),
       child: Center(
         child: Text(
           initial,
-          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFE8B438)),
         ),
       ),
     );
@@ -319,31 +315,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       children: [
         Expanded(
           child: _buildMetricCard(
-            icon: Icons.circle,
-            iconColor: const Color(0xFFF7CD57),
+            icon: Icons.account_balance_wallet,
+            iconColor: const Color(0xFFFFCD0F),
             label: 'Gold',
             value: '${goldGrams.toStringAsFixed(4)} g',
-            accentColor: const Color(0xFFF7CD57),
+            accentColor: const Color(0xFFE8B438),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _buildMetricCard(
-            icon: Icons.circle,
-            iconColor: const Color(0xFF90CAF9),
+            icon: Icons.auto_awesome,
+            iconColor: const Color(0xFFFFCD0F),
             label: 'Silver',
             value: '${silverGrams.toStringAsFixed(4)} g',
-            accentColor: const Color(0xFF90CAF9),
+            accentColor: const Color(0xFF6DD6FF),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _buildMetricCard(
-            icon: Icons.trending_up,
-            iconColor: const Color(0xFF66BB6A),
+            icon: Icons.shield,
+            iconColor: const Color(0xFFFFCD0F),
             label: 'Portfolio',
             value: _formatCurrency(portfolioValue),
-            accentColor: const Color(0xFF66BB6A),
+            accentColor: const Color(0xFF15EE01),
           ),
         ),
       ],
@@ -360,21 +356,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1416),
+        color: const Color(0xFF16181A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF2E2E2E)),
       ),
       child: Column(
         children: [
-          Icon(icon, color: iconColor, size: 14),
+          Container(
+            width: 24, height: 24,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.black),
+            child: Icon(icon, color: iconColor, size: 14),
+          ),
           const SizedBox(height: 6),
           Text(
             value,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: accentColor),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: accentColor),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
+          Text(label, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w600, color: Color(0xFF7E7E7E))),
         ],
       ),
     );
@@ -453,10 +453,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Text(
         title,
         style: const TextStyle(
-          fontSize: 12,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: Color(0xFFBFBFBF),
-          letterSpacing: 1.2,
         ),
       ),
     );
@@ -803,19 +802,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           GestureDetector(
             onTap: () => setState(() => _notificationsEnabled = !_notificationsEnabled),
             child: Container(
-              width: 44,
-              height: 24,
+              width: 40,
+              height: 20,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: _notificationsEnabled ? const Color(0xFFF7CD57) : const Color(0xFF2E2E2E),
+                borderRadius: BorderRadius.circular(10),
+                color: _notificationsEnabled ? const Color(0xFFF7CD57) : const Color(0xFFA2A2A2),
               ),
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 200),
                 alignment: _notificationsEnabled ? Alignment.centerRight : Alignment.centerLeft,
                 child: Container(
-                  width: 20,
-                  height: 20,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  width: 14,
+                  height: 14,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
                   decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
                 ),
               ),
@@ -844,7 +843,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFFF7CD57), size: 20),
+            Container(
+              width: 40, height: 40,
+              decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF1F2124)),
+              child: Icon(icon, color: const Color(0xFFF7CD57), size: 18),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(title, style: const TextStyle(fontSize: 14, color: Colors.white)),
@@ -872,14 +875,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: const Color(0xFF1A0A0A),
-            border: Border.all(color: const Color(0xFFEF5350)),
+            color: const Color(0xFF0F1416),
           ),
-          child: const Center(
-            child: Text(
-              'Sign Out',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFFEF5350)),
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.logout, color: Color(0xFFFF3700), size: 16),
+              const SizedBox(width: 8),
+              const Text(
+                'Sign Out',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFFF3700)),
+              ),
+            ],
           ),
         ),
       ),

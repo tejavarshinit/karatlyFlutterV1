@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 class SuccessAnimation extends StatefulWidget {
@@ -57,21 +58,26 @@ class _SuccessAnimationState extends State<SuccessAnimation>
                   animation: _particleController,
                   builder: (context, child) {
                     final progress = _particleController.value;
-                    final distance = progress * 80;
+                    final angle = (i * 60 + 15) * 3.14159 / 180;
+                    final distance = progress * (80 + (i % 3) * 20);
                     final opacity = (1 - progress).clamp(0.0, 1.0);
+                    final scale = 0.6 + (i % 3) * 0.2;
                     return Transform.translate(
                       offset: Offset(
-                        distance * (i % 2 == 0 ? 1 : -1) * 0.7,
-                        -distance * (i < 3 ? 1 : -1) * 0.7,
+                        distance * math.cos(angle),
+                        distance * math.sin(angle),
                       ),
-                      child: Opacity(
-                        opacity: opacity,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF7CD57),
-                            shape: BoxShape.circle,
+                      child: Transform.scale(
+                        scale: scale * (1 - progress * 0.5),
+                        child: Opacity(
+                          opacity: opacity,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF7CD57),
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
                       ),

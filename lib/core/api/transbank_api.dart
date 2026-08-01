@@ -140,6 +140,64 @@ class TransbankApi {
     };
   }
 
+  // ── Aadhaar OCR ──
+  Future<Map<String, dynamic>> transbankAadhaarOcr({
+    required String base64Image,
+    required String uniqueId,
+  }) async {
+    try {
+      final data = await _post('/api/v1/kyc/ocr/aadhaar', {
+        'doc_front_image': base64Image,
+        'doc_type': 'AADHAAR',
+        'uniqueId': uniqueId,
+      });
+      final result = (data['result'] as Map<String, dynamic>?) ??
+          (data['data'] as Map<String, dynamic>?) ??
+          ((data['payload'] as Map<String, dynamic>?)?['result'] as Map<String, dynamic>?) ??
+          {};
+
+      final name = (result['name_on_card']?.toString() ??
+              result['name']?.toString() ??
+              result['full_name']?.toString() ??
+              data['name_on_card']?.toString() ??
+              data['name']?.toString() ?? '')
+          .trim();
+
+      final cardNumber = (result['card_number']?.toString() ??
+              result['aadhaarNumber']?.toString() ??
+              result['aadhaar_number']?.toString() ??
+              data['card_number']?.toString() ??
+              data['aadhaarNumber']?.toString() ?? '')
+          .trim();
+
+      final dob = (result['date_of_birth']?.toString() ??
+              result['dob']?.toString() ??
+              data['date_of_birth']?.toString() ?? '')
+          .trim();
+
+      final gender = (result['gender']?.toString() ?? data['gender']?.toString() ?? '').trim();
+
+      final status = data['status'];
+      final message = (data['message']?.toString() ?? '').toLowerCase();
+      final ok = status == 1 || status == '1' || message == 'success' || data['ok'] == true;
+
+      return {
+        'ok': ok,
+        'name': name.isNotEmpty ? name : null,
+        'cardNumber': cardNumber.isNotEmpty ? cardNumber : null,
+        'dateOfBirth': dob.isNotEmpty ? dob : null,
+        'gender': gender.isNotEmpty ? gender : null,
+        'message': data['message']?.toString() ?? (ok ? 'Aadhaar verified via OCR.' : 'OCR failed. Please try again with a clearer photo.'),
+        'raw': data,
+      };
+    } catch (e) {
+      if (e is DioException && e.type == DioExceptionType.connectionTimeout) {
+        return {'ok': false, 'message': 'OCR request timed out. Please try again.'};
+      }
+      return {'ok': false, 'message': 'Network error during OCR. Please try again.'};
+    }
+  }
+
   // ── Bank Validation ──
   bool _isBankValidationSuccessResponse(Map<String, dynamic> data) {
     final payload = data['payload'] as Map<String, dynamic>?;

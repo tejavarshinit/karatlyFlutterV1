@@ -33,6 +33,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      ref.read(activeMetalProvider.notifier).state = 'gold';
       ref.read(homeProvider.notifier).fetchInvestmentData();
       ref.read(ordersProvider.notifier).fetchAllOrders();
     });
@@ -1323,7 +1324,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 12),
             Divider(color: dividerColor, height: 1),
             const SizedBox(height: 12),
-            Text('${DateTime.now().year} Karatly. All rights reserved.', style: TextStyle(fontSize: 8, color: const Color(0xFF5E5E5E), height: 1.5)),
+            Text('\u00A9 ${DateTime.now().year} Karatly. All rights reserved.', style: TextStyle(fontSize: 8, color: const Color(0xFF5E5E5E), height: 1.5)),
             const Text('Powered by Augmont \u2022 Backed by SafeGold', style: TextStyle(fontSize: 8, color: Color(0xFF5E5E5E), height: 1.5)),
             const SizedBox(height: 12),
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [

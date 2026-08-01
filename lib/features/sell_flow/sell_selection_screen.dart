@@ -22,7 +22,7 @@ class SellSelectionScreen extends ConsumerWidget {
     final isSilver = _isSilver;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF1A1918),
       body: Container(
         constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height * 0.86),
         decoration: BoxDecoration(
@@ -107,17 +107,21 @@ class SellSelectionScreen extends ConsumerWidget {
                               children: [
                                 const Text('Current Sell Rate', style: TextStyle(fontSize: 12, color: Color(0xFFA1A1A1))),
                                 const SizedBox(height: 4),
-                                Text(
-                                  loading ? 'Loading...' : sellPrice > 0 ? '₹${sellPrice.toInt()}/g' : 'Unavailable',
-                                  style: TextStyle(
-                                    fontSize: 24, fontWeight: FontWeight.w600,
-                                    color: isSilver ? Colors.white : null,
-                                  ),
-                                ),
-                                if (!isSilver)
+                                if (isSilver)
+                                  Text(
+                                    loading ? 'Loading...' : sellPrice > 0 ? '₹${sellPrice.toInt()}/g' : 'Unavailable',
+                                    style: const TextStyle(
+                                      fontSize: 24, fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                else
                                   ShaderMask(
                                     shaderCallback: (b) => const LinearGradient(colors: [Color(0xFFF7CD57), Color(0xFF917833)]).createShader(b),
-                                    child: Text(' '),
+                                    child: Text(
+                                      loading ? 'Loading...' : sellPrice > 0 ? '₹${sellPrice.toInt()}/g' : 'Unavailable',
+                                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.white),
+                                    ),
                                   ),
                                 const SizedBox(height: 8),
                                 Row(
@@ -257,9 +261,9 @@ class SellSelectionScreen extends ConsumerWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
+           ),
+         ),
+       ),
+     );
+   }
 }

@@ -1012,6 +1012,7 @@ class AadhaarSection extends StatefulWidget {
 }
 
 class _AadhaarSectionState extends State<AadhaarSection> {
+  String? _verificationMode;
   final _aadhaarController = TextEditingController();
   final _otpController = TextEditingController();
   String _stage = 'enter';
@@ -1020,6 +1021,9 @@ class _AadhaarSectionState extends State<AadhaarSection> {
   String? _success;
   String? _sessionId;
   int _countdown = 0;
+  bool _ocrLoading = false;
+  Map<String, dynamic>? _ocrResult;
+  String? _ocrError;
 
   @override
   void dispose() {
@@ -1115,15 +1119,205 @@ class _AadhaarSectionState extends State<AadhaarSection> {
     }
   }
 
+  Future<void> _pickAndOcrAadhaar() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
+    if (picked == null) return;
+
+    setState(() {
+      _ocrLoading = true;
+      _ocrError = null;
+      _ocrResult = null;
+    });
+
+    final bytes = await picked.readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    final api = TransbankApi(ProviderScope.containerOf(context).read(dioAugmontProvider));
+    final result = await api.transbankAadhaarOcr(
+      base64Image: base64Image,
+      uniqueId: widget.uniqueId,
+    );
+
+    if (!mounted) return;
+
+    setState(() => _ocrLoading = false);
+    if (result['ok'] == true) {
+      setState(() => _ocrResult = result);
+      widget.onVerified();
+    } else {
+      setState(() => _ocrError = result['message']?.toString() ?? 'OCR failed. Please try again with a clearer photo.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.verified) {
-      return const Text(
-        'Aadhaar verified successfully.',
-        style: TextStyle(fontSize: 12, color: Color(0xFF4CD676)),
+      return const Row(
+        children: [
+          Icon(Icons.check_circle, size: 14, color: Color(0xFF4CD676)),
+          SizedBox(width: 6),
+          Text('Aadhaar verified successfully.', style: TextStyle(fontSize: 12, color: Color(0xFF4CD676))),
+        ],
       );
     }
 
+    if (_verificationMode == null) {
+      return _buildChooser();
+    }
+
+    if (_verificationMode == 'manual') {
+      return _buildManualMode();
+    }
+
+    return _buildAutoMode();
+  }
+
+  Widget _buildChooser() {
+    return Row(
+      children: [
+        Expanded(child: _chooserButton(
+          icon: Icons.smartphone,
+          label: 'AUTO',
+          subtitle: 'Verify via OTP sent to your Aadhaar-linked mobile',
+          onTap: () => setState(() => _verificationMode = 'auto'),
+        )),
+        const SizedBox(width: 12),
+        Expanded(child: _chooserButton(
+          icon: Icons.camera_alt,
+          label: 'MANUAL',
+          subtitle: 'Upload Aadhaar image \u2014 OCR will extract details',
+          onTap: () => setState(() => _verificationMode = 'manual'),
+        )),
+      ],
+    );
+  }
+
+  Widget _chooserButton({required IconData icon, required String label, required String subtitle, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1710),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE8B438).withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40, height: 40,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(colors: [Color(0xFFE8EEF5), Color(0xFF8E9AAA)]),
+              ),
+              child: Icon(icon, size: 18, color: const Color(0xFF11130F)),
+            ),
+            const SizedBox(height: 10),
+            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 4),
+            Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, color: Color(0xFF9E9E9E), height: 1.4)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildManualMode() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Upload a clear photo of your Aadhaar card', style: TextStyle(fontSize: 10, color: Color(0x80FFFFFF))),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: _ocrLoading ? null : _pickAndOcrAadhaar,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE8B438).withOpacity(0.3)),
+              color: const Color(0xFF1A1710),
+            ),
+            child: _ocrLoading
+                ? const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFF7CD57))))
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.camera_alt, size: 16, color: Color(0xFFF7CD57)),
+                      SizedBox(width: 8),
+                      Text('Tap to capture Aadhaar', style: TextStyle(fontSize: 12, color: Color(0xFFF7CD57))),
+                    ],
+                  ),
+          ),
+        ),
+        if (_ocrError != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0x33EF5350)),
+              color: const Color(0x0DEF5350),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.error_outline, size: 12, color: Color(0xFFEF5350)),
+                const SizedBox(width: 6),
+                Expanded(child: Text(_ocrError!, style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350)))),
+              ],
+            ),
+          ),
+        ],
+        if (_ocrResult != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0x334CD676)),
+              color: const Color(0x0D4CD676),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_ocrResult!['name'] != null)
+                  _ocrDetailRow('Name', _ocrResult!['name'].toString()),
+                if (_ocrResult!['cardNumber'] != null)
+                  _ocrDetailRow('Aadhaar', _ocrResult!['cardNumber'].toString()),
+                if (_ocrResult!['dateOfBirth'] != null)
+                  _ocrDetailRow('DOB', _ocrResult!['dateOfBirth'].toString()),
+                if (_ocrResult!['gender'] != null)
+                  _ocrDetailRow('Gender', _ocrResult!['gender'].toString()),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: () => setState(() {
+            _verificationMode = 'auto';
+            _ocrError = null;
+            _ocrResult = null;
+          }),
+          child: const Center(
+            child: Text('Switch to OTP verification instead', style: TextStyle(fontSize: 10, color: Color(0xB3F7CD57), decoration: TextDecoration.underline)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _ocrDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text('$label: $value', style: const TextStyle(fontSize: 11, color: Color(0xFF4CD676))),
+    );
+  }
+
+  Widget _buildAutoMode() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1155,6 +1349,26 @@ class _AadhaarSectionState extends State<AadhaarSection> {
             const SizedBox(height: 4),
             Text(_error!, style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350))),
           ],
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () => setState(() {
+                _verificationMode = 'manual';
+                _error = null;
+                _ocrError = null;
+              }),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0x33E8B438)),
+                  color: const Color(0x0DE8B438),
+                ),
+                child: const Center(child: Text('Please try manually', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFFF7CD57)))),
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           _goldButton(label: 'Send OTP', loading: _loading, onTap: _sendOtp),
         ] else ...[
@@ -1171,9 +1385,36 @@ class _AadhaarSectionState extends State<AadhaarSection> {
             keyboardType: TextInputType.number,
             maxLength: 6,
           ),
-          const SizedBox(height: 4),
           const SizedBox(height: 8),
           _goldButton(label: 'Verify OTP', loading: _loading, onTap: _verifyOtp),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: _loading ? null : () { _sendOtp(); },
+                  child: const Center(child: Text('Resend OTP', style: TextStyle(fontSize: 10, color: Color(0x4DFFFFFF)))),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() { _stage = 'enter'; _otpController.clear(); _error = null; }),
+                  child: const Center(child: Text('Change number', style: TextStyle(fontSize: 10, color: Color(0x4DFFFFFF)))),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: () => setState(() {
+              _verificationMode = 'manual';
+              _error = null;
+              _ocrError = null;
+            }),
+            child: const Center(
+              child: Text('Switch to Manual (Upload Aadhaar image)', style: TextStyle(fontSize: 10, color: Color(0xB3F7CD57), decoration: TextDecoration.underline)),
+            ),
+          ),
         ],
       ],
     );

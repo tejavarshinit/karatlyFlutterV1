@@ -110,8 +110,11 @@ class _DiamondCardState extends State<DiamondCard> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2E2E2E)),
+        border: Border.all(color: const Color(0xFF0084FF)),
         color: const Color(0xFF26313B),
+        boxShadow: const [
+          BoxShadow(color: Color(0x330084FF), blurRadius: 12, spreadRadius: 0),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -191,26 +194,26 @@ class _DiamondCardState extends State<DiamondCard> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFD97706).withValues(alpha: 0.1),
+                              color: const Color(0xFF006CD2).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFFD97706).withValues(alpha: 0.2)),
+                              border: Border.all(color: const Color(0xFF006CD2).withValues(alpha: 0.2)),
                             ),
                             child: Text(
                               product.shade,
-                              style: const TextStyle(fontSize: 9, color: Color(0xFFFBBF24)),
+                              style: const TextStyle(fontSize: 9, color: Color(0xFF3AC7FF)),
                             ),
                           ),
                         if (product.luster.isNotEmpty)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF9333EA).withValues(alpha: 0.1),
+                              color: const Color(0xFF006CD2).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFF9333EA).withValues(alpha: 0.2)),
+                              border: Border.all(color: const Color(0xFF006CD2).withValues(alpha: 0.2)),
                             ),
                             child: Text(
                               product.luster,
-                              style: const TextStyle(fontSize: 9, color: Color(0xFFC084FC)),
+                              style: const TextStyle(fontSize: 9, color: Color(0xFF3AC7FF)),
                             ),
                           ),
                       ],
@@ -290,7 +293,7 @@ class _DiamondCardState extends State<DiamondCard> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          gradient: const LinearGradient(colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)]),
+          gradient: const LinearGradient(colors: [Color(0xFF0084FF), Color(0xFF004F99)]),
         ),
         child: Material(
           color: Colors.transparent,

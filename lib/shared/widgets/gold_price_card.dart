@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'glow_backdrop.dart';
 
 class GoldPriceCard extends StatelessWidget {
   final double currentPrice;
@@ -14,12 +15,18 @@ class GoldPriceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlowBackdrop(
+      clipBehavior: Clip.none,
+      glows: const [
+        GlowConfig(right: -20, top: -20, size: 128, color: Color(0xFFF7CD57), opacity: 0.10, blurSigma: 30),
+        GlowConfig(left: -10, bottom: -10, size: 96, color: Color(0xFFF7CD57), opacity: 0.10, blurSigma: 20),
+      ],
+      child: Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF242320),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFF7CD57).withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
@@ -79,7 +86,7 @@ class GoldPriceCard extends StatelessWidget {
               const Text(
                 '₹',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFFF7CD57),
                 ),
@@ -89,7 +96,7 @@ class GoldPriceCard extends StatelessWidget {
                 currentPrice.toStringAsFixed(0),
                 style: const TextStyle(
                   fontFamily: 'Georgia',
-                  fontSize: 32,
+                  fontSize: 36,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),
@@ -138,6 +145,7 @@ class GoldPriceCard extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
