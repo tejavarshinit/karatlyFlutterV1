@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/router.dart';
 import '../../app/theme.dart';
 import '../../core/api/augmont_api.dart';
+import '../../core/api/coupon_api.dart';
 import '../../core/services/auth_provider.dart';
 import '../../core/services/kyc_limit_provider.dart';
 import '../../core/services/rate_provider.dart';
@@ -18,6 +19,7 @@ import '../shared/karatly_circle.dart';
 import '../shared/feature_chip.dart';
 import '../shared/embedded_payment_gateway.dart';
 import '../shared/kyc_limit_modal.dart';
+import '../shared/coupon_input.dart';
 
 /// Buy flow screen with 5 steps matching reference BuyFlow.tsx
 class BuyScreen extends ConsumerStatefulWidget {
@@ -117,9 +119,13 @@ class _BuyScreenState extends ConsumerState<BuyScreen>
       : MoneyHelper.truncateMoney(_baseAmount * _itemCount);
   double get _gst =>
       _hasStoredValues ? _storedGst : MoneyHelper.truncateMoney(_amount * 0.03);
-  double get _payableNow => _hasStoredValues
-      ? _storedTotalPaid
-      : MoneyHelper.truncateMoney(_amount + _gst);
+  double get _payableNow {
+    final base = _hasStoredValues
+        ? _storedTotalPaid
+        : MoneyHelper.truncateMoney(_amount + _gst);
+    final couponDiscount = ref.read(goldFlowProvider).buyState.couponDiscount;
+    return base - couponDiscount > 0 ? base - couponDiscount : base;
+  }
   double get _quantity {
     if (_hasStoredValues) return _storedGrams;
     final liveRate = _getLiveRate();
@@ -349,6 +355,31 @@ class _BuyScreenState extends ConsumerState<BuyScreen>
     } else {
       context.go(AppRoutes.home);
     }
+  }
+
+  void _handleCouponApplied(CouponResult result) {
+    ref.read(goldFlowProvider.notifier).updateBuyState(
+      couponCode: result.couponCode,
+      reservationId: result.reservationId,
+      couponDiscount: result.discountAmount,
+      couponApplied: true,
+      employeeId: result.employeeId,
+      corporateId: result.corporateId,
+    );
+  }
+
+  void _handleCouponRemoved() {
+    final buyState = ref.read(goldFlowProvider).buyState;
+    final reservationId = buyState.reservationId;
+    if (reservationId.isNotEmpty) {
+      CouponApi(ref.read(augmontDioProvider)).releaseCoupon(reservationId: reservationId).catchError((_) {});
+    }
+    ref.read(goldFlowProvider.notifier).updateBuyState(
+      couponCode: '',
+      reservationId: '',
+      couponDiscount: 0,
+      couponApplied: false,
+    );
   }
 
   Color _getGradientStart() {
@@ -1293,6 +1324,7 @@ class _BuyScreenState extends ConsumerState<BuyScreen>
   Widget _buildStep3Payment() {
     final uniqueId = _resolveUniqueId();
     final blockId = ref.read(rateProvider).currentRate?.blockId ?? '';
+    final buyState = ref.read(goldFlowProvider).buyState;
 
     if (uniqueId.isEmpty) {
       return Center(
@@ -1337,46 +1369,85 @@ class _BuyScreenState extends ConsumerState<BuyScreen>
               border: Border.all(color: const Color(0xFF2E2E2E)),
               color: const Color(0xFF19160F),
             ),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Total Payable',
-                          style: TextStyle(
-                              fontSize: 10, color: Color(0xFF7E7E7E))),
-                      const SizedBox(height: 4),
-                      ShaderMask(
-                        shaderCallback: (b) => LinearGradient(
-                          colors: _isSilver
-                              ? [Colors.white, Colors.white70]
-                              : [
-                                  const Color(0xFFF7CD57),
-                                  const Color(0xFF917833)
-                                ],
-                        ).createShader(b),
-                        child: Text(
-                          '₹${_payableNow.toInt()}',
-                          style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
-                        ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Total Payable',
+                              style: TextStyle(
+                                  fontSize: 10, color: Color(0xFF7E7E7E))),
+                          const SizedBox(height: 4),
+                          ShaderMask(
+                            shaderCallback: (b) => LinearGradient(
+                              colors: _isSilver
+                                  ? [Colors.white, Colors.white70]
+                                  : [
+                                      const Color(0xFFF7CD57),
+                                      const Color(0xFF917833)
+                                    ],
+                            ).createShader(b),
+                            child: Text(
+                              '₹${_payableNow.toInt()}',
+                              style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                          ),
+                          Text(
+                            '${_quantity.toStringAsFixed(4)} g of ${_isSilver ? "Silver" : "Gold"}',
+                            style: const TextStyle(
+                                fontSize: 11, color: Color(0xFF7E7E7E)),
+                          ),
+                        ],
                       ),
-                      Text(
-                        '${_quantity.toStringAsFixed(4)} g of ${_isSilver ? "Silver" : "Gold"}',
-                        style: const TextStyle(
-                            fontSize: 11, color: Color(0xFF7E7E7E)),
-                      ),
-                    ],
-                  ),
+                    ),
+                    KaratlyCircle(size: 48, metalType: _metalType),
+                  ],
                 ),
-                KaratlyCircle(size: 48, metalType: _metalType),
+                // Coupon discount line
+                if (buyState.couponDiscount > 0) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.only(top: 8),
+                    decoration: const BoxDecoration(
+                      border: Border(top: BorderSide(color: Color(0xFF2E2E2E))),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Coupon discount',
+                            style: TextStyle(fontSize: 11, color: Color(0xFF7E7E7E))),
+                        Text(
+                          '- Rs.${buyState.couponDiscount.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15EE01)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+
+          // Coupon input
+          CouponInput(
+            orderId: buyState.merchantTransactionId.isNotEmpty
+                ? buyState.merchantTransactionId
+                : buyState.transactionId,
+            clientId: uniqueId,
+            subtotal: _amount,
+            initialCode: buyState.couponCode,
+            onApply: _handleCouponApplied,
+            onRemove: _handleCouponRemoved,
+          ),
+          const SizedBox(height: 12),
 
           // Embedded payment gateway
           EmbeddedPaymentGateway(
@@ -1386,6 +1457,10 @@ class _BuyScreenState extends ConsumerState<BuyScreen>
             lockPrice: _getLiveRate().toStringAsFixed(2),
             blockId: blockId,
             flowType: 'DIGITAL_BUY',
+            couponCode: buyState.couponCode.isNotEmpty ? buyState.couponCode : null,
+            couponSubtotal: buyState.couponDiscount > 0 ? _amount : null,
+            employeeId: buyState.employeeId.isNotEmpty ? buyState.employeeId : null,
+            corporateId: buyState.corporateId.isNotEmpty ? buyState.corporateId : null,
           ),
         ],
       ),

@@ -59,6 +59,14 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
   final _landmarkController = TextEditingController();
   bool _submittingAddress = false;
 
+  // State/City picker
+  List<dynamic> _states = [];
+  List<dynamic> _cities = [];
+  bool _statesLoading = false;
+  bool _citiesLoading = false;
+  String? _selectedStateId;
+  String? _selectedCityId;
+
   // Payment
   String _paymentAddressId = '';
   bool _showKycPrompt = false;
@@ -276,9 +284,11 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
       final results = await Future.wait([
         api.fetchAadhaarAddress(uniqueId: uniqueId),
         api.fetchAugmontAddresses(uniqueId),
+        api.fetchStates(),
       ]);
       final aadhaarRes = results[0];
       final addressesRes = results[1];
+      final statesRes = results[2];
 
       List<Map<String, dynamic>> saved = [];
       if (addressesRes['ok'] == true) {
@@ -311,6 +321,9 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
           _addressError = aadhaarAddr == null
               ? 'Aadhaar address unavailable. You can enter a custom address.'
               : '';
+          if (statesRes['ok'] == true) {
+            _states = statesRes['states'] as List<dynamic>? ?? [];
+          }
         });
         if (providerId.isNotEmpty && _paymentAddressId.isEmpty) {
           setState(() => _paymentAddressId = providerId);
@@ -322,6 +335,22 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
           _addressLoading = false;
           _addressError = 'Failed to load address';
         });
+    }
+  }
+
+  Future<void> _loadCities(String stateId) async {
+    setState(() { _citiesLoading = true; _selectedCityId = null; _cityController.clear(); });
+    try {
+      final api = AugmontApi(ref.read(augmontDioProvider));
+      final result = await api.fetchCities(stateId: stateId);
+      if (mounted) {
+        setState(() {
+          _cities = result['ok'] == true ? (result['cities'] as List<dynamic>? ?? []) : [];
+          _citiesLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() { _cities = []; _citiesLoading = false; });
     }
   }
 
@@ -510,16 +539,14 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
             const SizedBox(height: 12),
             _buildTextField(_addrController, 'Address', maxLines: 2),
             const SizedBox(height: 8),
-            Row(children: [
-              Expanded(child: _buildTextField(_cityController, 'City')),
-              const SizedBox(width: 8),
-              Expanded(child: _buildTextField(_stateController, 'State')),
-            ]),
+            // State dropdown
+            _buildStateDropdown(),
+            const SizedBox(height: 8),
+            // City dropdown
+            _buildCityDropdown(),
             const SizedBox(height: 8),
             Row(children: [
-              Expanded(
-                  child: _buildTextField(_pincodeController, 'Pincode',
-                      maxLen: 6)),
+              Expanded(child: _buildTextField(_pincodeController, 'Pincode', maxLen: 6)),
               const SizedBox(width: 8),
               Expanded(child: _buildTextField(_landmarkController, 'Landmark')),
             ]),
@@ -645,6 +672,82 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
     );
   }
 
+  Widget _buildStateDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF4E4E4E)),
+        color: const Color(0xFF24201A),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          value: _selectedStateId,
+          hint: const Text('Select State', style: TextStyle(fontSize: 13, color: Color(0xFF5E5E5E))),
+          style: const TextStyle(fontSize: 13, color: Colors.white),
+          dropdownColor: const Color(0xFF24201A),
+          items: _states.map<DropdownMenuItem<String>>((state) {
+            final id = state['stateId']?.toString() ?? state['id']?.toString() ?? '';
+            final name = state['stateName']?.toString() ?? state['name']?.toString() ?? '';
+            return DropdownMenuItem(value: id, child: Text(name));
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              setState(() => _selectedStateId = value);
+              final selectedState = _states.firstWhere(
+                (s) => (s['stateId']?.toString() ?? s['id']?.toString() ?? '') == value,
+                orElse: () => {},
+              );
+              _stateController.text = selectedState['stateName']?.toString() ?? selectedState['name']?.toString() ?? '';
+              _loadCities(value);
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCityDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF4E4E4E)),
+        color: const Color(0xFF24201A),
+      ),
+      child: _citiesLoading
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFFF7CD57)))),
+            )
+          : DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: _selectedCityId,
+                hint: const Text('Select City', style: TextStyle(fontSize: 13, color: Color(0xFF5E5E5E))),
+                style: const TextStyle(fontSize: 13, color: Colors.white),
+                dropdownColor: const Color(0xFF24201A),
+                items: _cities.map<DropdownMenuItem<String>>((city) {
+                  final id = city['cityId']?.toString() ?? city['id']?.toString() ?? '';
+                  final name = city['cityName']?.toString() ?? city['name']?.toString() ?? '';
+                  return DropdownMenuItem(value: id, child: Text(name));
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _selectedCityId = value);
+                    final selectedCity = _cities.firstWhere(
+                      (c) => (c['cityId']?.toString() ?? c['id']?.toString() ?? '') == value,
+                      orElse: () => {},
+                    );
+                    _cityController.text = selectedCity['cityName']?.toString() ?? selectedCity['name']?.toString() ?? '';
+                  }
+                },
+              ),
+            ),
+    );
+  }
+
   Future<void> _confirmAddress(BuildContext bottomCtx) async {
     if (_showCustomAddress) {
       // Validate custom address
@@ -670,6 +773,8 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
           'stateName': _stateController.text.trim(),
           'pincode': _pincodeController.text.trim(),
           'landmark': _landmarkController.text.trim(),
+          if (_selectedStateId != null) 'stateId': _selectedStateId,
+          if (_selectedCityId != null) 'cityId': _selectedCityId,
         });
         if (result['ok'] == true) {
           _paymentAddressId = result['userAddressId']?.toString() ?? '';
@@ -1421,34 +1526,103 @@ class _GoldCoinScreenState extends ConsumerState<GoldCoinScreen> {
                             fontSize: 12, color: Color(0xFF7E7E7E)))),
             ]),
           ),
-        const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
-          height: 44,
-          child: Container(
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(50),
-                gradient: LinearGradient(
-                    colors: _isSilver
-                        ? [Colors.white, Colors.grey[400]!]
-                        : [const Color(0xFFFED45C), const Color(0xFFDB9502)])),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                  borderRadius: BorderRadius.circular(50),
-                  onTap: () => context.replace(AppRoutes.home),
-                  child: const Center(
-                      child: Text('Go Home',
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black)))),
+        const SizedBox(height: 16),
+        // Invoice download button
+        if (result != null && result['transactionId'] != null)
+          GestureDetector(
+            onTap: () => _downloadInvoice(result['transactionId']?.toString() ?? ''),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF2E2E2E)),
+                color: const Color(0xFF19160F),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.download, size: 16, color: Color(0xFFF7CD57)),
+                  SizedBox(width: 8),
+                  Text('Download Invoice', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFFF7CD57))),
+                ],
+              ),
             ),
           ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 44,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(50),
+                    border: Border.all(color: _isSilver ? Colors.white : const Color(0xFFF7CD57)),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(50),
+                      onTap: () => context.go(AppRoutes.home),
+                      child: Center(
+                        child: Text('Go Home', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _isSilver ? Colors.white : const Color(0xFFF7CD57))),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SizedBox(
+                height: 44,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(50),
+                    gradient: LinearGradient(
+                        colors: _isSilver
+                            ? [Colors.white, Colors.grey[400]!]
+                            : [const Color(0xFFFED45C), const Color(0xFFDB9502)]),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(50),
+                      onTap: () => context.go('/sell/gold-coin/1?metal=${widget.metalType}'),
+                      child: const Center(
+                          child: Text('Sell more',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black))),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 40),
       ]),
     );
+  }
+
+  Future<void> _downloadInvoice(String transactionId) async {
+    try {
+      final api = AugmontApi(ref.read(augmontDioProvider));
+      final result = await api.fetchAugmontRedeemInvoice(transactionId: transactionId);
+      if (result['ok'] == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invoice downloaded')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to download invoice')),
+        );
+      }
+    }
   }
 
   // ─── KYC Prompt Modal ───

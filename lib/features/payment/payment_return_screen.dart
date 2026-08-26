@@ -7,7 +7,9 @@ import 'package:intl/intl.dart';
 import '../../app/router.dart';
 import '../../core/api/augmont_api.dart';
 import '../../core/api/cashfree_api.dart';
+import '../../core/api/coupon_api.dart';
 import '../../core/services/auth_provider.dart';
+import '../../core/services/rate_provider.dart';
 import '../../core/storage/local_storage.dart';
 
 class PaymentReturnScreen extends ConsumerStatefulWidget {
@@ -34,12 +36,24 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
   String _uniqueId = '';
   bool _isRedemption = false;
   double? _purchaseAmount;
+  String _couponReservationId = '';
+  String _couponOrderId = '';
+  bool _couponHandled = false;
 
   @override
   void initState() {
     super.initState();
     _loadContext();
     _check();
+  }
+
+  @override
+  void dispose() {
+    // Release coupon if payment never resolved (unmount cleanup)
+    if (!_couponHandled && _couponReservationId.isNotEmpty) {
+      _handleCouponRelease();
+    }
+    super.dispose();
   }
 
   void _loadContext() {
@@ -56,6 +70,8 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
         _flowType = ctx['flowType']?.toString() ?? 'DIGITAL_BUY';
         _isRedemption = _flowType == 'PHYSICAL_REDEMPTION' || _sku.isNotEmpty;
         _purchaseAmount = num.tryParse(ctx['amount']?.toString() ?? '')?.toDouble();
+        _couponReservationId = ctx['couponReservationId']?.toString() ?? '';
+        _couponOrderId = ctx['merchantOrderId']?.toString() ?? '';
       }
     } catch (_) {}
     _orderId = widget.orderId.isNotEmpty ? widget.orderId : _sabbpeOrderId;
@@ -107,6 +123,8 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
         /* debugPrint('[FLOW] status SUCCESS → calling _verifyWithAugmont'); */
         await _verifyWithAugmont();
       } else {
+        // Release coupon on payment failure/cancel
+        _handleCouponRelease();
         /* debugPrint('[FLOW] status NOT success → showing result message=${_buildStatusMessage()}'); */
         setState(() {
           _loading = false;
@@ -162,6 +180,9 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
         await _storeRedeemResult(detailsRes);
       }
 
+      // Confirm coupon on success
+      _handleCouponConfirm();
+
       final normalizedStatus = (normalized['status'] ?? '').toString().toUpperCase();
       /* debugPrint('[FLOW] final result | success=$_success pending=$_pending status=$_paymentStatusRaw'); */
       setState(() {
@@ -176,6 +197,8 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
                 : normalized['message']?.toString() ?? 'Payment details verified.';
       });
     } else {
+      // Release coupon on failure
+      _handleCouponRelease();
       setState(() {
         _loading = false;
         _statusCode = _paymentStatusRaw;
@@ -284,6 +307,40 @@ class _PaymentReturnScreenState extends ConsumerState<PaymentReturnScreen> {
       redeemData['status'] = 'SUCCESS';
 
       await LocalStorageService.setRedeemResult(jsonEncode(redeemData));
+    } catch (_) {}
+  }
+
+  void _handleCouponConfirm() {
+    if (_couponReservationId.isEmpty || _couponOrderId.isEmpty) return;
+    _couponHandled = true;
+    try {
+      CouponApi(ref.read(dioAugmontProvider)).confirmCoupon(
+        orderId: _couponOrderId,
+        reservationId: _couponReservationId,
+      ).catchError((_) {});
+      _clearCouponFromContext();
+    } catch (_) {}
+  }
+
+  void _handleCouponRelease() {
+    if (_couponReservationId.isEmpty) return;
+    _couponHandled = true;
+    try {
+      CouponApi(ref.read(dioAugmontProvider)).releaseCoupon(
+        reservationId: _couponReservationId,
+      ).catchError((_) {});
+      _clearCouponFromContext();
+    } catch (_) {}
+  }
+
+  void _clearCouponFromContext() {
+    try {
+      final raw = LocalStorageService.getAugmontOrderReferences();
+      if (raw != null && raw.isNotEmpty) {
+        final ctx = jsonDecode(raw) as Map<String, dynamic>;
+        ctx.remove('couponReservationId');
+        LocalStorageService.setAugmontOrderReferences(jsonEncode(ctx));
+      }
     } catch (_) {}
   }
 

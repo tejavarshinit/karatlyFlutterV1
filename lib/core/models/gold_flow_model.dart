@@ -43,6 +43,13 @@ class BuyState {
   final String metalType;
   final String addressId;
   final bool isRedeemPayment;
+  final String couponCode;
+  final String reservationId;
+  final double couponDiscount;
+  final bool couponApplied;
+  final String employeeId;
+  final String corporateId;
+  final String couponReservationId;
 
   const BuyState({
     this.type = '',
@@ -65,6 +72,13 @@ class BuyState {
     this.metalType = '',
     this.addressId = '',
     this.isRedeemPayment = false,
+    this.couponCode = '',
+    this.reservationId = '',
+    this.couponDiscount = 0,
+    this.couponApplied = false,
+    this.employeeId = '',
+    this.corporateId = '',
+    this.couponReservationId = '',
   });
 
   BuyState copyWith({
@@ -88,6 +102,13 @@ class BuyState {
     String? metalType,
     String? addressId,
     bool? isRedeemPayment,
+    String? couponCode,
+    String? reservationId,
+    double? couponDiscount,
+    bool? couponApplied,
+    String? employeeId,
+    String? corporateId,
+    String? couponReservationId,
   }) {
     return BuyState(
       type: type ?? this.type,
@@ -110,6 +131,13 @@ class BuyState {
       metalType: metalType ?? this.metalType,
       addressId: addressId ?? this.addressId,
       isRedeemPayment: isRedeemPayment ?? this.isRedeemPayment,
+      couponCode: couponCode ?? this.couponCode,
+      reservationId: reservationId ?? this.reservationId,
+      couponDiscount: couponDiscount ?? this.couponDiscount,
+      couponApplied: couponApplied ?? this.couponApplied,
+      employeeId: employeeId ?? this.employeeId,
+      corporateId: corporateId ?? this.corporateId,
+      couponReservationId: couponReservationId ?? this.couponReservationId,
     );
   }
 }

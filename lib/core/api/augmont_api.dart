@@ -1062,4 +1062,64 @@ class AugmontApi {
       'uniqueId': uniqueId.trim(),
     }, 'Failed to fetch Aadhaar address');
   }
+
+  // ── Create UPI ──
+  Future<Map<String, dynamic>> createAugmontUpi({
+    required String uniqueId,
+    required Map<String, dynamic> request,
+  }) async {
+    if (uniqueId.isEmpty) return {'ok': false, 'message': 'Missing uniqueId'};
+    return _requestAugmontOrderEndpoint('/api/v1/users/upi/create', {
+      'uniqueId': uniqueId.trim(),
+      ...request,
+    }, 'Failed to add UPI');
+  }
+
+  // ── Fetch States ──
+  Future<Map<String, dynamic>> fetchStates() async {
+    try {
+      final token = LocalStorageService.getToken() ?? '';
+      final res = await _dio.get(
+        '${ApiConfig.augmontBaseUrl}/api/v1/master/states',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            if (token.isNotEmpty) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      final data = _getJson(res);
+      final payload = data['payload'] as Map<String, dynamic>?;
+      final result = payload?['result'] as Map<String, dynamic>?;
+      final states = result?['data'] ?? result?['states'];
+      return {'ok': true, 'states': states ?? []};
+    } catch (e) {
+      return {'ok': false, 'message': 'Failed to fetch states', 'states': <dynamic>[]};
+    }
+  }
+
+  // ── Fetch Cities by State ──
+  Future<Map<String, dynamic>> fetchCities({required String stateId}) async {
+    if (stateId.isEmpty) return {'ok': false, 'message': 'Missing stateId', 'cities': <dynamic>[]};
+    try {
+      final token = LocalStorageService.getToken() ?? '';
+      final res = await _dio.post(
+        '${ApiConfig.augmontBaseUrl}/api/v1/master/cities',
+        data: {'stateId': stateId},
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            if (token.isNotEmpty) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      final data = _getJson(res);
+      final payload = data['payload'] as Map<String, dynamic>?;
+      final result = payload?['result'] as Map<String, dynamic>?;
+      final cities = result?['data'] ?? result?['cities'];
+      return {'ok': true, 'cities': cities ?? []};
+    } catch (e) {
+      return {'ok': false, 'message': 'Failed to fetch cities', 'cities': <dynamic>[]};
+    }
+  }
 }

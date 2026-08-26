@@ -30,6 +30,13 @@ class GoldFlowNotifier extends StateNotifier<GoldFlowState> {
     String? metalType,
     String? addressId,
     bool? isRedeemPayment,
+    String? couponCode,
+    String? reservationId,
+    double? couponDiscount,
+    bool? couponApplied,
+    String? employeeId,
+    String? corporateId,
+    String? couponReservationId,
   }) {
     state = state.copyWith(
       buyState: state.buyState.copyWith(
@@ -53,6 +60,13 @@ class GoldFlowNotifier extends StateNotifier<GoldFlowState> {
         metalType: metalType,
         addressId: addressId,
         isRedeemPayment: isRedeemPayment,
+        couponCode: couponCode,
+        reservationId: reservationId,
+        couponDiscount: couponDiscount,
+        couponApplied: couponApplied,
+        employeeId: employeeId,
+        corporateId: corporateId,
+        couponReservationId: couponReservationId,
       ),
     );
   }

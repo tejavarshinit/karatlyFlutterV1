@@ -17,6 +17,8 @@ import '../features/sip_flow/sip_screen.dart';
 import '../features/cart/cart_screen.dart';
 import '../features/brands/brands_screen.dart';
 import '../features/payment/payment_gateway_screen.dart';
+import '../features/sell_flow/sell_silver_upi_screen.dart';
+import '../features/sell_flow/sell_silver_bank_screen.dart';
 
 import '../features/payment/payment_return_screen.dart';
 import '../features/settings/help_center_screen.dart';
@@ -322,6 +324,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.sip3, builder: (_, __) => const SipScreen(step: 3)),
       GoRoute(path: AppRoutes.sip4, builder: (_, __) => const SipScreen(step: 4)),
       GoRoute(path: AppRoutes.sip5, builder: (_, __) => const SipScreen(step: 5)),
+
+      // Silver sell UPI/Bank add
+      GoRoute(path: '/sell-silver/upi', builder: (_, __) => const SellSilverUpiScreen()),
+      GoRoute(path: '/sell-silver/bank', builder: (_, __) => const SellSilverBankScreen()),
 
       GoRoute(path: AppRoutes.paymentGateway, builder: (_, state) {
         final extras = state.extra as Map<String, dynamic>? ?? {};

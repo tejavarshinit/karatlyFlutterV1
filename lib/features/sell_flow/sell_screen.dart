@@ -1268,6 +1268,29 @@ class _SellScreenState extends ConsumerState<SellScreen> {
           ],
           const SizedBox(height: 12),
 
+          // Add payment method button
+          GestureDetector(
+            onTap: () => context.go(AppRoutes.paymentMethods),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF2E2E2E)),
+                color: const Color(0xFF19160F),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.account_balance, size: 16, color: Color(0xFF7E7E7E)),
+                  SizedBox(width: 6),
+                  Text('Add Bank Account', style: TextStyle(fontSize: 12, color: Color(0xFF7E7E7E))),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
           // Security info
           _buildSecurityInfo(),
           const SizedBox(height: 12),
@@ -1568,7 +1591,7 @@ class _SellScreenState extends ConsumerState<SellScreen> {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(50),
-                        onTap: () => context.go('/sell/sell/1'),
+                        onTap: () => context.go('/sell/sell/1?metal=$_metalType'),
                         child: const Center(
                           child: Text(
                             'Sell more ->',

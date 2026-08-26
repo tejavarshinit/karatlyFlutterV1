@@ -69,6 +69,11 @@ class PaymentBusiness {
   final String? blockId;
   final String? sku;
   final String? addressId;
+  final String? couponCode;
+  final double? couponSubtotal;
+  final double? couponFee;
+  final String? employeeId;
+  final String? corporateId;
 
   const PaymentBusiness({
     required this.flowType,
@@ -79,6 +84,11 @@ class PaymentBusiness {
     this.blockId,
     this.sku,
     this.addressId,
+    this.couponCode,
+    this.couponSubtotal,
+    this.couponFee,
+    this.employeeId,
+    this.corporateId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -92,6 +102,11 @@ class PaymentBusiness {
     'blockId': blockId ?? '',
     if (sku != null && sku!.isNotEmpty) 'sku': sku,
     if (addressId != null && addressId!.isNotEmpty) 'addressId': addressId,
+    if (couponCode != null && couponCode!.isNotEmpty) 'couponCode': couponCode,
+    if (couponSubtotal != null && couponSubtotal! > 0) 'couponSubtotal': couponSubtotal,
+    if (couponFee != null && couponFee! > 0) 'couponFee': couponFee,
+    if (employeeId != null && employeeId!.isNotEmpty) 'employeeId': employeeId,
+    if (corporateId != null && corporateId!.isNotEmpty) 'corporateId': corporateId,
   };
 
   factory PaymentBusiness.fromJson(Map<String, dynamic> json) {
@@ -106,6 +121,11 @@ class PaymentBusiness {
       blockId: json['blockId']?.toString(),
       sku: json['sku']?.toString(),
       addressId: json['addressId']?.toString(),
+      couponCode: json['couponCode']?.toString(),
+      couponSubtotal: (json['couponSubtotal'] as num?)?.toDouble(),
+      couponFee: (json['couponFee'] as num?)?.toDouble(),
+      employeeId: json['employeeId']?.toString(),
+      corporateId: json['corporateId']?.toString(),
     );
   }
 }
@@ -124,6 +144,8 @@ class PaymentResponse {
   final String cfPaymentId;
   final PaymentActionData? actionData;
   final String message;
+  final String couponReservationId;
+  final double couponDiscount;
 
   const PaymentResponse({
     this.sabbpeOrderId = '',
@@ -139,6 +161,8 @@ class PaymentResponse {
     this.cfPaymentId = '',
     this.actionData,
     this.message = '',
+    this.couponReservationId = '',
+    this.couponDiscount = 0,
   });
 
   factory PaymentResponse.fromJson(Map<String, dynamic> json) {
@@ -158,6 +182,8 @@ class PaymentResponse {
           ? PaymentActionData.fromJson(json['actionData'] as Map<String, dynamic>)
           : null,
       message: json['message']?.toString() ?? '',
+      couponReservationId: json['couponReservationId']?.toString() ?? '',
+      couponDiscount: (json['couponDiscount'] as num?)?.toDouble() ?? 0,
     );
   }
 }

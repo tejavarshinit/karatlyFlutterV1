@@ -21,6 +21,11 @@ class EmbeddedPaymentGateway extends ConsumerStatefulWidget {
   final String flowType; // DIGITAL_BUY or PHYSICAL_REDEMPTION
   final String? sku;
   final String? addressId;
+  final String? couponCode;
+  final double? couponSubtotal;
+  final double? couponFee;
+  final String? employeeId;
+  final String? corporateId;
 
   const EmbeddedPaymentGateway({
     super.key,
@@ -32,6 +37,11 @@ class EmbeddedPaymentGateway extends ConsumerStatefulWidget {
     this.flowType = 'DIGITAL_BUY',
     this.sku,
     this.addressId,
+    this.couponCode,
+    this.couponSubtotal,
+    this.couponFee,
+    this.employeeId,
+    this.corporateId,
   });
 
   @override
@@ -152,6 +162,11 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
           blockId: widget.blockId,
           sku: widget.sku,
           addressId: widget.addressId,
+          couponCode: widget.couponCode,
+          couponSubtotal: widget.couponSubtotal,
+          couponFee: widget.couponFee,
+          employeeId: widget.employeeId,
+          corporateId: widget.corporateId,
         ),
       );
 
@@ -171,9 +186,14 @@ class _EmbeddedPaymentGatewayState extends ConsumerState<EmbeddedPaymentGateway>
         'metalType': widget.metalType,
         'amount': _paymentAmount,
         'sabbpeOrderId': response.sabbpeOrderId,
+        'merchantOrderId': response.merchantOrderId,
         if (widget.sku != null) 'sku': widget.sku,
         if (widget.addressId != null) 'addressId': widget.addressId,
         'flowType': widget.flowType,
+        if (response.couponReservationId.isNotEmpty)
+          'couponReservationId': response.couponReservationId,
+        if (widget.couponCode != null && widget.couponCode!.isNotEmpty)
+          'couponCode': widget.couponCode,
       });
       await LocalStorageService.setAugmontOrderReferences(jsonEncode(merged));
 

@@ -452,8 +452,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _buildSellIcon(onTap: () => context.go('/sell-gold/select?metal=$_metalType'), label: 'Sell / Redeem'),
                 _buildQuickActionCircle(label: 'SIP', icon: Icons.swap_horiz, bg: const Color(0xFF233737), fg: const Color(0xFF6DD6FF), onTap: () => _showComingSoon('SIP')),
                 _buildQuickActionCircle(label: 'History', icon: Icons.history, bg: const Color(0xFF233737), fg: const Color(0xFF6DD6FF), onTap: () => context.go(AppRoutes.orders)),
-                if (_isGold)
-                  _buildQuickActionCircle(label: 'Gift360', icon: Icons.card_giftcard, bg: const Color(0xFF3D3214), fg: const Color(0xFFF7CD57), onTap: () => context.go(AppRoutes.gift360), badge: 'UAT'),
               ],
             ),
     );
