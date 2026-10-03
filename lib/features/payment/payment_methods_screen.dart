@@ -32,6 +32,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
   bool _submitting = false;
   String? _primaryUpdatingId;
   String? _formMessage;
+  bool _formMessageSuccess = true;
   String? _deleteMessage;
   String? _primaryMessage;
   final Map<String, String> _errors = {};
@@ -176,7 +177,10 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
 
     final uniqueId = _resolveUniqueId();
     if (uniqueId.isEmpty) {
-      setState(() => _formMessage = 'User session not found. Please login again.');
+      setState(() {
+        _formMessage = 'User session not found. Please login again.';
+        _formMessageSuccess = false;
+      });
       return;
     }
 
@@ -189,6 +193,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
       if (mismatch != null) {
         setState(() {
           _formMessage = mismatch;
+          _formMessageSuccess = false;
         });
         return;
       }
@@ -213,6 +218,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
       setState(() {
         _submitting = false;
         _formMessage = msg;
+        _formMessageSuccess = false;
       });
       return;
     }
@@ -227,6 +233,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
       _accountNumberController.clear();
       _ifscController.clear();
       _formMessage = 'Bank account validated successfully.';
+      _formMessageSuccess = true;
     });
   }
 
@@ -305,22 +312,24 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: RadialGradient(
-          center: Alignment(0.9755, -0.3792),
-          radius: 1.04,
-          colors: [Color(0xFF4A3A1E), Colors.black],
+    return Material(
+      type: MaterialType.transparency,
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(0.9755, -0.3792),
+            radius: 1.04,
+            colors: [Color(0xFF4A3A1E), Colors.black],
+          ),
         ),
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 88),
-          child: DefaultTextStyle(
-            style: const TextStyle(decoration: TextDecoration.none),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 88),
+            child: DefaultTextStyle(
+              style: const TextStyle(decoration: TextDecoration.none),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 _buildHeader(context, 'Add your bank'),
               const SizedBox(height: 24),
               _buildSectionHeading('SAVED BANK ACCOUNTS'),
@@ -354,8 +363,9 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
               ],
               const SizedBox(height: 24),
               _buildSecurityBadge(),
-            ],
-          ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -703,7 +713,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen> {
             },
           ),
           const SizedBox(height: 14),
-          if (_formMessage != null) _banner(_formMessage!, success: !_formMessage!.toLowerCase().contains('failed')),
+          if (_formMessage != null) _banner(_formMessage!, success: _formMessageSuccess),
           const SizedBox(height: 14),
           Row(
             children: [

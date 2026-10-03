@@ -188,6 +188,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 title: 'Terms & Condition',
                 onTap: () => context.go(AppRoutes.terms),
               ),
+              _buildMenuRow(
+                icon: Icons.delete_outline,
+                title: 'Delete Account',
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2D1513),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'Info',
+                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Color(0xFFFF5555)),
+                  ),
+                ),
+                onTap: () => context.go(AppRoutes.deleteAccount),
+              ),
               const SizedBox(height: 28),
               Center(
                 child: Text(

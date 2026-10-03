@@ -19,6 +19,7 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -32,11 +33,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        ndk {
-            // Only ship 64-bit + 32-bit ARM — drop x86_64 (emulators only, ~0 real devices).
-            // This cuts native lib + symbol bloat significantly.
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
-        }
     }
 
     signingConfigs {
@@ -69,4 +65,17 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Required by flutter_local_notifications.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}
+
+// Firebase (push notifications). Download google-services.json from the
+// Firebase console (Android app com.karatly.karatly) into android/app/.
+// The plugin is only applied when the file exists so builds without it still work
+// (push is disabled at runtime in that case).
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }

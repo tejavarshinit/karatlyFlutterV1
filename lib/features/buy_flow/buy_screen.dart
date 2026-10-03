@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/router.dart';
 import '../../app/theme.dart';
 import '../../core/api/augmont_api.dart';
-import '../../core/api/coupon_api.dart';
+// import '../../core/api/coupon_api.dart';
 import '../../core/services/auth_provider.dart';
 import '../../core/services/kyc_limit_provider.dart';
 import '../../core/services/rate_provider.dart';
@@ -19,7 +19,7 @@ import '../shared/karatly_circle.dart';
 import '../shared/feature_chip.dart';
 import '../shared/embedded_payment_gateway.dart';
 import '../shared/kyc_limit_modal.dart';
-import '../shared/coupon_input.dart';
+// import '../shared/coupon_input.dart';
 
 /// Buy flow screen with 5 steps matching reference BuyFlow.tsx
 class BuyScreen extends ConsumerStatefulWidget {
@@ -357,30 +357,30 @@ class _BuyScreenState extends ConsumerState<BuyScreen>
     }
   }
 
-  void _handleCouponApplied(CouponResult result) {
-    ref.read(goldFlowProvider.notifier).updateBuyState(
-      couponCode: result.couponCode,
-      reservationId: result.reservationId,
-      couponDiscount: result.discountAmount,
-      couponApplied: true,
-      employeeId: result.employeeId,
-      corporateId: result.corporateId,
-    );
-  }
+  // void _handleCouponApplied(CouponResult result) {
+  //   ref.read(goldFlowProvider.notifier).updateBuyState(
+  //     couponCode: result.couponCode,
+  //     reservationId: result.reservationId,
+  //     couponDiscount: result.discountAmount,
+  //     couponApplied: true,
+  //     employeeId: result.employeeId,
+  //     corporateId: result.corporateId,
+  //   );
+  // }
 
-  void _handleCouponRemoved() {
-    final buyState = ref.read(goldFlowProvider).buyState;
-    final reservationId = buyState.reservationId;
-    if (reservationId.isNotEmpty) {
-      CouponApi(ref.read(augmontDioProvider)).releaseCoupon(reservationId: reservationId).catchError((_) {});
-    }
-    ref.read(goldFlowProvider.notifier).updateBuyState(
-      couponCode: '',
-      reservationId: '',
-      couponDiscount: 0,
-      couponApplied: false,
-    );
-  }
+  // void _handleCouponRemoved() {
+  //   final buyState = ref.read(goldFlowProvider).buyState;
+  //   final reservationId = buyState.reservationId;
+  //   if (reservationId.isNotEmpty) {
+  //     CouponApi(ref.read(augmontDioProvider)).releaseCoupon(reservationId: reservationId).catchError((_) {});
+  //   }
+  //   ref.read(goldFlowProvider.notifier).updateBuyState(
+  //     couponCode: '',
+  //     reservationId: '',
+  //     couponDiscount: 0,
+  //     couponApplied: false,
+  //   );
+  // }
 
   Color _getGradientStart() {
     return _isSilver ? const Color(0xFF293341) : const Color(0xFF4A3A1E);
@@ -1409,44 +1409,44 @@ class _BuyScreenState extends ConsumerState<BuyScreen>
                     KaratlyCircle(size: 48, metalType: _metalType),
                   ],
                 ),
-                // Coupon discount line
-                if (buyState.couponDiscount > 0) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.only(top: 8),
-                    decoration: const BoxDecoration(
-                      border: Border(top: BorderSide(color: Color(0xFF2E2E2E))),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Coupon discount',
-                            style: TextStyle(fontSize: 11, color: Color(0xFF7E7E7E))),
-                        Text(
-                          '- Rs.${buyState.couponDiscount.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15EE01)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                // Coupon discount line (hidden)
+                // if (buyState.couponDiscount > 0) ...[
+                //   const SizedBox(height: 8),
+                //   Container(
+                //     padding: const EdgeInsets.only(top: 8),
+                //     decoration: const BoxDecoration(
+                //       border: Border(top: BorderSide(color: Color(0xFF2E2E2E))),
+                //     ),
+                //     child: Row(
+                //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //       children: [
+                //         const Text('Coupon discount',
+                //             style: TextStyle(fontSize: 11, color: Color(0xFF7E7E7E))),
+                //         Text(
+                //           '- Rs.${buyState.couponDiscount.toStringAsFixed(2)}',
+                //           style: const TextStyle(
+                //               fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15EE01)),
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                // ],
               ],
             ),
           ),
           const SizedBox(height: 12),
 
-          // Coupon input
-          CouponInput(
-            orderId: buyState.merchantTransactionId.isNotEmpty
-                ? buyState.merchantTransactionId
-                : buyState.transactionId,
-            clientId: uniqueId,
-            subtotal: _amount,
-            initialCode: buyState.couponCode,
-            onApply: _handleCouponApplied,
-            onRemove: _handleCouponRemoved,
-          ),
+          // Coupon input (hidden)
+          // CouponInput(
+          //   orderId: buyState.merchantTransactionId.isNotEmpty
+          //       ? buyState.merchantTransactionId
+          //       : buyState.transactionId,
+          //   clientId: uniqueId,
+          //   subtotal: _amount,
+          //   initialCode: buyState.couponCode,
+          //   onApply: _handleCouponApplied,
+          //   onRemove: _handleCouponRemoved,
+          // ),
           const SizedBox(height: 12),
 
           // Embedded payment gateway

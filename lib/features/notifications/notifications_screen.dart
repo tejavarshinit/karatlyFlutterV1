@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/router.dart';
 import '../../core/services/auth_provider.dart';
 import '../../core/services/rate_provider.dart';
+import '../../core/services/home_provider.dart';
 import '../../core/storage/local_storage.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
@@ -20,6 +21,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   bool _loading = true;
   _OrderData? _lastOrder;
   String _kycStatus = 'Not Started';
+  double _goldBuy = 0;
+  double _goldSell = 0;
+  double _silverBuy = 0;
+  double _silverSell = 0;
 
   @override
   void initState() {
@@ -40,6 +45,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final api = ref.read(augmontApiProvider);
 
     final results = await Future.wait<Map<String, dynamic>>([
+      api.fetchLiveGoldRateSnapshot(),
       api.fetchAugmontBuyOrders(uniqueId: uniqueId),
       api.fetchAugmontRedeemOrders(uniqueId: uniqueId),
       uniqueId.isNotEmpty ? api.fetchProductOrders(uniqueId) : Future.value({'ok': false, 'orders': <dynamic>[]}),
@@ -47,8 +53,19 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     if (!mounted) return;
 
+    // Live rates
+    final rateRes = results[0];
+    if (rateRes['ok'] == true && rateRes['snapshot'] != null) {
+      final snapshot = rateRes['snapshot'];
+      _goldBuy = snapshot.gold.buyPrice;
+      _goldSell = snapshot.gold.sellPrice;
+      _silverBuy = snapshot.silver.buyPrice;
+      _silverSell = snapshot.silver.sellPrice;
+    }
+
     final allOrders = <_OrderData>[];
-    for (final result in results) {
+    for (int i = 1; i < results.length; i++) {
+      final result = results[i];
       if (result['ok'] == true) {
         final orders = result['orders'];
         if (orders is List) {
@@ -121,6 +138,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   const SizedBox(height: 32),
                   _buildHeader(),
                   const SizedBox(height: 20),
+                  _buildLiveRatesCard(_goldBuy, _goldSell, _silverBuy, _silverSell, _loading),
+                  const SizedBox(height: 24),
+                  _buildSectionHeader('EXPLORE MORE'),
+                  const SizedBox(height: 12),
+                  _buildDiamondsButton(),
+                  const SizedBox(height: 10),
+                  _buildComingSoonSection(),
+                  const SizedBox(height: 24),
                   _buildSectionHeader('RECENT ACTIVITY'),
                   const SizedBox(height: 12),
                   _buildRecentActivity(),
@@ -381,6 +406,63 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDiamondsButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: GestureDetector(
+        onTap: () {
+          ref.read(activeMetalProvider.notifier).state = 'diamond';
+          context.go(AppRoutes.home);
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            gradient: const LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [Color(0xFF0A3A6B), Color(0xFF061E45)],
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF5AC8FF).withOpacity(0.09),
+                  border: Border.all(color: const Color(0xFF5AC8FF).withOpacity(0.21)),
+                ),
+                child: const Icon(Icons.diamond_outlined, color: Color(0xFF5AC8FF), size: 18),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Diamonds',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFA0D8FF)),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Certified natural diamonds',
+                      style: TextStyle(fontSize: 10, color: Color(0xFF7AACC8)),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Color(0xFF5AC8FF), size: 16),
+            ],
+          ),
+        ),
       ),
     );
   }

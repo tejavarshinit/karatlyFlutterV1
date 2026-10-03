@@ -21,6 +21,33 @@ class TransbankApi {
     }
   }
 
+  String? _extractErrorMessage(Map<String, dynamic> data) {
+    final raw = data['message']?.toString();
+    if (raw == null || raw.isEmpty) return null;
+
+    if (raw.startsWith('{')) {
+      try {
+        final parsed = jsonDecode(raw);
+        if (parsed is Map) {
+          final errors = parsed['errors'] as Map<String, dynamic>?;
+          if (errors != null && errors.isNotEmpty) {
+            final firstErrors = errors.values.first;
+            if (firstErrors is List && firstErrors.isNotEmpty) {
+              final firstError = firstErrors.first;
+              if (firstError is Map && firstError['message'] != null) {
+                return firstError['message'].toString();
+              }
+            }
+          }
+          if (parsed['message'] != null) return parsed['message'].toString();
+        }
+      } catch (_) {}
+      return raw;
+    }
+
+    return raw;
+  }
+
   Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
     try {
       final token = LocalStorageService.getToken() ?? '';
@@ -41,7 +68,16 @@ class TransbankApi {
         return {'ok': false, 'message': 'Session expired. Please login again.'};
       }
 
-      return _getJson(res);
+      final json = _getJson(res);
+
+      if (res.statusCode != null && res.statusCode! >= 400) {
+        final cleanMsg = _extractErrorMessage(json);
+        if (cleanMsg != null) {
+          return {'ok': false, 'message': cleanMsg, 'statusCode': res.statusCode};
+        }
+      }
+
+      return json;
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
@@ -219,9 +255,11 @@ class TransbankApi {
         status == 1 ||
         status == '1' ||
         statusText == 'success' ||
+        statusText == 'accepted' ||
         statusCode.startsWith('2') ||
         verificationStatus == 'verified' ||
         verificationStatus == 'success' ||
+        verificationStatus == 'account_valid' ||
         RegExp(r'success|verified', caseSensitive: false).hasMatch(message);
   }
 

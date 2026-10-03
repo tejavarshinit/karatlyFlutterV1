@@ -12,7 +12,8 @@ class SellSilverUpiScreen extends ConsumerStatefulWidget {
   const SellSilverUpiScreen({super.key});
 
   @override
-  ConsumerState<SellSilverUpiScreen> createState() => _SellSilverUpiScreenState();
+  ConsumerState<SellSilverUpiScreen> createState() =>
+      _SellSilverUpiScreenState();
 }
 
 class _SellSilverUpiScreenState extends ConsumerState<SellSilverUpiScreen> {
@@ -30,7 +31,8 @@ class _SellSilverUpiScreenState extends ConsumerState<SellSilverUpiScreen> {
     final phone = LocalStorageService.getUserPhone();
     if (phone != null && phone.isNotEmpty) {
       final dob = profile['dateOfBirth']?.toString() ?? '';
-      return UniqueIdHelper.buildMobileDobUniqueId(mobileNumber: phone, dateOfBirth: dob);
+      return UniqueIdHelper.buildMobileDobUniqueId(
+          mobileNumber: phone, dateOfBirth: dob);
     }
     return '';
   }
@@ -46,7 +48,10 @@ class _SellSilverUpiScreenState extends ConsumerState<SellSilverUpiScreen> {
       setState(() => _error = 'Enter a valid mobile number');
       return;
     }
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final api = AugmontApi(ref.read(augmontDioProvider));
       final uniqueId = _resolveUniqueId();
@@ -55,17 +60,30 @@ class _SellSilverUpiScreenState extends ConsumerState<SellSilverUpiScreen> {
         'mobileNumber': mobile,
       });
       if (result['ok'] == true) {
+        ref.read(goldFlowProvider.notifier).updateSellState(
+              payoutMethod: 'upi',
+              upiId: upiId,
+              mobileNumber: mobile,
+              payoutVerified: true,
+              metalType: 'silver',
+            );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('UPI added successfully')),
           );
-          context.go('/sell-silver/3');
+          context.go('/sell-silver/3?metal=silver');
         }
       } else {
-        setState(() { _error = result['message']?.toString() ?? 'Failed to add UPI'; _loading = false; });
+        setState(() {
+          _error = result['message']?.toString() ?? 'Failed to add UPI';
+          _loading = false;
+        });
       }
     } catch (e) {
-      setState(() { _error = 'Error: $e'; _loading = false; });
+      setState(() {
+        _error = 'Error: $e';
+        _loading = false;
+      });
     }
   }
 
@@ -83,7 +101,8 @@ class _SellSilverUpiScreenState extends ConsumerState<SellSilverUpiScreen> {
       body: Align(
         alignment: Alignment.bottomCenter,
         child: Container(
-          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+          constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85),
           decoration: const BoxDecoration(
             borderRadius: BorderRadius.vertical(top: Radius.circular(60)),
             gradient: RadialGradient(
@@ -91,7 +110,12 @@ class _SellSilverUpiScreenState extends ConsumerState<SellSilverUpiScreen> {
               radius: 1.2,
               colors: [Color(0xFF293341), Colors.black],
             ),
-            boxShadow: [BoxShadow(color: Color(0x80000000), blurRadius: 60, offset: Offset(0, -24))],
+            boxShadow: [
+              BoxShadow(
+                  color: Color(0x80000000),
+                  blurRadius: 60,
+                  offset: Offset(0, -24))
+            ],
           ),
           child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(60)),
@@ -100,31 +124,57 @@ class _SellSilverUpiScreenState extends ConsumerState<SellSilverUpiScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(width: 100, height: 10, decoration: BoxDecoration(color: const Color(0xFF3E3E3E), borderRadius: BorderRadius.circular(10))),
+                  Container(
+                      width: 100,
+                      height: 10,
+                      decoration: BoxDecoration(
+                          color: const Color(0xFF3E3E3E),
+                          borderRadius: BorderRadius.circular(10))),
                   const SizedBox(height: 16),
                   SizedBox(
                     height: 32,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        Positioned(left: 0, child: GestureDetector(onTap: () => context.go('/sell-silver/3'), child: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.white))),
-                        const Center(child: Text('Add UPI', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white))),
+                        Positioned(
+                            left: 0,
+                            child: GestureDetector(
+                                onTap: () =>
+                                    context.go('/sell-silver/3?metal=silver'),
+                                child: const Icon(
+                                    Icons.arrow_back_ios_new_rounded,
+                                    size: 20,
+                                    color: Colors.white))),
+                        const Center(
+                            child: Text('Add UPI',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white))),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _buildTextField(_upiController, 'UPI ID (e.g. name@upi)', icon: Icons.account_balance_wallet),
+                  _buildTextField(_upiController, 'UPI ID (e.g. name@upi)',
+                      icon: Icons.account_balance_wallet),
                   const SizedBox(height: 12),
-                  _buildTextField(_mobileController, 'Mobile Number', keyboardType: TextInputType.phone, icon: Icons.phone),
+                  _buildTextField(_mobileController, 'Mobile Number',
+                      keyboardType: TextInputType.phone, icon: Icons.phone),
                   if (_error != null) ...[
                     const SizedBox(height: 8),
-                    Text(_error!, style: const TextStyle(fontSize: 12, color: Color(0xFFFF6B6B))),
+                    Text(_error!,
+                        style: const TextStyle(
+                            fontSize: 12, color: Color(0xFFFF6B6B))),
                   ],
                   const SizedBox(height: 20),
                   SizedBox(
-                    width: double.infinity, height: 48,
+                    width: double.infinity,
+                    height: 48,
                     child: Container(
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(50), gradient: const LinearGradient(colors: [Color(0xFFFFFFFF), Color(0xFF999999)])),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(50),
+                          gradient: const LinearGradient(
+                              colors: [Color(0xFFFFFFFF), Color(0xFF999999)])),
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -132,8 +182,16 @@ class _SellSilverUpiScreenState extends ConsumerState<SellSilverUpiScreen> {
                           onTap: _loading ? null : _addUpi,
                           child: Center(
                             child: _loading
-                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                                : const Text('Add UPI', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black)),
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.black))
+                                : const Text('Add UPI',
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black)),
                           ),
                         ),
                       ),
@@ -148,19 +206,30 @@ class _SellSilverUpiScreenState extends ConsumerState<SellSilverUpiScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController ctrl, String hint, {TextInputType? keyboardType, IconData? icon}) {
+  Widget _buildTextField(TextEditingController ctrl, String hint,
+      {TextInputType? keyboardType, IconData? icon}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF4E4E4E)), color: const Color(0xFF21211A)),
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF4E4E4E)),
+          color: const Color(0xFF21211A)),
       child: Row(
         children: [
-          if (icon != null) ...[Icon(icon, size: 18, color: const Color(0xFF7E7E7E)), const SizedBox(width: 12)],
+          if (icon != null) ...[
+            Icon(icon, size: 18, color: const Color(0xFF7E7E7E)),
+            const SizedBox(width: 12)
+          ],
           Expanded(
             child: TextField(
               controller: ctrl,
               keyboardType: keyboardType,
               style: const TextStyle(fontSize: 14, color: Colors.white),
-              decoration: InputDecoration(hintText: hint, hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF5E5E5E)), border: InputBorder.none),
+              decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle:
+                      const TextStyle(fontSize: 13, color: Color(0xFF5E5E5E)),
+                  border: InputBorder.none),
             ),
           ),
         ],

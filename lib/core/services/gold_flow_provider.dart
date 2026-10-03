@@ -89,6 +89,13 @@ class GoldFlowNotifier extends StateNotifier<GoldFlowState> {
     String? merchantTransactionId,
     String? orderStatus,
     String? metalType,
+    String? payoutMethod,
+    String? upiId,
+    String? mobileNumber,
+    String? accountNumber,
+    String? accountHolderName,
+    String? ifscCode,
+    bool? payoutVerified,
   }) {
     state = state.copyWith(
       sellState: state.sellState.copyWith(
@@ -105,6 +112,13 @@ class GoldFlowNotifier extends StateNotifier<GoldFlowState> {
         merchantTransactionId: merchantTransactionId,
         orderStatus: orderStatus,
         metalType: metalType,
+        payoutMethod: payoutMethod,
+        upiId: upiId,
+        mobileNumber: mobileNumber,
+        accountNumber: accountNumber,
+        accountHolderName: accountHolderName,
+        ifscCode: ifscCode,
+        payoutVerified: payoutVerified,
       ),
     );
   }
@@ -151,6 +165,7 @@ class GoldFlowNotifier extends StateNotifier<GoldFlowState> {
 }
 
 // ── Provider ──
-final goldFlowProvider = StateNotifierProvider<GoldFlowNotifier, GoldFlowState>((ref) {
+final goldFlowProvider =
+    StateNotifierProvider<GoldFlowNotifier, GoldFlowState>((ref) {
   return GoldFlowNotifier();
 });

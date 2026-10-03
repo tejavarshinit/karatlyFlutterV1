@@ -18,7 +18,8 @@ class KycVerificationScreen extends ConsumerStatefulWidget {
   const KycVerificationScreen({super.key});
 
   @override
-  ConsumerState<KycVerificationScreen> createState() => _KycVerificationScreenState();
+  ConsumerState<KycVerificationScreen> createState() =>
+      _KycVerificationScreenState();
 }
 
 class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
@@ -52,7 +53,9 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
     }
 
     final profile = LocalStorageService.getUserProfile();
-    final uniqueId = profile?['augmontUniqueId']?.toString().trim() ?? profile?['uniqueId']?.toString().trim() ?? '';
+    final uniqueId = profile?['augmontUniqueId']?.toString().trim() ??
+        profile?['uniqueId']?.toString().trim() ??
+        '';
     if (uniqueId.isNotEmpty) return uniqueId;
 
     return LocalStorageService.getUserUniqueId() ?? '';
@@ -110,7 +113,8 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
         _loading = false;
         _kycApproved = false;
         _panNumber = '';
-        _aadhaarVerified = LocalStorageService.getUserProfile()?['aadhaarVerified'] == true;
+        _aadhaarVerified =
+            LocalStorageService.getUserProfile()?['aadhaarVerified'] == true;
         _banks = [];
         _bankVerified = false;
       });
@@ -137,9 +141,12 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
 
   void _maybeShowCompletionModal() {
     final uniqueId = _resolveUniqueId();
-    final key = '$_completionModalKeyPrefix${uniqueId.isEmpty ? 'current-user' : uniqueId}';
+    final key =
+        '$_completionModalKeyPrefix${uniqueId.isEmpty ? 'current-user' : uniqueId}';
     final allDone = _kycApproved && _aadhaarVerified && _bankVerified;
-    if (!_previousAllDone && allDone && !LocalStorageService.getUserProfile().toString().contains(key)) {
+    if (!_previousAllDone &&
+        allDone &&
+        !LocalStorageService.getUserProfile().toString().contains(key)) {
       // Mirror the reference behavior by showing the congratulatory modal once.
       setState(() {
         _showCompletionModal = true;
@@ -243,14 +250,17 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
                       title: 'Bank Account',
                       subtitle: 'Required for gold sell payouts',
                       verified: _bankVerified,
-                      defaultOpen: !_bankVerified && _kycApproved && _aadhaarVerified,
+                      defaultOpen:
+                          !_bankVerified && _kycApproved && _aadhaarVerified,
                       child: BankSection(
                         uniqueId: _resolveUniqueId(),
                         banks: _banks,
                         onVerified: () async {
-                          final augmont = AugmontApi(ref.read(dioAugmontProvider));
+                          final augmont =
+                              AugmontApi(ref.read(dioAugmontProvider));
                           final uniqueId = _resolveUniqueId();
-                          final refreshed = await augmont.fetchAugmontUserBanks(uniqueId);
+                          final refreshed =
+                              await augmont.fetchAugmontUserBanks(uniqueId);
                           if (!mounted) return;
                           final nextBanks = _parseBanks(refreshed['banks']);
                           setState(() {
@@ -275,8 +285,11 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            allDone ? 'Go to Dashboard →' : 'Complete later — Go to Dashboard',
-                            style: const TextStyle(fontSize: 12, color: Colors.white),
+                            allDone
+                                ? 'Go to Dashboard →'
+                                : 'Complete later — Go to Dashboard',
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.white),
                           ),
                         ),
                       ),
@@ -306,10 +319,12 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
           children: [
             GestureDetector(
               onTap: () => context.go(AppRoutes.profile),
-              child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
+              child: const Icon(Icons.arrow_back_ios_new_rounded,
+                  color: Color(0xFFF7CD57), size: 18),
             ),
             const SizedBox(width: 8),
-            const Text('KYC Verification', style: TextStyle(fontSize: 14, color: Color(0xFFF7CD57))),
+            const Text('KYC Verification',
+                style: TextStyle(fontSize: 14, color: Color(0xFFF7CD57))),
           ],
         ),
         Row(
@@ -318,20 +333,31 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
               height: 24,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                color: allDoneState() ? const Color(0xFF032101) : const Color(0xFF1D170D),
+                color: allDoneState()
+                    ? const Color(0xFF032101)
+                    : const Color(0xFF1D170D),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: allDoneState() ? const Color(0xFF0C9100) : const Color(0xFFE8B438)),
+                border: Border.all(
+                    color: allDoneState()
+                        ? const Color(0xFF0C9100)
+                        : const Color(0xFFE8B438)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.shield, size: 10, color: allDoneState() ? const Color(0xFF15EE01) : const Color(0xFFF7CD57)),
+                  Icon(Icons.shield,
+                      size: 10,
+                      color: allDoneState()
+                          ? const Color(0xFF15EE01)
+                          : const Color(0xFFF7CD57)),
                   const SizedBox(width: 4),
                   Text(
                     allDoneState() ? 'Verified' : 'Pending',
                     style: TextStyle(
                       fontSize: 10,
-                      color: allDoneState() ? const Color(0xFF15EE01) : const Color(0xFFF7CD57),
+                      color: allDoneState()
+                          ? const Color(0xFF15EE01)
+                          : const Color(0xFFF7CD57),
                     ),
                   ),
                 ],
@@ -361,11 +387,17 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Icon(Icons.notifications_outlined, color: Colors.grey[400], size: 14),
+            Icon(Icons.notifications_outlined,
+                color: Colors.grey[400], size: 14),
             const Positioned(
               right: 4,
               top: 4,
-              child: SizedBox(width: 5, height: 5, child: DecoratedBox(decoration: BoxDecoration(color: Color(0xFFEE0105), shape: BoxShape.circle))),
+              child: SizedBox(
+                  width: 5,
+                  height: 5,
+                  child: DecoratedBox(
+                      decoration: BoxDecoration(
+                          color: Color(0xFFEE0105), shape: BoxShape.circle))),
             ),
           ],
         ),
@@ -394,7 +426,10 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
             height: 40,
             decoration: const BoxDecoration(
               borderRadius: BorderRadius.all(Radius.circular(12)),
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFFFFE784), Color(0xFFC88912)]),
+              gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFFFE784), Color(0xFFC88912)]),
             ),
             child: const Icon(Icons.shield, color: Colors.black, size: 18),
           ),
@@ -403,9 +438,15 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Approval required', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                const Text('Approval required',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
                 const SizedBox(height: 4),
-                Text(message, style: const TextStyle(fontSize: 10, color: Color(0xFFC8BFAE), height: 1.4)),
+                Text(message,
+                    style: const TextStyle(
+                        fontSize: 10, color: Color(0xFFC8BFAE), height: 1.4)),
               ],
             ),
           ),
@@ -431,9 +472,14 @@ class _KycVerificationScreenState extends ConsumerState<KycVerificationScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('All KYC steps completed', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF4CD676))),
+                Text('All KYC steps completed',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF4CD676))),
                 SizedBox(height: 2),
-                Text('Your account is fully verified', style: TextStyle(fontSize: 10, color: Color(0x66FFFFFF))),
+                Text('Your account is fully verified',
+                    style: TextStyle(fontSize: 10, color: Color(0x66FFFFFF))),
               ],
             ),
           ],
@@ -506,8 +552,13 @@ class _KycAccordionState extends State<KycAccordion> {
       duration: const Duration(milliseconds: 220),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: widget.verified ? const Color(0xFF4CD676).withOpacity(0.2) : const Color(0xFF2E2E2E)),
-        color: widget.verified ? const Color(0xFF4CD676).withOpacity(0.05) : const Color(0xFF0F1416),
+        border: Border.all(
+            color: widget.verified
+                ? const Color(0xFF4CD676).withOpacity(0.2)
+                : const Color(0xFF2E2E2E)),
+        color: widget.verified
+            ? const Color(0xFF4CD676).withOpacity(0.05)
+            : const Color(0xFF0F1416),
       ),
       child: Column(
         children: [
@@ -521,35 +572,60 @@ class _KycAccordionState extends State<KycAccordion> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: widget.verified ? const Color(0xFF4CD676).withOpacity(0.15) : const Color(0xFF38342C),
+                      color: widget.verified
+                          ? const Color(0xFF4CD676).withOpacity(0.15)
+                          : const Color(0xFF38342C),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(widget.verified ? Icons.check_circle : widget.icon, color: widget.verified ? const Color(0xFF4CD676) : const Color(0xFFF7CD57), size: 18),
+                    child: Icon(
+                        widget.verified ? Icons.check_circle : widget.icon,
+                        color: widget.verified
+                            ? const Color(0xFF4CD676)
+                            : const Color(0xFFF7CD57),
+                        size: 18),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(widget.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                        Text(widget.title,
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white)),
                         const SizedBox(height: 2),
-                        Text(widget.subtitle, style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
+                        Text(widget.subtitle,
+                            style: const TextStyle(
+                                fontSize: 10, color: Color(0xFF7E7E7E))),
                       ],
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: widget.verified ? const Color(0xFF0D3320) : const Color(0xFF3D2E00),
+                      color: widget.verified
+                          ? const Color(0xFF0D3320)
+                          : const Color(0xFF3D2E00),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       widget.verified ? 'Verified' : 'Pending',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: widget.verified ? const Color(0xFF4CD676) : const Color(0xFFF7CD57)),
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: widget.verified
+                              ? const Color(0xFF4CD676)
+                              : const Color(0xFFF7CD57)),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Icon(_open ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: const Color(0xFF7E7E7E)),
+                  Icon(
+                      _open
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: const Color(0xFF7E7E7E)),
                 ],
               ),
             ),
@@ -585,13 +661,23 @@ class KycCompletionModal extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: const Color(0xFFE8B438).withOpacity(0.35)),
+              border:
+                  Border.all(color: const Color(0xFFE8B438).withOpacity(0.35)),
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF503B15), Color(0xFF1C1408), Color(0xFF080603)],
+                colors: [
+                  Color(0xFF503B15),
+                  Color(0xFF1C1408),
+                  Color(0xFF080603)
+                ],
               ),
-              boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 30, offset: Offset(0, 16))],
+              boxShadow: const [
+                BoxShadow(
+                    color: Colors.black54,
+                    blurRadius: 30,
+                    offset: Offset(0, 16))
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -601,34 +687,45 @@ class KycCompletionModal extends StatelessWidget {
                   height: 64,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: LinearGradient(colors: [Color(0xFFFFE784), Color(0xFFC88912)]),
+                    gradient: LinearGradient(
+                        colors: [Color(0xFFFFE784), Color(0xFFC88912)]),
                   ),
-                  child: const Icon(Icons.shield, color: Color(0xFF11130F), size: 30),
+                  child: const Icon(Icons.shield,
+                      color: Color(0xFF11130F), size: 30),
                 ),
                 const SizedBox(height: 14),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
                     color: const Color(0xFF2D2513),
-                    border: Border.all(color: const Color(0xFFF7CD57).withOpacity(0.25)),
+                    border: Border.all(
+                        color: const Color(0xFFF7CD57).withOpacity(0.25)),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: const Text(
                     'KYC Verified',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFF7CD57)),
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFF7CD57)),
                   ),
                 ),
                 const SizedBox(height: 14),
                 const Text(
                   'Congratulations! 🎉',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
                 const SizedBox(height: 8),
                 const Text(
                   'You are now a KYC Verified Customer',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: Color(0xFFD5C7A8), height: 1.5),
+                  style: TextStyle(
+                      fontSize: 13, color: Color(0xFFD5C7A8), height: 1.5),
                 ),
                 const SizedBox(height: 18),
                 GestureDetector(
@@ -639,9 +736,17 @@ class KycCompletionModal extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: const BoxDecoration(
                       borderRadius: BorderRadius.all(Radius.circular(15)),
-                      gradient: LinearGradient(colors: [Color(0xFFFED75D), Color(0xFFECB000), Color(0xFFD48D00)]),
+                      gradient: LinearGradient(colors: [
+                        Color(0xFFFED75D),
+                        Color(0xFFECB000),
+                        Color(0xFFD48D00)
+                      ]),
                     ),
-                    child: const Text('Start Investing', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                    child: const Text('Start Investing',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black)),
                   ),
                 ),
               ],
@@ -698,7 +803,10 @@ class _PanSectionState extends State<PanSection> {
   Future<void> _submit() async {
     final pan = _panController.text.trim().toUpperCase();
     final name = _nameController.text.trim();
-    final mobile = LocalStorageService.getUserProfile()?['mobileNumber']?.toString() ?? LocalStorageService.getUserPhone() ?? '';
+    final mobile =
+        LocalStorageService.getUserProfile()?['mobileNumber']?.toString() ??
+            LocalStorageService.getUserPhone() ??
+            '';
 
     if (!RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$').hasMatch(pan)) {
       setState(() => _error = 'Enter a valid PAN (e.g. ABCDE1234F)');
@@ -714,8 +822,10 @@ class _PanSectionState extends State<PanSection> {
       _error = null;
     });
 
-    final api = TransbankApi(ProviderScope.containerOf(context).read(dioAugmontProvider));
-    final result = await api.transbankValidatePan(panNumber: pan, name: name, mobile: mobile);
+    final api = TransbankApi(
+        ProviderScope.containerOf(context).read(dioAugmontProvider));
+    final result = await api.transbankValidatePan(
+        panNumber: pan, name: name, mobile: mobile);
     if (!mounted) return;
 
     if (result['ok'] != true || result['isValid'] != true) {
@@ -725,13 +835,15 @@ class _PanSectionState extends State<PanSection> {
         if (rawCode == 2) {
           _showOcr = true;
         } else {
-          _error = result['message']?.toString() ?? 'PAN verification failed. Please try again.';
+          _error = result['message']?.toString() ??
+              'PAN verification failed. Please try again.';
         }
       });
       return;
     }
 
-    final augmont = AugmontApi(ProviderScope.containerOf(context).read(dioAugmontProvider));
+    final augmont =
+        AugmontApi(ProviderScope.containerOf(context).read(dioAugmontProvider));
     final response = await augmont.updateAugmontKyc(
       uniqueId: widget.uniqueId,
       request: {
@@ -746,19 +858,21 @@ class _PanSectionState extends State<PanSection> {
     if (response['ok'] == true) {
       widget.onVerified(pan);
     } else {
-      setState(() => _error = response['message']?.toString() ?? 'PAN submission failed.');
+      setState(() =>
+          _error = response['message']?.toString() ?? 'PAN submission failed.');
     }
   }
 
   Future<void> _pickOcrImage() async {
     final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+    final file =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
     if (!mounted || file == null) return;
-      setState(() {
-        _ocrFile = file;
-        _ocrPreviewBytes = null;
-        _ocrError = null;
-      });
+    setState(() {
+      _ocrFile = file;
+      _ocrPreviewBytes = null;
+      _ocrError = null;
+    });
     final bytes = await file.readAsBytes();
     if (!mounted) return;
     setState(() => _ocrPreviewBytes = bytes);
@@ -788,21 +902,28 @@ class _PanSectionState extends State<PanSection> {
     final dio = ProviderScope.containerOf(context).read(dioAugmontProvider);
     final transbank = TransbankApi(dio);
     final result = await transbank.transbankPanOcr(
-      file: await MultipartFile.fromBytes(_ocrPreviewBytes ?? await _ocrFile!.readAsBytes(), filename: _ocrFile!.name),
+      file: await MultipartFile.fromBytes(
+          _ocrPreviewBytes ?? await _ocrFile!.readAsBytes(),
+          filename: _ocrFile!.name),
       uniqueId: widget.uniqueId,
-      mobile: LocalStorageService.getUserProfile()?['mobileNumber']?.toString() ?? LocalStorageService.getUserPhone() ?? '',
+      mobile:
+          LocalStorageService.getUserProfile()?['mobileNumber']?.toString() ??
+              LocalStorageService.getUserPhone() ??
+              '',
     );
 
     if (!mounted) return;
     if (result['ok'] != true) {
       setState(() {
         _ocrLoading = false;
-        _ocrError = result['message']?.toString() ?? 'OCR verification failed. Please try again.';
+        _ocrError = result['message']?.toString() ??
+            'OCR verification failed. Please try again.';
       });
       return;
     }
 
-    final panNumber = result['panNumber']?.toString() ?? _panController.text.trim().toUpperCase();
+    final panNumber = result['panNumber']?.toString() ??
+        _panController.text.trim().toUpperCase();
     final name = result['name']?.toString() ?? _nameController.text.trim();
 
     final augmont = AugmontApi(dio);
@@ -820,7 +941,8 @@ class _PanSectionState extends State<PanSection> {
     if (response['ok'] == true) {
       widget.onVerified(panNumber);
     } else {
-      setState(() => _ocrError = response['message']?.toString() ?? 'PAN submission failed after OCR.');
+      setState(() => _ocrError = response['message']?.toString() ??
+          'PAN submission failed after OCR.');
     }
   }
 
@@ -842,7 +964,8 @@ class _PanSectionState extends State<PanSection> {
           decoration: BoxDecoration(
             color: const Color(0xFFF7CD57).withOpacity(0.05),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE8B438).withOpacity(0.15)),
+            border:
+                Border.all(color: const Color(0xFFE8B438).withOpacity(0.15)),
           ),
           child: const Text(
             'PAN is required for KYC compliance and purchases above ₹1,000.',
@@ -857,12 +980,17 @@ class _PanSectionState extends State<PanSection> {
             decoration: BoxDecoration(
               color: const Color(0xFF1A1710),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE8B438).withOpacity(0.2)),
+              border:
+                  Border.all(color: const Color(0xFFE8B438).withOpacity(0.2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Verify via PAN Card Image', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFF7CD57))),
+                const Text('Verify via PAN Card Image',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFF7CD57))),
                 const SizedBox(height: 4),
                 const Text(
                   "We couldn't verify your PAN automatically. Upload a clear PAN card photo to continue.",
@@ -877,26 +1005,34 @@ class _PanSectionState extends State<PanSection> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFF7CD57).withOpacity(0.05),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE8B438).withOpacity(0.35), style: BorderStyle.solid),
+                      border: Border.all(
+                          color: const Color(0xFFE8B438).withOpacity(0.35),
+                          style: BorderStyle.solid),
                     ),
                     child: _ocrPreviewBytes == null
                         ? const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.image_outlined, color: Color(0xFFF7CD57)),
+                              Icon(Icons.image_outlined,
+                                  color: Color(0xFFF7CD57)),
                               SizedBox(height: 6),
-                              Text('Tap to select PAN card image', style: TextStyle(fontSize: 11, color: Color(0xFFF7CD57))),
+                              Text('Tap to select PAN card image',
+                                  style: TextStyle(
+                                      fontSize: 11, color: Color(0xFFF7CD57))),
                             ],
                           )
                         : ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.memory(_ocrPreviewBytes!, fit: BoxFit.cover),
+                            child: Image.memory(_ocrPreviewBytes!,
+                                fit: BoxFit.cover),
                           ),
                   ),
                 ),
                 if (_ocrError != null) ...[
                   const SizedBox(height: 8),
-                  Text(_ocrError!, style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350))),
+                  Text(_ocrError!,
+                      style: const TextStyle(
+                          fontSize: 11, color: Color(0xFFEF5350))),
                 ],
                 const SizedBox(height: 10),
                 GestureDetector(
@@ -906,12 +1042,24 @@ class _PanSectionState extends State<PanSection> {
                     padding: const EdgeInsets.symmetric(vertical: 11),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      gradient: const LinearGradient(colors: [Color(0xFFFED75D), Color(0xFFECB000), Color(0xFFD48D00)]),
+                      gradient: const LinearGradient(colors: [
+                        Color(0xFFFED75D),
+                        Color(0xFFECB000),
+                        Color(0xFFD48D00)
+                      ]),
                     ),
                     child: Center(
                       child: _ocrLoading
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                          : const Text('Verify PAN via Image', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black)),
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.black))
+                          : const Text('Verify PAN via Image',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black)),
                     ),
                   ),
                 ),
@@ -919,12 +1067,22 @@ class _PanSectionState extends State<PanSection> {
             ),
           ),
         ] else ...[
-          _inputField(controller: _panController, label: 'PAN Number', hint: 'ABCDE1234F', maxLength: 10, toUpperCase: true),
+          _inputField(
+              controller: _panController,
+              label: 'PAN Number',
+              hint: 'ABCDE1234F',
+              maxLength: 10,
+              toUpperCase: true),
           const SizedBox(height: 10),
-          _inputField(controller: _nameController, label: 'Name as per PAN', hint: 'FULL NAME AS ON PAN', toUpperCase: true),
+          _inputField(
+              controller: _nameController,
+              label: 'Name as per PAN',
+              hint: 'FULL NAME AS ON PAN',
+              toUpperCase: true),
           const SizedBox(height: 10),
           if (_error != null) ...[
-            Text(_error!, style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350))),
+            Text(_error!,
+                style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350))),
             const SizedBox(height: 8),
           ],
           GestureDetector(
@@ -934,12 +1092,24 @@ class _PanSectionState extends State<PanSection> {
               padding: const EdgeInsets.symmetric(vertical: 11),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                gradient: const LinearGradient(colors: [Color(0xFFFED75D), Color(0xFFECB000), Color(0xFFD48D00)]),
+                gradient: const LinearGradient(colors: [
+                  Color(0xFFFED75D),
+                  Color(0xFFECB000),
+                  Color(0xFFD48D00)
+                ]),
               ),
               child: Center(
                 child: _loading
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                    : const Text('Verify & Submit PAN', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black)),
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.black))
+                    : const Text('Verify & Submit PAN',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black)),
               ),
             ),
           ),
@@ -959,7 +1129,8 @@ class _PanSectionState extends State<PanSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
+        Text(label,
+            style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
@@ -984,10 +1155,17 @@ class _PanSectionState extends State<PanSection> {
             hintStyle: const TextStyle(color: Color(0xFF4E4E4E), fontSize: 12),
             filled: true,
             fillColor: const Color(0xFF1A1710),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF4E4E4E))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF4E4E4E))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE8B438))),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFF4E4E4E))),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFF4E4E4E))),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFE8B438))),
           ),
         ),
       ],
@@ -1044,7 +1222,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
   }
 
   Future<void> _sendOtp() async {
-    final aadhaar = _aadhaarController.text.trim().replaceAll(RegExp(r'\D'), '');
+    final aadhaar =
+        _aadhaarController.text.trim().replaceAll(RegExp(r'\D'), '');
     if (aadhaar.length != 12) {
       setState(() => _error = 'Enter a valid 12-digit Aadhaar number');
       return;
@@ -1056,7 +1235,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
       _success = null;
     });
 
-    final api = TransbankApi(ProviderScope.containerOf(context).read(dioAugmontProvider));
+    final api = TransbankApi(
+        ProviderScope.containerOf(context).read(dioAugmontProvider));
     final result = await api.transbankAadhaarGenerateOtp(aadhaar);
     if (!mounted) return;
 
@@ -1069,13 +1249,15 @@ class _AadhaarSectionState extends State<AadhaarSection> {
       });
       _startCountdown();
     } else {
-      setState(() => _error = result['message']?.toString() ?? 'Could not send OTP.');
+      setState(() =>
+          _error = result['message']?.toString() ?? 'Could not send OTP.');
     }
   }
 
   Future<void> _verifyOtp() async {
     final otp = _otpController.text.trim().replaceAll(RegExp(r'\D'), '');
-    final aadhaar = _aadhaarController.text.trim().replaceAll(RegExp(r'\D'), '');
+    final aadhaar =
+        _aadhaarController.text.trim().replaceAll(RegExp(r'\D'), '');
     if (otp.length != 6) {
       setState(() => _error = 'Enter a valid 6-digit OTP');
       return;
@@ -1091,7 +1273,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
       _success = null;
     });
 
-    final api = TransbankApi(ProviderScope.containerOf(context).read(dioAugmontProvider));
+    final api = TransbankApi(
+        ProviderScope.containerOf(context).read(dioAugmontProvider));
     final result = await api.transbankAadhaarSubmitOtp(
       aadhaarNumber: aadhaar,
       otp: otp,
@@ -1106,7 +1289,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
           (raw?['data'] as Map<String, dynamic>?)?['photo']?.toString() ??
           (raw?['payload'] as Map<String, dynamic>?)?['photo']?.toString();
       if (photo != null && photo.isNotEmpty) {
-        final formatted = photo.startsWith('data:') ? photo : 'data:image/jpeg;base64,$photo';
+        final formatted =
+            photo.startsWith('data:') ? photo : 'data:image/jpeg;base64,$photo';
         await LocalStorageService.setProfilePhoto(formatted);
       }
       setState(() => _loading = false);
@@ -1121,7 +1305,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
 
   Future<void> _pickAndOcrAadhaar() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
+    final picked =
+        await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
     if (picked == null) return;
 
     setState(() {
@@ -1133,7 +1318,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
     final bytes = await picked.readAsBytes();
     final base64Image = base64Encode(bytes);
 
-    final api = TransbankApi(ProviderScope.containerOf(context).read(dioAugmontProvider));
+    final api = TransbankApi(
+        ProviderScope.containerOf(context).read(dioAugmontProvider));
     final result = await api.transbankAadhaarOcr(
       base64Image: base64Image,
       uniqueId: widget.uniqueId,
@@ -1146,7 +1332,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
       setState(() => _ocrResult = result);
       widget.onVerified();
     } else {
-      setState(() => _ocrError = result['message']?.toString() ?? 'OCR failed. Please try again with a clearer photo.');
+      setState(() => _ocrError = result['message']?.toString() ??
+          'OCR failed. Please try again with a clearer photo.');
     }
   }
 
@@ -1157,7 +1344,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
         children: [
           Icon(Icons.check_circle, size: 14, color: Color(0xFF4CD676)),
           SizedBox(width: 6),
-          Text('Aadhaar verified successfully.', style: TextStyle(fontSize: 12, color: Color(0xFF4CD676))),
+          Text('Aadhaar verified successfully.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF4CD676))),
         ],
       );
     }
@@ -1176,14 +1364,16 @@ class _AadhaarSectionState extends State<AadhaarSection> {
   Widget _buildChooser() {
     return Row(
       children: [
-        Expanded(child: _chooserButton(
+        Expanded(
+            child: _chooserButton(
           icon: Icons.smartphone,
           label: 'AUTO',
           subtitle: 'Verify via OTP sent to your Aadhaar-linked mobile',
           onTap: () => setState(() => _verificationMode = 'auto'),
         )),
         const SizedBox(width: 12),
-        Expanded(child: _chooserButton(
+        Expanded(
+            child: _chooserButton(
           icon: Icons.camera_alt,
           label: 'MANUAL',
           subtitle: 'Upload Aadhaar image \u2014 OCR will extract details',
@@ -1193,7 +1383,11 @@ class _AadhaarSectionState extends State<AadhaarSection> {
     );
   }
 
-  Widget _chooserButton({required IconData icon, required String label, required String subtitle, required VoidCallback onTap}) {
+  Widget _chooserButton(
+      {required IconData icon,
+      required String label,
+      required String subtitle,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1206,17 +1400,26 @@ class _AadhaarSectionState extends State<AadhaarSection> {
         child: Column(
           children: [
             Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(colors: [Color(0xFFE8EEF5), Color(0xFF8E9AAA)]),
+                gradient: LinearGradient(
+                    colors: [Color(0xFFE8EEF5), Color(0xFF8E9AAA)]),
               ),
               child: Icon(icon, size: 18, color: const Color(0xFF11130F)),
             ),
             const SizedBox(height: 10),
-            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white)),
             const SizedBox(height: 4),
-            Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, color: Color(0xFF9E9E9E), height: 1.4)),
+            Text(subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 10, color: Color(0xFF9E9E9E), height: 1.4)),
           ],
         ),
       ),
@@ -1227,7 +1430,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Upload a clear photo of your Aadhaar card', style: TextStyle(fontSize: 10, color: Color(0x80FFFFFF))),
+        const Text('Upload a clear photo of your Aadhaar card',
+            style: TextStyle(fontSize: 10, color: Color(0x80FFFFFF))),
         const SizedBox(height: 10),
         GestureDetector(
           onTap: _ocrLoading ? null : _pickAndOcrAadhaar,
@@ -1236,17 +1440,26 @@ class _AadhaarSectionState extends State<AadhaarSection> {
             padding: const EdgeInsets.symmetric(vertical: 14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE8B438).withOpacity(0.3)),
+              border:
+                  Border.all(color: const Color(0xFFE8B438).withOpacity(0.3)),
               color: const Color(0xFF1A1710),
             ),
             child: _ocrLoading
-                ? const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFF7CD57))))
+                ? const Center(
+                    child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Color(0xFFF7CD57))))
                 : const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.camera_alt, size: 16, color: Color(0xFFF7CD57)),
+                      Icon(Icons.camera_alt,
+                          size: 16, color: Color(0xFFF7CD57)),
                       SizedBox(width: 8),
-                      Text('Tap to capture Aadhaar', style: TextStyle(fontSize: 12, color: Color(0xFFF7CD57))),
+                      Text('Tap to capture Aadhaar',
+                          style: TextStyle(
+                              fontSize: 12, color: Color(0xFFF7CD57))),
                     ],
                   ),
           ),
@@ -1263,9 +1476,13 @@ class _AadhaarSectionState extends State<AadhaarSection> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.error_outline, size: 12, color: Color(0xFFEF5350)),
+                const Icon(Icons.error_outline,
+                    size: 12, color: Color(0xFFEF5350)),
                 const SizedBox(width: 6),
-                Expanded(child: Text(_ocrError!, style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350)))),
+                Expanded(
+                    child: Text(_ocrError!,
+                        style: const TextStyle(
+                            fontSize: 11, color: Color(0xFFEF5350)))),
               ],
             ),
           ),
@@ -1286,7 +1503,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
                 if (_ocrResult!['name'] != null)
                   _ocrDetailRow('Name', _ocrResult!['name'].toString()),
                 if (_ocrResult!['cardNumber'] != null)
-                  _ocrDetailRow('Aadhaar', _ocrResult!['cardNumber'].toString()),
+                  _ocrDetailRow(
+                      'Aadhaar', _ocrResult!['cardNumber'].toString()),
                 if (_ocrResult!['dateOfBirth'] != null)
                   _ocrDetailRow('DOB', _ocrResult!['dateOfBirth'].toString()),
                 if (_ocrResult!['gender'] != null)
@@ -1301,9 +1519,18 @@ class _AadhaarSectionState extends State<AadhaarSection> {
             _verificationMode = 'auto';
             _ocrError = null;
             _ocrResult = null;
+            _otpController.clear();
+            _sessionId = null;
+            _stage = 'enter';
+            _success = null;
+            _error = null;
           }),
           child: const Center(
-            child: Text('Switch to OTP verification instead', style: TextStyle(fontSize: 10, color: Color(0xB3F7CD57), decoration: TextDecoration.underline)),
+            child: Text('Switch to OTP verification instead',
+                style: TextStyle(
+                    fontSize: 10,
+                    color: Color(0xB3F7CD57),
+                    decoration: TextDecoration.underline)),
           ),
         ),
       ],
@@ -1313,7 +1540,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
   Widget _ocrDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
-      child: Text('$label: $value', style: const TextStyle(fontSize: 11, color: Color(0xFF4CD676))),
+      child: Text('$label: $value',
+          style: const TextStyle(fontSize: 11, color: Color(0xFF4CD676))),
     );
   }
 
@@ -1327,7 +1555,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
           decoration: BoxDecoration(
             color: const Color(0xFFF7CD57).withOpacity(0.05),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE8B438).withOpacity(0.15)),
+            border:
+                Border.all(color: const Color(0xFFE8B438).withOpacity(0.15)),
           ),
           child: const Text(
             'An OTP will be sent to the mobile number linked with your Aadhaar.',
@@ -1344,10 +1573,13 @@ class _AadhaarSectionState extends State<AadhaarSection> {
             maxLength: 12,
           ),
           const SizedBox(height: 8),
-          if (_success != null) Text(_success!, style: const TextStyle(fontSize: 11, color: Color(0xFF4CD676))),
+          if (_success != null)
+            Text(_success!,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF4CD676))),
           if (_error != null) ...[
             const SizedBox(height: 4),
-            Text(_error!, style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350))),
+            Text(_error!,
+                style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350))),
           ],
           if (_error != null) ...[
             const SizedBox(height: 8),
@@ -1365,17 +1597,25 @@ class _AadhaarSectionState extends State<AadhaarSection> {
                   border: Border.all(color: const Color(0x33E8B438)),
                   color: const Color(0x0DE8B438),
                 ),
-                child: const Center(child: Text('Please try manually', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFFF7CD57)))),
+                child: const Center(
+                    child: Text('Please try manually',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFFF7CD57)))),
               ),
             ),
           ],
           const SizedBox(height: 10),
           _goldButton(label: 'Send OTP', loading: _loading, onTap: _sendOtp),
         ] else ...[
-          if (_success != null) Text(_success!, style: const TextStyle(fontSize: 11, color: Color(0xFF4CD676))),
+          if (_success != null)
+            Text(_success!,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF4CD676))),
           if (_error != null) ...[
             const SizedBox(height: 4),
-            Text(_error!, style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350))),
+            Text(_error!,
+                style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350))),
           ],
           const SizedBox(height: 6),
           _inputField(
@@ -1386,20 +1626,35 @@ class _AadhaarSectionState extends State<AadhaarSection> {
             maxLength: 6,
           ),
           const SizedBox(height: 8),
-          _goldButton(label: 'Verify OTP', loading: _loading, onTap: _verifyOtp),
+          _goldButton(
+              label: 'Verify OTP', loading: _loading, onTap: _verifyOtp),
           const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: _loading ? null : () { _sendOtp(); },
-                  child: const Center(child: Text('Resend OTP', style: TextStyle(fontSize: 10, color: Color(0x4DFFFFFF)))),
+                  onTap: _loading
+                      ? null
+                      : () {
+                          _sendOtp();
+                        },
+                  child: const Center(
+                      child: Text('Resend OTP',
+                          style: TextStyle(
+                              fontSize: 10, color: Color(0x4DFFFFFF)))),
                 ),
               ),
               Expanded(
                 child: GestureDetector(
-                  onTap: () => setState(() { _stage = 'enter'; _otpController.clear(); _error = null; }),
-                  child: const Center(child: Text('Change number', style: TextStyle(fontSize: 10, color: Color(0x4DFFFFFF)))),
+                  onTap: () => setState(() {
+                    _stage = 'enter';
+                    _otpController.clear();
+                    _error = null;
+                  }),
+                  child: const Center(
+                      child: Text('Change number',
+                          style: TextStyle(
+                              fontSize: 10, color: Color(0x4DFFFFFF)))),
                 ),
               ),
             ],
@@ -1408,11 +1663,19 @@ class _AadhaarSectionState extends State<AadhaarSection> {
           GestureDetector(
             onTap: () => setState(() {
               _verificationMode = 'manual';
+              _otpController.clear();
+              _sessionId = null;
+              _stage = 'enter';
+              _success = null;
               _error = null;
               _ocrError = null;
             }),
             child: const Center(
-              child: Text('Switch to Manual (Upload Aadhaar image)', style: TextStyle(fontSize: 10, color: Color(0xB3F7CD57), decoration: TextDecoration.underline)),
+              child: Text('Switch to Manual (Upload Aadhaar image)',
+                  style: TextStyle(
+                      fontSize: 10,
+                      color: Color(0xB3F7CD57),
+                      decoration: TextDecoration.underline)),
             ),
           ),
         ],
@@ -1430,7 +1693,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
+        Text(label,
+            style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
@@ -1443,7 +1707,8 @@ class _AadhaarSectionState extends State<AadhaarSection> {
             if (keyboardType == TextInputType.number) {
               controller.value = controller.value.copyWith(
                 text: value.replaceAll(RegExp(r'\D'), ''),
-                selection: TextSelection.collapsed(offset: value.replaceAll(RegExp(r'\D'), '').length),
+                selection: TextSelection.collapsed(
+                    offset: value.replaceAll(RegExp(r'\D'), '').length),
               );
             }
             setState(() {
@@ -1457,17 +1722,27 @@ class _AadhaarSectionState extends State<AadhaarSection> {
             hintStyle: const TextStyle(color: Color(0xFF4E4E4E), fontSize: 12),
             filled: true,
             fillColor: const Color(0xFF1A1710),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF4E4E4E))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF4E4E4E))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE8B438))),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFF4E4E4E))),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFF4E4E4E))),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFE8B438))),
           ),
         ),
       ],
     );
   }
 
-  Widget _goldButton({required String label, required bool loading, required VoidCallback onTap}) {
+  Widget _goldButton(
+      {required String label,
+      required bool loading,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: loading ? null : onTap,
       child: Container(
@@ -1475,12 +1750,24 @@ class _AadhaarSectionState extends State<AadhaarSection> {
         padding: const EdgeInsets.symmetric(vertical: 11),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          gradient: const LinearGradient(colors: [Color(0xFFFED75D), Color(0xFFECB000), Color(0xFFD48D00)]),
+          gradient: const LinearGradient(colors: [
+            Color(0xFFFED75D),
+            Color(0xFFECB000),
+            Color(0xFFD48D00)
+          ]),
         ),
         child: Center(
           child: loading
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-              : Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black)),
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.black))
+              : Text(label,
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black)),
         ),
       ),
     );
@@ -1527,7 +1814,11 @@ class _BankSectionState extends State<BankSection> {
   }
 
   String _extractBankId(Map<String, dynamic> bank) {
-    return (bank['provider_bank_id'] ?? bank['userBankId'] ?? bank['bankId'] ?? bank['id'] ?? '')
+    return (bank['provider_bank_id'] ??
+            bank['userBankId'] ??
+            bank['bankId'] ??
+            bank['id'] ??
+            '')
         .toString()
         .trim();
   }
@@ -1557,7 +1848,8 @@ class _BankSectionState extends State<BankSection> {
       _error = null;
     });
 
-    final transbank = TransbankApi(ProviderScope.containerOf(context).read(dioAugmontProvider));
+    final transbank = TransbankApi(
+        ProviderScope.containerOf(context).read(dioAugmontProvider));
     final result = await transbank.transbankValidateBankAccount(
       accountName: accountName,
       accountNumber: accountNumber,
@@ -1568,11 +1860,13 @@ class _BankSectionState extends State<BankSection> {
     if (!mounted) return;
     setState(() => _loading = false);
     if (result['ok'] != true || result['isValid'] == false) {
-      setState(() => _error = result['message']?.toString() ?? 'Bank validation failed.');
+      setState(() =>
+          _error = result['message']?.toString() ?? 'Bank validation failed.');
       return;
     }
 
-    final augmont = AugmontApi(ProviderScope.containerOf(context).read(dioAugmontProvider));
+    final augmont =
+        AugmontApi(ProviderScope.containerOf(context).read(dioAugmontProvider));
 
     final createResult = await augmont.createAugmontUserBank(
       uniqueId: widget.uniqueId,
@@ -1585,7 +1879,8 @@ class _BankSectionState extends State<BankSection> {
 
     if (!mounted) return;
     if (createResult['ok'] != true) {
-      setState(() => _error = createResult['message']?.toString() ?? 'Failed to save bank details.');
+      setState(() => _error = createResult['message']?.toString() ??
+          'Failed to save bank details.');
       return;
     }
 
@@ -1594,7 +1889,8 @@ class _BankSectionState extends State<BankSection> {
     if (latestBanks.length == 1) {
       final bankId = _extractBankId(latestBanks.first);
       if (bankId.isNotEmpty) {
-        await augmont.setPrimaryAugmontUserBank(uniqueId: widget.uniqueId, userBankId: bankId);
+        await augmont.setPrimaryAugmontUserBank(
+            uniqueId: widget.uniqueId, userBankId: bankId);
         final bankMap = Map<String, dynamic>.from(latestBanks.first);
         bankMap['isPrimary'] = true;
         bankMap['is_primary'] = true;
@@ -1602,12 +1898,16 @@ class _BankSectionState extends State<BankSection> {
         await LocalStorageService.setPrimaryBank(jsonEncode(bankMap));
       }
     } else {
-      final apiPrimary = latestBanks.where((item) => item['isPrimary'] == true || item['is_primary'] == true).toList();
+      final apiPrimary = latestBanks
+          .where(
+              (item) => item['isPrimary'] == true || item['is_primary'] == true)
+          .toList();
       if (apiPrimary.isNotEmpty) {
         final primaryId = _extractBankId(apiPrimary.first);
         if (primaryId.isNotEmpty) {
           await LocalStorageService.setPrimaryBankId(primaryId);
-          await LocalStorageService.setPrimaryBank(jsonEncode(apiPrimary.first));
+          await LocalStorageService.setPrimaryBank(
+              jsonEncode(apiPrimary.first));
         }
       }
     }
@@ -1627,12 +1927,17 @@ class _BankSectionState extends State<BankSection> {
             decoration: BoxDecoration(
               color: const Color(0xFF4CD676).withOpacity(0.05),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF4CD676).withOpacity(0.2)),
+              border:
+                  Border.all(color: const Color(0xFF4CD676).withOpacity(0.2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Existing accounts', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF4CD676))),
+                const Text('Existing accounts',
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF4CD676))),
                 const SizedBox(height: 8),
                 ...widget.banks.map(
                   (bank) => Padding(
@@ -1643,19 +1948,22 @@ class _BankSectionState extends State<BankSection> {
                         Expanded(
                           child: Text(
                             '${bank['accountName'] ?? bank['account_holder_name'] ?? ''}',
-                            style: const TextStyle(fontSize: 12, color: Colors.white),
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.white),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         Text(
                           '${_maskAccount((bank['accountNumber'] ?? bank['account_number'] ?? '').toString())} · ${bank['ifscCode'] ?? bank['ifsc_code'] ?? ''}',
-                          style: const TextStyle(fontSize: 10, color: Color(0x80FFFFFF)),
+                          style: const TextStyle(
+                              fontSize: 10, color: Color(0x80FFFFFF)),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const Text('Add another account below', style: TextStyle(fontSize: 10, color: Color(0x80FFFFFF))),
+                const Text('Add another account below',
+                    style: TextStyle(fontSize: 10, color: Color(0x80FFFFFF))),
               ],
             ),
           ),
@@ -1667,7 +1975,8 @@ class _BankSectionState extends State<BankSection> {
           decoration: BoxDecoration(
             color: const Color(0xFFF7CD57).withOpacity(0.05),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE8B438).withOpacity(0.15)),
+            border:
+                Border.all(color: const Color(0xFFE8B438).withOpacity(0.15)),
           ),
           child: const Text(
             'Bank account is verified in real-time before being added.',
@@ -1695,10 +2004,12 @@ class _BankSectionState extends State<BankSection> {
         ),
         if (_error != null) ...[
           const SizedBox(height: 8),
-          Text(_error!, style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350))),
+          Text(_error!,
+              style: const TextStyle(fontSize: 11, color: Color(0xFFEF5350))),
         ],
         const SizedBox(height: 10),
-        _goldButton(label: 'Validate & Add Bank', loading: _loading, onTap: _submit),
+        _goldButton(
+            label: 'Validate & Add Bank', loading: _loading, onTap: _submit),
       ],
     );
   }
@@ -1712,15 +2023,28 @@ class _BankSectionState extends State<BankSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
+        Text(label,
+            style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
           keyboardType: keyboardType,
+          textCapitalization: controller == _ifscController
+              ? TextCapitalization.characters
+              : TextCapitalization.none,
+          inputFormatters: controller == _ifscController
+              ? [
+                  TextInputFormatter.withFunction((oldValue, newValue) {
+                    return newValue.copyWith(text: newValue.text.toUpperCase());
+                  }),
+                ]
+              : null,
           onChanged: (value) {
             if (keyboardType == TextInputType.number) {
               final digits = value.replaceAll(RegExp(r'\D'), '');
-              controller.value = controller.value.copyWith(text: digits, selection: TextSelection.collapsed(offset: digits.length));
+              controller.value = controller.value.copyWith(
+                  text: digits,
+                  selection: TextSelection.collapsed(offset: digits.length));
             }
             setState(() => _error = null);
           },
@@ -1730,17 +2054,27 @@ class _BankSectionState extends State<BankSection> {
             hintStyle: const TextStyle(color: Color(0xFF4E4E4E), fontSize: 12),
             filled: true,
             fillColor: const Color(0xFF1A1710),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF4E4E4E))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF4E4E4E))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE8B438))),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFF4E4E4E))),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFF4E4E4E))),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFE8B438))),
           ),
         ),
       ],
     );
   }
 
-  Widget _goldButton({required String label, required bool loading, required VoidCallback onTap}) {
+  Widget _goldButton(
+      {required String label,
+      required bool loading,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: loading ? null : onTap,
       child: Container(
@@ -1748,12 +2082,24 @@ class _BankSectionState extends State<BankSection> {
         padding: const EdgeInsets.symmetric(vertical: 11),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          gradient: const LinearGradient(colors: [Color(0xFFFED75D), Color(0xFFECB000), Color(0xFFD48D00)]),
+          gradient: const LinearGradient(colors: [
+            Color(0xFFFED75D),
+            Color(0xFFECB000),
+            Color(0xFFD48D00)
+          ]),
         ),
         child: Center(
           child: loading
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-              : Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black)),
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.black))
+              : Text(label,
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black)),
         ),
       ),
     );

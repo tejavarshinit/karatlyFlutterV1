@@ -1,7 +1,7 @@
 name: karatly
 description: "Karatly — Buy Digital Gold & Silver"
 publish_to: 'none'
-version: 1.0.0+1
+version: 2.6.0+7
 
 environment:
   sdk: ^3.5.0
@@ -55,6 +55,9 @@ dependencies:
   image_picker: ^1.1.2
   flutter_custom_tabs: ^2.6.0
   local_auth: ^3.0.2
+  firebase_core: ^4.15.0
+  firebase_messaging: ^16.7.0
+  flutter_local_notifications: ^22.3.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -65,6 +68,14 @@ dev_dependencies:
   json_annotation: ^4.9.0
   freezed: ^2.5.7
   freezed_annotation: ^2.4.4
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  image_path: "assets/images/karatlywbg.jpeg"
+  android: true
+  ios: true
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/karatlywbg.jpeg"
 
 flutter:
   uses-material-design: true

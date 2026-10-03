@@ -125,7 +125,8 @@ class BuyState {
       address: address ?? this.address,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       transactionId: transactionId ?? this.transactionId,
-      merchantTransactionId: merchantTransactionId ?? this.merchantTransactionId,
+      merchantTransactionId:
+          merchantTransactionId ?? this.merchantTransactionId,
       paymentStatus: paymentStatus ?? this.paymentStatus,
       paymentMessage: paymentMessage ?? this.paymentMessage,
       metalType: metalType ?? this.metalType,
@@ -156,6 +157,13 @@ class SellState {
   final String merchantTransactionId;
   final String orderStatus;
   final String metalType;
+  final String payoutMethod;
+  final String upiId;
+  final String mobileNumber;
+  final String accountNumber;
+  final String accountHolderName;
+  final String ifscCode;
+  final bool payoutVerified;
 
   const SellState({
     this.amount = 0,
@@ -171,6 +179,13 @@ class SellState {
     this.merchantTransactionId = '',
     this.orderStatus = '',
     this.metalType = '',
+    this.payoutMethod = '',
+    this.upiId = '',
+    this.mobileNumber = '',
+    this.accountNumber = '',
+    this.accountHolderName = '',
+    this.ifscCode = '',
+    this.payoutVerified = false,
   });
 
   SellState copyWith({
@@ -187,6 +202,13 @@ class SellState {
     String? merchantTransactionId,
     String? orderStatus,
     String? metalType,
+    String? payoutMethod,
+    String? upiId,
+    String? mobileNumber,
+    String? accountNumber,
+    String? accountHolderName,
+    String? ifscCode,
+    bool? payoutVerified,
   }) {
     return SellState(
       amount: amount ?? this.amount,
@@ -199,9 +221,17 @@ class SellState {
       userBankId: userBankId ?? this.userBankId,
       bankName: bankName ?? this.bankName,
       transactionId: transactionId ?? this.transactionId,
-      merchantTransactionId: merchantTransactionId ?? this.merchantTransactionId,
+      merchantTransactionId:
+          merchantTransactionId ?? this.merchantTransactionId,
       orderStatus: orderStatus ?? this.orderStatus,
       metalType: metalType ?? this.metalType,
+      payoutMethod: payoutMethod ?? this.payoutMethod,
+      upiId: upiId ?? this.upiId,
+      mobileNumber: mobileNumber ?? this.mobileNumber,
+      accountNumber: accountNumber ?? this.accountNumber,
+      accountHolderName: accountHolderName ?? this.accountHolderName,
+      ifscCode: ifscCode ?? this.ifscCode,
+      payoutVerified: payoutVerified ?? this.payoutVerified,
     );
   }
 }
@@ -261,7 +291,8 @@ class SipState {
       type: type ?? this.type,
       brand: brand ?? this.brand,
       transactionId: transactionId ?? this.transactionId,
-      merchantTransactionId: merchantTransactionId ?? this.merchantTransactionId,
+      merchantTransactionId:
+          merchantTransactionId ?? this.merchantTransactionId,
     );
   }
 }

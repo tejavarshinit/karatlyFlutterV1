@@ -25,42 +25,46 @@ class TermsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(context),
-              const SizedBox(height: 16),
-              _buildInfoCard(),
-              const SizedBox(height: 16),
-              const Text(
-                'These Terms and Conditions ("T&C") govern all transactions on the Karatly Platform. By clicking "I Agree" or placing any transaction, you agree to be bound by these T&C.',
-                style: TextStyle(color: Color(0xFFBFBFBF), fontSize: 12, height: 1.5),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'TERMS AND CONDITIONS:',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                height: 325,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F1416),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF2E2E2E)),
+                const SizedBox(height: 16),
+                _buildInfoCard(),
+                const SizedBox(height: 16),
+                const Text(
+                  'These Terms and Conditions ("T&C") govern all transactions on the Karatly Platform. By clicking "I Agree" or placing any transaction, you agree to be bound by these T&C.',
+                  style: TextStyle(
+                      color: Color(0xFFBFBFBF), fontSize: 12, height: 1.5),
                 ),
-                child: SingleChildScrollView(
-                  child: Text(
-                    _termsText,
-                    style: const TextStyle(
-                      color: Color(0xFFBFBFBF),
-                      fontSize: 12,
-                      height: 1.6,
-                      decoration: TextDecoration.none,
+                const SizedBox(height: 20),
+                const Text(
+                  'TERMS AND CONDITIONS:',
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  height: 325,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F1416),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF2E2E2E)),
+                  ),
+                  child: SingleChildScrollView(
+                    child: Text(
+                      _termsText,
+                      style: const TextStyle(
+                        color: Color(0xFFBFBFBF),
+                        fontSize: 12,
+                        height: 1.6,
+                        decoration: TextDecoration.none,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
         ),
       ),
@@ -74,11 +78,19 @@ class TermsScreen extends StatelessWidget {
         Row(
           children: [
             GestureDetector(
-              onTap: () => context.go(AppRoutes.profile),
-              child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
+              onTap: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go(AppRoutes.profile);
+                }
+              },
+              child: const Icon(Icons.arrow_back_ios_new_rounded,
+                  color: Color(0xFFF7CD57), size: 18),
             ),
             const SizedBox(width: 8),
-            const Text('Terms & Condition', style: TextStyle(fontSize: 14, color: Color(0xFFF7CD57))),
+            const Text('Terms & Condition',
+                style: TextStyle(fontSize: 14, color: Color(0xFFF7CD57))),
           ],
         ),
         GestureDetector(
@@ -94,11 +106,18 @@ class TermsScreen extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Icon(Icons.notifications_outlined, color: Colors.grey[400], size: 14),
+                Icon(Icons.notifications_outlined,
+                    color: Colors.grey[400], size: 14),
                 const Positioned(
                   right: 4,
                   top: 4,
-                  child: SizedBox(width: 5, height: 5, child: DecoratedBox(decoration: BoxDecoration(color: Color(0xFFEE0105), shape: BoxShape.circle))),
+                  child: SizedBox(
+                      width: 5,
+                      height: 5,
+                      child: DecoratedBox(
+                          decoration: BoxDecoration(
+                              color: Color(0xFFEE0105),
+                              shape: BoxShape.circle))),
                 ),
               ],
             ),
@@ -137,7 +156,11 @@ class TermsScreen extends StatelessWidget {
             alignment: Alignment.center,
             child: const Text(
               'KARATLY',
-              style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.black, letterSpacing: 0.5),
+              style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  letterSpacing: 0.5),
             ),
           ),
           const SizedBox(width: 16),
@@ -145,9 +168,14 @@ class TermsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Karatly Legal v2.6', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('Karatly Legal v2.6',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold)),
                 SizedBox(height: 4),
-                Text('Last updated June 2026', style: TextStyle(color: Color(0xFFBFBFBF), fontSize: 12)),
+                Text('Last updated June 2026',
+                    style: TextStyle(color: Color(0xFFBFBFBF), fontSize: 12)),
               ],
             ),
           ),

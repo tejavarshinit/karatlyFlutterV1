@@ -10,7 +10,6 @@ import '../../core/services/home_provider.dart';
 import '../../core/services/orders_provider.dart';
 import '../../core/services/auth_provider.dart';
 
-
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -32,11 +31,54 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   List<double> get _chartPoints => _chartPeriod == 'Quarterly'
-      ? [10,15,12,20,18,25,22,30,35,28,40,38,45,50,48,55,60,58,65,70]
-      : [10,12,18,22,30,35,40,50,55,60,70,80,90,100,110,125,140,150,160,175];
+      ? [
+          10,
+          15,
+          12,
+          20,
+          18,
+          25,
+          22,
+          30,
+          35,
+          28,
+          40,
+          38,
+          45,
+          50,
+          48,
+          55,
+          60,
+          58,
+          65,
+          70
+        ]
+      : [
+          10,
+          12,
+          18,
+          22,
+          30,
+          35,
+          40,
+          50,
+          55,
+          60,
+          70,
+          80,
+          90,
+          100,
+          110,
+          125,
+          140,
+          150,
+          160,
+          175
+        ];
 
   String _formatCurrency(double amount) {
-    final fmt = NumberFormat.currency(symbol: 'Rs.', locale: 'en_IN', decimalDigits: 2);
+    final fmt =
+        NumberFormat.currency(symbol: 'Rs.', locale: 'en_IN', decimalDigits: 2);
     return fmt.format(amount);
   }
 
@@ -82,15 +124,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             children: [
               _buildHeader(goldRate: goldRate, silverRate: silverRate),
               const SizedBox(height: 12),
-              _buildWelcomeCard(userName: userName, portfolioValue: portfolioValue, totalInvested: totalInvested),
+              _buildWelcomeCard(
+                  userName: userName,
+                  portfolioValue: portfolioValue,
+                  totalInvested: totalInvested),
               const SizedBox(height: 16),
-              _buildAssetAllocation(investment: investment, goldRate: goldRate, silverRate: silverRate),
+              _buildAssetAllocation(
+                  investment: investment,
+                  goldRate: goldRate,
+                  silverRate: silverRate),
               const SizedBox(height: 16),
               _buildPortfolioGrowth(),
               const SizedBox(height: 16),
               _buildSipManagement(),
               const SizedBox(height: 16),
-              _buildPortfolioMixAndMarketRate(goldRate: goldRate, silverRate: silverRate, goldPct: goldPct, silverPct: silverPct),
+              _buildPortfolioMixAndMarketRate(
+                  goldRate: goldRate,
+                  silverRate: silverRate,
+                  goldPct: goldPct,
+                  silverPct: silverPct),
               const SizedBox(height: 16),
               _buildRecentOrders(recentOrders: recentOrders),
               const SizedBox(height: 16),
@@ -111,11 +163,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
       child: Row(
         children: [
-          Image.asset('assets/images/KaratlyLOGO-removebg-preview.png', width: 36, height: 36, fit: BoxFit.contain),
+          Image.asset('assets/images/KaratlyLOGO-removebg-preview.png',
+              width: 36, height: 36, fit: BoxFit.contain),
           const SizedBox(width: 8),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Karatly', style: TextStyle(fontFamily: 'Playfair Display', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-            const Text('PREMIUM GOLD', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.12, color: Color(0xFFC9A84C))),
+            const Text('Karatly',
+                style: TextStyle(
+                    fontFamily: 'Playfair Display',
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white)),
+            const Text('GOLD',
+                style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.12,
+                    color: Color(0xFFC9A84C))),
           ]),
           const Spacer(),
           _AnimatedLiveRatePill(metal: 'gold', price: goldRate),
@@ -125,9 +188,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           GestureDetector(
             onTap: () => context.go(AppRoutes.notifications),
             child: Container(
-              width: 28, height: 28,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF1A1408), border: Border.all(color: const Color(0xFF4E4E4E))),
-              child: const Icon(Icons.notifications_outlined, size: 13, color: Color(0xFFC1C1C1)),
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF1A1408),
+                  border: Border.all(color: const Color(0xFF4E4E4E))),
+              child: const Icon(Icons.notifications_outlined,
+                  size: 13, color: Color(0xFFC1C1C1)),
             ),
           ),
         ],
@@ -136,13 +204,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   // ── 2. WELCOME CARD ──
-  Widget _buildWelcomeCard({required String userName, required double portfolioValue, required double totalInvested}) {
+  Widget _buildWelcomeCard(
+      {required String userName,
+      required double portfolioValue,
+      required double totalInvested}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF2A1E06), Color(0xFF1A1208), Color(0xFF0D0902)]),
+          gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF2A1E06),
+                Color(0xFF1A1208),
+                Color(0xFF0D0902)
+              ]),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFF4E4E4E)),
         ),
@@ -150,30 +228,54 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('Welcome back,', style: TextStyle(fontSize: 16, color: Color(0xFFA1A1A1))),
-                  const SizedBox(height: 4),
-                  ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(colors: [Color(0xFFF7CD57), Color(0xFFE5AF35)]).createShader(bounds),
-                    child: Text(userName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text('Your Portfolio is Growing!\nTrack, Invest & Grow your Wealth with Karatly',
-                      style: TextStyle(fontSize: 10, color: Color(0xFFBCBCBC))),
-                ])),
+              child:
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      const Text('Welcome back,',
+                          style: TextStyle(
+                              fontSize: 16, color: Color(0xFFA1A1A1))),
+                      const SizedBox(height: 4),
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                                colors: [Color(0xFFF7CD57), Color(0xFFE5AF35)])
+                            .createShader(bounds),
+                        child: Text(userName,
+                            style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white)),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                          'Your Portfolio is Growing!\nTrack, Invest & Grow your Wealth with Karatly',
+                          style: TextStyle(
+                              fontSize: 10, color: Color(0xFFBCBCBC))),
+                    ])),
                 SizedBox(
-                  width: 90, height: 73,
-                  child: Image.asset('assets/images/JewelleryDashboard.png', fit: BoxFit.contain),
+                  width: 90,
+                  height: 73,
+                  child: Image.asset('assets/images/JewelleryDashboard.png',
+                      fit: BoxFit.contain),
                 ),
               ]),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Row(children: [
-                Expanded(child: _statBox('Total Portfolio Value', _formatCurrency(portfolioValue), const Color(0xFFF7CD57))),
+                Expanded(
+                    child: _statBox(
+                        'Total Portfolio Value',
+                        _formatCurrency(portfolioValue),
+                        const Color(0xFFF7CD57))),
                 const SizedBox(width: 8),
-                Expanded(child: _statBox('Total Invested Value', _formatCurrency(totalInvested), const Color(0xFFF7CD57))),
+                Expanded(
+                    child: _statBox(
+                        'Total Invested Value',
+                        _formatCurrency(totalInvested),
+                        const Color(0xFFF7CD57))),
               ]),
             ),
           ],
@@ -185,58 +287,110 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _statBox(String label, String value, Color valueColor) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.04), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF4E4E4E))),
+      decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF4E4E4E))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFFBCBCBC))),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFBCBCBC))),
         const SizedBox(height: 4),
-        FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: valueColor, fontFamily: 'Poppins'))),
+        FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value,
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: valueColor,
+                    fontFamily: 'Poppins'))),
       ]),
     );
   }
 
   // ── 3. ASSET ALLOCATION ──
-  Widget _buildAssetAllocation({required InvestmentData investment, required double goldRate, required double silverRate}) {
+  Widget _buildAssetAllocation(
+      {required InvestmentData investment,
+      required double goldRate,
+      required double silverRate}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Asset Allocation', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
-        const Text('Distribution across precious assets', style: TextStyle(fontSize: 9, color: Color(0xFF7E7E7E))),
+        const Text('Asset Allocation',
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.white)),
+        const Text('Distribution across precious assets',
+            style: TextStyle(fontSize: 9, color: Color(0xFF7E7E7E))),
         const SizedBox(height: 12),
         Row(children: [
-          Expanded(child: _assetCard(
-            title: 'Digital Gold Invested', subtitle: 'Total Gold Holdings',
-            holding: '${investment.goldHoldingWithMultiplier.toStringAsFixed(4)}/gm',
-            value: 'Rs.${NumberFormat('#,##,###', 'en_IN').format(investment.goldTotalInvested.toInt())}',
-            btnLabel: 'Buy Gold', isLocked: false,
+          Expanded(
+              child: _assetCard(
+            title: 'Digital Gold Invested',
+            subtitle: 'Total Gold Holdings',
+            holding:
+                '${investment.goldHoldingWithMultiplier.toStringAsFixed(4)}/gm',
+            value:
+                'Rs.${NumberFormat('#,##,###', 'en_IN').format(investment.goldTotalInvested.toInt())}',
+            btnLabel: 'Buy Gold',
+            isLocked: false,
             onTap: () => context.go('/buy-gold/select?metal=gold'),
           )),
           const SizedBox(width: 12),
-          Expanded(child: _assetCard(
-            title: 'Digital Silver Invested', subtitle: 'Total Silver Holdings',
-            holding: '${investment.silverHoldingWithMultiplier.toStringAsFixed(4)}/gm',
-            value: 'Rs.${NumberFormat('#,##,###', 'en_IN').format(investment.silverTotalInvested.toInt())}',
-            btnLabel: 'Buy Silver', isLocked: false,
+          Expanded(
+              child: _assetCard(
+            title: 'Digital Silver Invested',
+            subtitle: 'Total Silver Holdings',
+            holding:
+                '${investment.silverHoldingWithMultiplier.toStringAsFixed(4)}/gm',
+            value:
+                'Rs.${NumberFormat('#,##,###', 'en_IN').format(investment.silverTotalInvested.toInt())}',
+            btnLabel: 'Buy Silver',
+            isLocked: false,
             onTap: () => context.go('/buy-gold/select?metal=silver'),
           )),
         ]),
         const SizedBox(height: 12),
         Row(children: [
-          Expanded(child: _assetCard(
-            title: 'Diamond Purchase', subtitle: '', holding: '', value: '',
-            btnLabel: 'Diamond', isLocked: false,
-            onTap: () => context.go(AppRoutes.home, extra: {'metalType': 'diamond'}),
+          Expanded(
+              child: _assetCard(
+            title: 'Diamond Purchase',
+            subtitle: '',
+            holding: '',
+            value: '',
+            btnLabel: 'Diamond',
+            isLocked: false,
+            onTap: () =>
+                context.go(AppRoutes.home, extra: {'metalType': 'diamond'}),
           )),
           const SizedBox(width: 12),
-          Expanded(child: _assetCard(
-            title: 'Jewellery purchased', subtitle: '', holding: '', value: '',
-            btnLabel: 'Jewellery', isLocked: true, onTap: null,
+          Expanded(
+              child: _assetCard(
+            title: 'Jewellery purchased',
+            subtitle: '',
+            holding: '',
+            value: '',
+            btnLabel: 'Jewellery',
+            isLocked: true,
+            onTap: null,
           )),
         ]),
       ]),
     );
   }
 
-  Widget _assetCard({required String title, String subtitle = '', String holding = '', String value = '', required String btnLabel, required bool isLocked, VoidCallback? onTap}) {
+  Widget _assetCard(
+      {required String title,
+      String subtitle = '',
+      String holding = '',
+      String value = '',
+      required String btnLabel,
+      required bool isLocked,
+      VoidCallback? onTap}) {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
@@ -246,39 +400,73 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
       child: Stack(children: [
         if (isLocked)
-          Positioned(right: 8, top: 8, child: Container(
-            width: 24, height: 24,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF1A1408), border: Border.all(color: const Color(0xFF4E4E4E))),
-            child: const Icon(Icons.lock, size: 12, color: Color(0xFFF7CD57)),
-          )),
+          Positioned(
+              right: 8,
+              top: 8,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF1A1408),
+                    border: Border.all(color: const Color(0xFF4E4E4E))),
+                child:
+                    const Icon(Icons.lock, size: 12, color: Color(0xFFF7CD57)),
+              )),
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white)),
           if (subtitle.isNotEmpty) ...[
             const SizedBox(height: 2),
-            Text(subtitle, style: const TextStyle(fontSize: 8, color: Color(0xFF7E7E7E))),
+            Text(subtitle,
+                style: const TextStyle(fontSize: 8, color: Color(0xFF7E7E7E))),
           ],
           if (holding.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(holding, style: const TextStyle(fontSize: 8, color: Color(0xFF9E9E9E))),
+            Text(holding,
+                style: const TextStyle(fontSize: 8, color: Color(0xFF9E9E9E))),
           ],
           if (value.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(value, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white), overflow: TextOverflow.ellipsis),
+            Text(value,
+                style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
+                overflow: TextOverflow.ellipsis),
           ],
           const SizedBox(height: 8),
           GestureDetector(
             onTap: isLocked ? null : onTap,
             child: Container(
-              width: double.infinity, height: 24,
+              width: double.infinity,
+              height: 24,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
-                gradient: isLocked ? null : const LinearGradient(colors: [Color(0xFFF7CD57), Color(0xFFD09B14)]),
+                gradient: isLocked
+                    ? null
+                    : const LinearGradient(
+                        colors: [Color(0xFFF7CD57), Color(0xFFD09B14)]),
                 color: isLocked ? const Color(0xFF2A2010) : null,
-                border: isLocked ? Border.all(color: const Color(0xFF4E4E4E)) : null,
+                border: isLocked
+                    ? Border.all(color: const Color(0xFF4E4E4E))
+                    : null,
               ),
-              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                if (isLocked) ...[const Icon(Icons.lock, size: 10, color: Color(0xFF7E7E7E)), const SizedBox(width: 4)],
-                Text(btnLabel, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: isLocked ? const Color(0xFF7E7E7E) : Colors.black)),
+              child:
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                if (isLocked) ...[
+                  const Icon(Icons.lock, size: 10, color: Color(0xFF7E7E7E)),
+                  const SizedBox(width: 4)
+                ],
+                Text(btnLabel,
+                    style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color:
+                            isLocked ? const Color(0xFF7E7E7E) : Colors.black)),
               ]),
             ),
           ),
@@ -299,18 +487,33 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _chartCard({required String title, required String subtitle, required List<double> points, required double chartHeight, required String period, required ValueChanged<String> onToggle}) {
+  Widget _chartCard(
+      {required String title,
+      required String subtitle,
+      required List<double> points,
+      required double chartHeight,
+      required String period,
+      required ValueChanged<String> onToggle}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         width: double.infinity,
-        decoration: BoxDecoration(color: const Color(0xFF111008), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF4E4E4E))),
+        decoration: BoxDecoration(
+            color: const Color(0xFF111008),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF4E4E4E))),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
-              Text(subtitle, style: const TextStyle(fontSize: 9, color: Color(0xFF7E7E7E))),
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
+              Text(subtitle,
+                  style:
+                      const TextStyle(fontSize: 9, color: Color(0xFF7E7E7E))),
             ]),
             _toggleBtn(period, onToggle),
           ]),
@@ -321,7 +524,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               borderRadius: BorderRadius.circular(10),
               child: CustomPaint(
                 size: Size(double.infinity, chartHeight),
-                painter: _AreaChartPainter(points: points, chartWidth: 330, chartHeight: chartHeight),
+                painter: _AreaChartPainter(
+                    points: points, chartWidth: 330, chartHeight: chartHeight),
               ),
             ),
           ),
@@ -333,7 +537,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _toggleBtn(String current, ValueChanged<String> onChanged) {
     return Container(
       height: 24,
-      decoration: BoxDecoration(color: const Color(0xFF1E1A0E), borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFF4E4E4E))),
+      decoration: BoxDecoration(
+          color: const Color(0xFF1E1A0E),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFF4E4E4E))),
       child: Row(children: [
         _toggleOption('Quarterly', current, onChanged),
         _toggleOption('Yearly', current, onChanged),
@@ -341,7 +548,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _toggleOption(String value, String current, ValueChanged<String> onChanged) {
+  Widget _toggleOption(
+      String value, String current, ValueChanged<String> onChanged) {
     final active = current == value;
     return GestureDetector(
       onTap: () => onChanged(value),
@@ -349,9 +557,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          gradient: active ? const LinearGradient(colors: [Color(0xFFF7CD57), Color(0xFFD09B14)]) : null,
+          gradient: active
+              ? const LinearGradient(
+                  colors: [Color(0xFFF7CD57), Color(0xFFD09B14)])
+              : null,
         ),
-        child: Center(child: Text(value, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: active ? Colors.black : const Color(0xFF7E7E7E)))),
+        child: Center(
+            child: Text(value,
+                style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: active ? Colors.black : const Color(0xFF7E7E7E)))),
       ),
     );
   }
@@ -365,26 +581,48 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         child: AbsorbPointer(
           child: Container(
             width: double.infinity,
-            decoration: BoxDecoration(color: const Color(0xFF111008), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF4E4E4E))),
+            decoration: BoxDecoration(
+                color: const Color(0xFF111008),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF4E4E4E))),
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Stack(children: [
               Positioned(right: 8, top: 8, child: _lockIcon()),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('SIP Management', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                const Text('SIP Management',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
                 const SizedBox(height: 4),
-                const Text('Disciplined wealth building, automated', style: TextStyle(fontSize: 9, color: Color(0xFF7E7E7E))),
+                const Text('Disciplined wealth building, automated',
+                    style: TextStyle(fontSize: 9, color: Color(0xFF7E7E7E))),
                 const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
-                  decoration: BoxDecoration(color: const Color(0xFF1A1408), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF4E4E4E))),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFF1A1408),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF4E4E4E))),
                   padding: const EdgeInsets.all(12),
                   child: Column(children: [
-                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        const Text('Active SIP Plans', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
-                        const Text('3 active / Next debit on 15 Jun 2026', style: TextStyle(fontSize: 8, color: Color(0xFF7E7E7E))),
-                      ]),
-                    ]),
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Active SIP Plans',
+                                    style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white)),
+                                const Text(
+                                    '3 active / Next debit on 15 Jun 2026',
+                                    style: TextStyle(
+                                        fontSize: 8, color: Color(0xFF7E7E7E))),
+                              ]),
+                        ]),
                   ]),
                 ),
                 const SizedBox(height: 12),
@@ -406,59 +644,87 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _lockedBtn(String label) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(color: const Color(0xFF2A2010), borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFF4E4E4E))),
+      decoration: BoxDecoration(
+          color: const Color(0xFF2A2010),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFF4E4E4E))),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         const Icon(Icons.lock, size: 10, color: Color(0xFF7E7E7E)),
         const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
+        Text(label,
+            style: const TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
       ]),
     );
   }
 
   Widget _lockIcon() {
     return Container(
-      width: 24, height: 24,
-      decoration: BoxDecoration(color: const Color(0xFF1A1408), shape: BoxShape.circle, border: Border.all(color: const Color(0xFF4E4E4E))),
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+          color: const Color(0xFF1A1408),
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFF4E4E4E))),
       child: const Icon(Icons.lock, size: 12, color: Color(0xFFF7CD57)),
     );
   }
 
   // ── 6. PORTFOLIO MIX + MARKET RATE SNAPSHOT ──
-  Widget _buildPortfolioMixAndMarketRate({required double goldRate, required double silverRate, required double goldPct, required double silverPct}) {
+  Widget _buildPortfolioMixAndMarketRate(
+      {required double goldRate,
+      required double silverRate,
+      required double goldPct,
+      required double silverPct}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(child: _buildPortfolioMix(goldPct: goldPct, silverPct: silverPct)),
+        Expanded(
+            child: _buildPortfolioMix(goldPct: goldPct, silverPct: silverPct)),
         const SizedBox(width: 12),
-        Expanded(child: _buildMarketRateSnapshot(goldRate: goldRate, silverRate: silverRate)),
+        Expanded(
+            child: _buildMarketRateSnapshot(
+                goldRate: goldRate, silverRate: silverRate)),
       ]),
     );
   }
 
-  Widget _buildPortfolioMix({required double goldPct, required double silverPct}) {
-    final r = 40.0; final circ = 2 * math.pi * r;
+  Widget _buildPortfolioMix(
+      {required double goldPct, required double silverPct}) {
+    final r = 40.0;
+    final circ = 2 * math.pi * r;
     final goldDash = (goldPct / 100) * circ;
     final silverDash = (silverPct / 100) * circ;
     final sOff = -goldDash;
 
     return Container(
-      decoration: BoxDecoration(color: const Color(0xFF111008), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF4E4E4E))),
+      decoration: BoxDecoration(
+          color: const Color(0xFF111008),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF4E4E4E))),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Portfolio Mix', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+        const Text('Portfolio Mix',
+            style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.white)),
         const SizedBox(height: 8),
         SizedBox(
-          width: 90, height: 90,
+          width: 90,
+          height: 90,
           child: Center(
             child: CustomPaint(
               size: const Size(90, 90),
-              painter: _DonutChartPainter(goldPct: goldPct, silverPct: silverPct),
+              painter:
+                  _DonutChartPainter(goldPct: goldPct, silverPct: silverPct),
             ),
           ),
         ),
         const SizedBox(height: 8),
-        _legendRow(const Color(0xFFF7CD57), 'Gold', '${goldPct.toStringAsFixed(1)}%'),
-        _legendRow(const Color(0xFFC0C0C0), 'Silver', '${silverPct.toStringAsFixed(1)}%'),
+        _legendRow(
+            const Color(0xFFF7CD57), 'Gold', '${goldPct.toStringAsFixed(1)}%'),
+        _legendRow(const Color(0xFFC0C0C0), 'Silver',
+            '${silverPct.toStringAsFixed(1)}%'),
       ]),
     );
   }
@@ -467,33 +733,59 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 0.5),
       child: Row(children: [
-        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 9, color: Color(0xFF9E9E9E))),
+        Text(label,
+            style: const TextStyle(fontSize: 9, color: Color(0xFF9E9E9E))),
         const Spacer(),
-        Text(pct, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white)),
+        Text(pct,
+            style: const TextStyle(
+                fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white)),
       ]),
     );
   }
 
-  Widget _buildMarketRateSnapshot({required double goldRate, required double silverRate}) {
+  Widget _buildMarketRateSnapshot(
+      {required double goldRate, required double silverRate}) {
     return Container(
-      decoration: BoxDecoration(color: const Color(0xFF111008), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF4E4E4E))),
+      decoration: BoxDecoration(
+          color: const Color(0xFF111008),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF4E4E4E))),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Market Rate Snapshot', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+        const Text('Market Rate Snapshot',
+            style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.white)),
         const SizedBox(height: 8),
-        _marketRateRow('Gold Rate', goldRate > 0 ? 'Rs.${NumberFormat('#,##,###', 'en_IN').format(goldRate.round())}/gm' : 'Loading...'),
+        _marketRateRow(
+            'Gold Rate',
+            goldRate > 0
+                ? 'Rs.${NumberFormat('#,##,###', 'en_IN').format(goldRate.round())}/gm'
+                : 'Loading...'),
         const SizedBox(height: 8),
-        _marketRateRow('Silver Rate', silverRate > 0 ? 'Rs.${silverRate.toStringAsFixed(2)}/gm' : 'Loading...'),
+        _marketRateRow(
+            'Silver Rate',
+            silverRate > 0
+                ? 'Rs.${silverRate.toStringAsFixed(2)}/gm'
+                : 'Loading...'),
       ]),
     );
   }
 
   Widget _marketRateRow(String label, String value) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(fontSize: 8, color: Color(0xFF7E7E7E))),
-      Text(value, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white), overflow: TextOverflow.ellipsis),
+      Text(label,
+          style: const TextStyle(fontSize: 8, color: Color(0xFF7E7E7E))),
+      Text(value,
+          style: const TextStyle(
+              fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white),
+          overflow: TextOverflow.ellipsis),
     ]);
   }
 
@@ -503,30 +795,63 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         width: double.infinity,
-        decoration: BoxDecoration(color: const Color(0xFF111008), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF4E4E4E))),
+        decoration: BoxDecoration(
+            color: const Color(0xFF111008),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF4E4E4E))),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Recent Orders & Transactions', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
-          const Text('Your last 3 transactions', style: TextStyle(fontSize: 9, color: Color(0xFF7E7E7E))),
+          const Text('Recent Orders & Transactions',
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white)),
+          const Text('Your last 3 transactions',
+              style: TextStyle(fontSize: 9, color: Color(0xFF7E7E7E))),
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF4E4E4E))),
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF4E4E4E))),
             child: Column(children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: const BoxDecoration(color: Color(0xFF1A1408)),
                 child: const Row(children: [
-                  Expanded(flex: 3, child: Text('TXN ID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF9E9E9E)))),
-                  Expanded(flex: 3, child: Text('TYPE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF9E9E9E)))),
-                  Expanded(flex: 2, child: Text('AMOUNT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF9E9E9E)), textAlign: TextAlign.end)),
+                  Expanded(
+                      flex: 3,
+                      child: Text('TXN ID',
+                          style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF9E9E9E)))),
+                  Expanded(
+                      flex: 3,
+                      child: Text('TYPE',
+                          style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF9E9E9E)))),
+                  Expanded(
+                      flex: 2,
+                      child: Text('AMOUNT',
+                          style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF9E9E9E)),
+                          textAlign: TextAlign.end)),
                 ]),
               ),
               if (recentOrders.isEmpty)
                 Container(
                   padding: const EdgeInsets.all(16),
                   color: const Color(0xFF0D0902),
-                  child: const Center(child: Text('No transactions yet', style: TextStyle(fontSize: 10, color: Color(0xFF7E7E7E)))),
+                  child: const Center(
+                      child: Text('No transactions yet',
+                          style: TextStyle(
+                              fontSize: 10, color: Color(0xFF7E7E7E)))),
                 )
               else
                 ...List.generate(recentOrders.length, (i) {
@@ -534,29 +859,76 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   final isSell = o.type.toString().toUpperCase() == 'SELL';
                   final mt = o.metalType?.toString().toLowerCase() ?? '';
                   final isDiamond = mt == 'diamond';
-                  final metalLabel = isDiamond ? 'Diamond' : (mt == 'silver' ? 'Silver' : 'Gold');
-                  final txnId = (o.merchantTransactionId ?? o.transactionId ?? o.id ?? '').toString();
-                  final bg = i % 2 == 0 ? const Color(0xFF0D0902) : const Color(0xFF111008);
+                  final metalLabel = isDiamond
+                      ? 'Diamond'
+                      : (mt == 'silver' ? 'Silver' : 'Gold');
+                  final txnId =
+                      (o.merchantTransactionId ?? o.transactionId ?? o.id ?? '')
+                          .toString();
+                  final bg = i % 2 == 0
+                      ? const Color(0xFF0D0902)
+                      : const Color(0xFF111008);
                   return Container(
-                    decoration: BoxDecoration(color: bg, border: Border(top: BorderSide(color: const Color(0xFF1E1A0E)))),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                        color: bg,
+                        border: Border(
+                            top: BorderSide(color: const Color(0xFF1E1A0E)))),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                     child: Row(children: [
-                      Expanded(flex: 3, child: Text(txnId.length > 8 ? '...${txnId.substring(txnId.length - 8)}' : txnId,
-                          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Color(0xFFF7CD57)), overflow: TextOverflow.ellipsis)),
-                      Expanded(flex: 3, child: Row(children: [
-                        Text(metalLabel, style: const TextStyle(fontSize: 9, color: Colors.white)),
-                        const SizedBox(width: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: o.type.toString().toUpperCase() == 'REDEEM' ? const Color(0xFF242C36) : (isSell ? const Color(0xFF243736) : const Color(0xFF38342C)),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: Text(o.type.toString().toUpperCase(), style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold,
-                              color: o.type.toString().toUpperCase() == 'REDEEM' ? Colors.white : (isSell ? const Color(0xFF6DD6FF) : const Color(0xFFF7CD57)))),
-                        ),
-                      ])),
-                      Expanded(flex: 2, child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight, child: Text('Rs.${o.amount?.toStringAsFixed(0) ?? '0'}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)))),
+                      Expanded(
+                          flex: 3,
+                          child: Text(
+                              txnId.length > 8
+                                  ? '...${txnId.substring(txnId.length - 8)}'
+                                  : txnId,
+                              style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFFF7CD57)),
+                              overflow: TextOverflow.ellipsis)),
+                      Expanded(
+                          flex: 3,
+                          child: Row(children: [
+                            Text(metalLabel,
+                                style: const TextStyle(
+                                    fontSize: 9, color: Colors.white)),
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color:
+                                    o.type.toString().toUpperCase() == 'REDEEM'
+                                        ? const Color(0xFF242C36)
+                                        : (isSell
+                                            ? const Color(0xFF243736)
+                                            : const Color(0xFF38342C)),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: Text(o.type.toString().toUpperCase(),
+                                  style: TextStyle(
+                                      fontSize: 7,
+                                      fontWeight: FontWeight.bold,
+                                      color: o.type.toString().toUpperCase() ==
+                                              'REDEEM'
+                                          ? Colors.white
+                                          : (isSell
+                                              ? const Color(0xFF6DD6FF)
+                                              : const Color(0xFFF7CD57)))),
+                            ),
+                          ])),
+                      Expanded(
+                          flex: 2,
+                          child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                  'Rs.${o.amount?.toStringAsFixed(0) ?? '0'}',
+                                  style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white)))),
                     ]),
                   );
                 }),
@@ -576,17 +948,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         child: AbsorbPointer(
           child: Container(
             width: double.infinity,
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF4E4E4E))),
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF4E4E4E))),
             child: Column(children: [
               Stack(children: [
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                   decoration: const BoxDecoration(color: Color(0xFF111008)),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('Rewards & Benefits', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
-                    const Text('Exclusive privileges curated for members', style: TextStyle(fontSize: 9, color: Color(0xFF7E7E7E))),
-                  ]),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Rewards & Benefits',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white)),
+                        const Text('Exclusive privileges curated for members',
+                            style: TextStyle(
+                                fontSize: 9, color: Color(0xFF7E7E7E))),
+                      ]),
                 ),
                 Positioned(right: 8, top: 8, child: _lockIcon()),
               ]),
@@ -594,23 +976,41 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 decoration: const BoxDecoration(
-                  gradient: RadialGradient(center: Alignment(0.5, 0.0), radius: 0.8, colors: [Color(0xFF3A2A04), Color(0xFF0D0902)]),
+                  gradient: RadialGradient(
+                      center: Alignment(0.5, 0.0),
+                      radius: 0.8,
+                      colors: [Color(0xFF3A2A04), Color(0xFF0D0902)]),
                 ),
                 child: Column(children: [
                   Container(
-                    width: 100, height: 100,
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: const RadialGradient(center: Alignment(0.35, 0.3), colors: [Color(0xFFFFE27A), Color(0xFFF5BF31), Color(0xFFC98900)]),
+                      gradient: const RadialGradient(
+                          center: Alignment(0.35, 0.3),
+                          colors: [
+                            Color(0xFFFFE27A),
+                            Color(0xFFF5BF31),
+                            Color(0xFFC98900)
+                          ]),
                     ),
                     child: Center(
-                      child: Image.asset('assets/images/GOLDCOINDASHBOARD.png', width: 60, height: 60, fit: BoxFit.contain),
+                      child: Image.asset('assets/images/GOLDCOINDASHBOARD.png',
+                          width: 60, height: 60, fit: BoxFit.contain),
                     ),
                   ),
                   const SizedBox(height: 8),
                   ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(colors: [Color(0xFFF7CD57), Color(0xFFE5AF35)]).createShader(bounds),
-                    child: const Text('GOLD MEMBER', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.white)),
+                    shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Color(0xFFF7CD57), Color(0xFFE5AF35)])
+                        .createShader(bounds),
+                    child: const Text('GOLD MEMBER',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                            color: Colors.white)),
                   ),
                   const SizedBox(height: 16),
                   Padding(
@@ -618,7 +1018,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     child: Row(children: [
                       Expanded(child: _rewardBox('Loyalty Points', '0', 'pts')),
                       const SizedBox(width: 12),
-                      Expanded(child: _rewardBox('Referral Earnings', 'Rs.0', '')),
+                      Expanded(
+                          child: _rewardBox('Referral Earnings', 'Rs.0', '')),
                     ]),
                   ),
                 ]),
@@ -633,12 +1034,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _rewardBox(String label, String value, String suffix) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF1A1408), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF4E4E4E))),
+      decoration: BoxDecoration(
+          color: const Color(0xFF1A1408),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF4E4E4E))),
       child: Column(children: [
-        Text(label, style: const TextStyle(fontSize: 9, color: Color(0xFF9E9E9E))),
+        Text(label,
+            style: const TextStyle(fontSize: 9, color: Color(0xFF9E9E9E))),
         const SizedBox(height: 4),
-        FittedBox(fit: BoxFit.scaleDown, child: Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white))),
-        if (suffix.isNotEmpty) Text(suffix, style: const TextStyle(fontSize: 8, color: Color(0xFFC9A84C))),
+        FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(value,
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white))),
+        if (suffix.isNotEmpty)
+          Text(suffix,
+              style: const TextStyle(fontSize: 8, color: Color(0xFFC9A84C))),
       ]),
     );
   }
@@ -650,30 +1063,47 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: const Color(0xFF111008), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF4E4E4E))),
+        decoration: BoxDecoration(
+            color: const Color(0xFF111008),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF4E4E4E))),
         child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             ShaderMask(
-              shaderCallback: (bounds) => const LinearGradient(colors: [Color(0xFFF7CD57), Color(0xFFE5AF35)]).createShader(bounds),
-              child: const Text('Karatly', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+              shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Color(0xFFF7CD57), Color(0xFFE5AF35)])
+                  .createShader(bounds),
+              child: const Text('Karatly',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
             ),
-            const Text(' | ', style: TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
-            const Text('Digital Gold & Silver', style: TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
+            const Text(' | ',
+                style: TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
+            const Text('Digital Gold & Silver',
+                style: TextStyle(fontSize: 10, color: Color(0xFF7E7E7E))),
           ]),
           const SizedBox(height: 12),
-          Wrap(spacing: 16, runSpacing: 8, alignment: WrapAlignment.center, children: [
-            _footerLink('Privacy Policy', AppRoutes.privacyPolicy),
-            _footerLink('Refund Policy', AppRoutes.refundPolicy),
-            _footerLink('Terms', AppRoutes.terms),
-            _footerLink('Terms of Use', AppRoutes.termsOfUse),
-            _footerLink('Trademark Notice', AppRoutes.trademarkNotice),
-            _footerLink('How It Works', AppRoutes.howItWorks),
-            _footerLink('Why Karatly', AppRoutes.why),
-          ]),
+          Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                _footerLink('Privacy Policy', AppRoutes.privacyPolicy),
+                _footerLink('Refund Policy', AppRoutes.refundPolicy),
+                _footerLink('Terms', AppRoutes.terms),
+                _footerLink('Terms of Use', AppRoutes.termsOfUse),
+                _footerLink('Trademark Notice', AppRoutes.trademarkNotice),
+                _footerLink('How It Works', AppRoutes.howItWorks),
+                _footerLink('Why Karatly', AppRoutes.why),
+              ]),
           const Divider(color: Color(0xFF2A2010), height: 24),
-          Text('© ${DateTime.now().year} Karatly. All rights reserved.', style: const TextStyle(fontSize: 8, color: Color(0xFF5E5E5E))),
+          Text('© ${DateTime.now().year} Karatly. All rights reserved.',
+              style: const TextStyle(fontSize: 8, color: Color(0xFF5E5E5E))),
           const SizedBox(height: 4),
-          const Text('Powered by Augmont • Backed by SafeGold', style: TextStyle(fontSize: 8, color: Color(0xFF5E5E5E))),
+          const Text('Powered by Augmont • Backed by SafeGold',
+              style: TextStyle(fontSize: 8, color: Color(0xFF5E5E5E))),
         ]),
       ),
     );
@@ -681,8 +1111,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _footerLink(String label, String route) {
     return GestureDetector(
-      onTap: () => context.go(route),
-      child: Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF9E9E9E), decoration: TextDecoration.underline)),
+      onTap: () => context.push(route),
+      child: Text(label,
+          style: const TextStyle(
+              fontSize: 10,
+              color: Color(0xFF9E9E9E),
+              decoration: TextDecoration.underline)),
     );
   }
 }
@@ -700,16 +1134,19 @@ class _AnimatedLiveRatePill extends StatefulWidget {
   State<_AnimatedLiveRatePill> createState() => _AnimatedLiveRatePillState();
 }
 
-class _AnimatedLiveRatePillState extends State<_AnimatedLiveRatePill> with TickerProviderStateMixin {
+class _AnimatedLiveRatePillState extends State<_AnimatedLiveRatePill>
+    with TickerProviderStateMixin {
   late AnimationController _wiggleCtrl;
   late AnimationController _shimmerCtrl;
 
   @override
   void initState() {
     super.initState();
-    _wiggleCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))
+    _wiggleCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2400))
       ..repeat();
-    _shimmerCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 2100))
+    _shimmerCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2100))
       ..repeat();
   }
 
@@ -724,7 +1161,9 @@ class _AnimatedLiveRatePillState extends State<_AnimatedLiveRatePill> with Ticke
   Widget build(BuildContext context) {
     final isGold = widget.metal == 'gold';
     final label = isGold ? 'Gold' : 'Silver';
-    final value = widget.price > 0 ? 'Rs.${NumberFormat('#,##,###', 'en_IN').format(widget.price.round())}/g' : '...';
+    final value = widget.price > 0
+        ? 'Rs.${NumberFormat('#,##,###', 'en_IN').format(widget.price.round())}/g'
+        : '...';
 
     return AnimatedBuilder(
       animation: _wiggleCtrl,
@@ -738,34 +1177,62 @@ class _AnimatedLiveRatePillState extends State<_AnimatedLiveRatePill> with Ticke
           child: Transform.rotate(
             angle: wiggleRotate * (math.pi / 180),
             child: Container(
-              height: 28, padding: const EdgeInsets.symmetric(horizontal: 8),
+              height: 28,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               decoration: BoxDecoration(
-                border: Border.all(color: isGold ? const Color(0x73E8B438) : const Color(0x61FFFFFF)),
+                border: Border.all(
+                    color: isGold
+                        ? const Color(0x73E8B438)
+                        : const Color(0x61FFFFFF)),
                 borderRadius: BorderRadius.circular(14),
                 gradient: isGold
-                    ? const LinearGradient(colors: [Color(0xFF3A2A04), Color(0xFF1A1408), Color(0xFF0D0902)])
-                    : const LinearGradient(colors: [Color(0xFF3B4654), Color(0xFF171D24), Color(0xFF0D1117)]),
-                boxShadow: [BoxShadow(color: (isGold ? const Color(0xFFF7CD57) : const Color(0xFFC6CDD7)).withValues(alpha: 0.1), blurRadius: 22)],
+                    ? const LinearGradient(colors: [
+                        Color(0xFF3A2A04),
+                        Color(0xFF1A1408),
+                        Color(0xFF0D0902)
+                      ])
+                    : const LinearGradient(colors: [
+                        Color(0xFF3B4654),
+                        Color(0xFF171D24),
+                        Color(0xFF0D1117)
+                      ]),
+                boxShadow: [
+                  BoxShadow(
+                      color: (isGold
+                              ? const Color(0xFFF7CD57)
+                              : const Color(0xFFC6CDD7))
+                          .withValues(alpha: 0.1),
+                      blurRadius: 22)
+                ],
               ),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   // Shimmer sweep
                   Positioned(
-                    left: -45, top: 0, bottom: 0,
+                    left: -45,
+                    top: 0,
+                    bottom: 0,
                     child: AnimatedBuilder(
                       animation: _shimmerCtrl,
                       builder: (context, child) {
                         return Transform.translate(
                           offset: Offset(_shimmerCtrl.value * 310, 0),
                           child: Transform(
-                            transform: Matrix4.identity()..setEntry(0, 1, math.tan(-0.32)),
+                            transform: Matrix4.identity()
+                              ..setEntry(0, 1, math.tan(-0.32)),
                             child: Container(
-                              width: 40, height: 28,
+                              width: 40,
+                              height: 28,
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  begin: Alignment.centerLeft, end: Alignment.centerRight,
-                                  colors: [Colors.transparent, Color(0x38FFFFFF), Colors.transparent],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                  colors: [
+                                    Colors.transparent,
+                                    Color(0x38FFFFFF),
+                                    Colors.transparent
+                                  ],
                                 ),
                               ),
                             ),
@@ -776,18 +1243,37 @@ class _AnimatedLiveRatePillState extends State<_AnimatedLiveRatePill> with Ticke
                   ),
                   Row(mainAxisSize: MainAxisSize.min, children: [
                     Container(
-                      width: 8, height: 8,
+                      width: 8,
+                      height: 8,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: isGold
-                            ? const RadialGradient(colors: [Color(0xFFFFF1A6), Color(0xFFF7CD57), Color(0xFFB57F23)])
-                            : const RadialGradient(colors: [Color(0xFFFFFFFF), Color(0xFFC6CDD7), Color(0xFF7D8794)]),
+                            ? const RadialGradient(colors: [
+                                Color(0xFFFFF1A6),
+                                Color(0xFFF7CD57),
+                                Color(0xFFB57F23)
+                              ])
+                            : const RadialGradient(colors: [
+                                Color(0xFFFFFFFF),
+                                Color(0xFFC6CDD7),
+                                Color(0xFF7D8794)
+                              ]),
                       ),
                     ),
                     const SizedBox(width: 4),
-                    Text(label, style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: isGold ? const Color(0xFFF7CD57) : const Color(0xFFE5EAF0))),
+                    Text(label,
+                        style: TextStyle(
+                            fontSize: 7,
+                            fontWeight: FontWeight.bold,
+                            color: isGold
+                                ? const Color(0xFFF7CD57)
+                                : const Color(0xFFE5EAF0))),
                     const SizedBox(width: 2),
-                    Text(value, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white)),
+                    Text(value,
+                        style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white)),
                   ]),
                 ],
               ),
@@ -826,25 +1312,43 @@ class _AreaChartPainter extends CustomPainter {
     final range = (max - min).clamp(1, double.infinity);
     final w = chartWidth;
     final h = chartHeight;
-    final xs = List.generate(points.length, (i) => (i / (points.length - 1)) * w);
-    final ys = points.map((p) => h - ((p - min) / range) * (h - 10) - 5).toList();
+    final xs =
+        List.generate(points.length, (i) => (i / (points.length - 1)) * w);
+    final ys =
+        points.map((p) => h - ((p - min) / range) * (h - 10) - 5).toList();
 
     final areaPath = Path()..moveTo(xs[0], ys[0]);
-    for (var i = 1; i < xs.length; i++) { areaPath.lineTo(xs[i], ys[i]); }
-    areaPath..lineTo(w, h)..lineTo(0, h)..close();
-    canvas.drawPath(areaPath, Paint()..shader = LinearGradient(
-      begin: Alignment.topCenter, end: Alignment.bottomCenter,
-      colors: [lineColor.withValues(alpha: fillOpacity), lineColor.withValues(alpha: 0.02)],
-    ).createShader(Rect.fromLTWH(0, 0, w, h)));
+    for (var i = 1; i < xs.length; i++) {
+      areaPath.lineTo(xs[i], ys[i]);
+    }
+    areaPath
+      ..lineTo(w, h)
+      ..lineTo(0, h)
+      ..close();
+    canvas.drawPath(
+        areaPath,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              lineColor.withValues(alpha: fillOpacity),
+              lineColor.withValues(alpha: 0.02)
+            ],
+          ).createShader(Rect.fromLTWH(0, 0, w, h)));
 
     final linePath = Path()..moveTo(xs[0], ys[0]);
-    for (var i = 1; i < xs.length; i++) { linePath.lineTo(xs[i], ys[i]); }
-    canvas.drawPath(linePath, Paint()
-      ..color = lineColor
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round);
+    for (var i = 1; i < xs.length; i++) {
+      linePath.lineTo(xs[i], ys[i]);
+    }
+    canvas.drawPath(
+        linePath,
+        Paint()
+          ..color = lineColor
+          ..strokeWidth = 2
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round);
   }
 
   @override
@@ -876,22 +1380,37 @@ class _DonutChartPainter extends CustomPainter {
     // Background track
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2, 2 * math.pi, false,
-      Paint()..color = const Color(0xFF2A2010)..strokeWidth = strokeWidth..style = PaintingStyle.stroke,
+      -math.pi / 2,
+      2 * math.pi,
+      false,
+      Paint()
+        ..color = const Color(0xFF2A2010)
+        ..strokeWidth = strokeWidth
+        ..style = PaintingStyle.stroke,
     );
 
     // Gold arc
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2, (goldPct / 100) * 2 * math.pi, false,
-      Paint()..color = const Color(0xFFF7CD57)..strokeWidth = strokeWidth..style = PaintingStyle.stroke,
+      -math.pi / 2,
+      (goldPct / 100) * 2 * math.pi,
+      false,
+      Paint()
+        ..color = const Color(0xFFF7CD57)
+        ..strokeWidth = strokeWidth
+        ..style = PaintingStyle.stroke,
     );
 
     // Silver arc
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2 + (goldPct / 100) * 2 * math.pi, (silverPct / 100) * 2 * math.pi, false,
-      Paint()..color = const Color(0xFFC0C0C0)..strokeWidth = strokeWidth..style = PaintingStyle.stroke,
+      -math.pi / 2 + (goldPct / 100) * 2 * math.pi,
+      (silverPct / 100) * 2 * math.pi,
+      false,
+      Paint()
+        ..color = const Color(0xFFC0C0C0)
+        ..strokeWidth = strokeWidth
+        ..style = PaintingStyle.stroke,
     );
   }
 

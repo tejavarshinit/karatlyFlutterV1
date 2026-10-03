@@ -80,9 +80,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   String _normalizeMobile(String value) {
     String digits = value.replaceAll(RegExp(r'\D'), '');
-    if (digits.length > 10 && digits.startsWith('0091')) digits = digits.substring(4);
-    if (digits.length > 10 && digits.startsWith('91')) digits = digits.substring(2);
-    if (digits.length > 10 && digits.startsWith('0')) digits = digits.replaceFirst(RegExp(r'^0+'), '');
+    if (digits.length > 10 && digits.startsWith('0091'))
+      digits = digits.substring(4);
+    if (digits.length > 10 && digits.startsWith('91'))
+      digits = digits.substring(2);
+    if (digits.length > 10 && digits.startsWith('0'))
+      digits = digits.replaceFirst(RegExp(r'^0+'), '');
     if (digits.length > 10) digits = digits.substring(digits.length - 10);
     return digits;
   }
@@ -94,14 +97,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final pincode = _pincodeController.text.trim();
 
     if (fullName.isEmpty) return 'Full name is required';
-    if (!RegExp(r"^[A-Za-z .']+$").hasMatch(fullName)) return 'Full name should only contain letters';
+    if (!RegExp(r"^[A-Za-z .']+$").hasMatch(fullName))
+      return 'Full name should only contain letters';
     if (mobile.length != 10) return 'Enter a valid 10-digit mobile number';
-    if (!RegExp(r'^[6-9]').hasMatch(mobile)) return 'Mobile number must start with 6, 7, 8, or 9';
+    if (!RegExp(r'^[6-9]').hasMatch(mobile))
+      return 'Mobile number must start with 6, 7, 8, or 9';
     if (dob.isEmpty) return 'Select a valid date of birth';
     if (_selectedState == null) return 'Select a state';
     if (_selectedCity == null) return 'Select a city';
     if (pincode.length != 6) return 'Enter a valid 6-digit pincode';
-    if (!_acceptedTerms) return 'Please agree to the Terms and Conditions before continuing.';
+    if (!_acceptedTerms)
+      return 'Please agree to the Terms and Conditions before continuing.';
     return null;
   }
 
@@ -134,19 +140,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     try {
       final result = await ref.read(authProvider.notifier).sendOtp(
-        mobileNumber: mobile,
-        email: email,
-        fullName: fullName,
-        dateOfBirth: dob,
-        type: 'register',
-      );
+            mobileNumber: mobile,
+            email: email,
+            fullName: fullName,
+            dateOfBirth: dob,
+            type: 'register',
+          );
 
       if (mounted) {
         final success = result['ok'] == true || result['success'] == true;
         final alreadyRegistered = result['alreadyRegistered'] == true;
 
         if (alreadyRegistered) {
-          setState(() => _error = 'This mobile number is already registered. Please login instead.');
+          setState(() => _error =
+              'This mobile number is already registered. Please login instead.');
         } else if (success) {
           // Save pending registration profile
           await LocalStorageService.setPendingRegistrationProfile({
@@ -171,12 +178,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             });
           }
         } else {
-          setState(() => _error = result['message']?.toString() ?? 'Failed to send OTP');
+          setState(() =>
+              _error = result['message']?.toString() ?? 'Failed to send OTP');
         }
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _error = 'Unable to send OTP. Please check your connection and try again.');
+        setState(() => _error =
+            'Unable to send OTP. Please check your connection and try again.');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -214,7 +223,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 1.8),
                       ),
-                      child: const Icon(Icons.chevron_left, size: 18, color: Colors.white),
+                      child: const Icon(Icons.chevron_left,
+                          size: 18, color: Colors.white),
                     ),
                   ),
                 ),
@@ -223,7 +233,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 const AnimatedRingLogo(),
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: const Color(0xFF7D5800)),
@@ -234,23 +245,34 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     children: [
                       Icon(Icons.auto_awesome, size: 12, color: Colors.white),
                       SizedBox(width: 6),
-                      Text('CREATE ACCOUNT', style: TextStyle(fontSize: 12, color: Colors.white, letterSpacing: 1)),
+                      Text('CREATE ACCOUNT',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                              letterSpacing: 1)),
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
                 const Text(
                   'STEP 1 OF 2',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF999999), letterSpacing: 3),
+                  style: TextStyle(
+                      fontSize: 12, color: Color(0xFF999999), letterSpacing: 3),
                 ),
                 const SizedBox(height: 12),
                 RichText(
                   textAlign: TextAlign.center,
                   text: const TextSpan(
                     text: 'Start your ',
-                    style: TextStyle(fontFamily: 'Playfair Display', fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: TextStyle(
+                        fontFamily: 'Playfair Display',
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                     children: [
-                      TextSpan(text: 'Gold', style: TextStyle(color: Color(0xFFD9A639))),
+                      TextSpan(
+                          text: 'Gold',
+                          style: TextStyle(color: Color(0xFFD9A639))),
                       TextSpan(text: ' journey'),
                     ],
                   ),
@@ -259,18 +281,26 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(width: 39, height: 1, color: const Color(0xFF6A511C)),
+                    Container(
+                        width: 39, height: 1, color: const Color(0xFF6A511C)),
                     const SizedBox(width: 12),
-                    Transform.rotate(angle: 0.7854, child: Container(width: 8, height: 8, color: const Color(0xFFB57F23))),
+                    Transform.rotate(
+                        angle: 0.7854,
+                        child: Container(
+                            width: 8,
+                            height: 8,
+                            color: const Color(0xFFB57F23))),
                     const SizedBox(width: 12),
-                    Container(width: 39, height: 1, color: const Color(0xFF6A511C)),
+                    Container(
+                        width: 39, height: 1, color: const Color(0xFF6A511C)),
                   ],
                 ),
                 const SizedBox(height: 12),
                 const Text(
                   'Create an account to buy, sell, and manage your precious metals',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, height: 1.5, color: Color(0xFFFFF6D9)),
+                  style: TextStyle(
+                      fontSize: 12, height: 1.5, color: Color(0xFFFFF6D9)),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
@@ -282,77 +312,158 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       border: Border.all(color: Colors.red.withOpacity(0.3)),
                       color: Colors.red.withOpacity(0.1),
                     ),
-                    child: Text(_error!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, color: Colors.redAccent)),
+                    child: Text(_error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 14, color: Colors.redAccent)),
                   ),
                 ],
                 const SizedBox(height: 20),
-                _buildField(_fullNameController, 'Full name *', TextInputType.name),
+                _buildField(
+                    _fullNameController, 'Full name *', TextInputType.name),
                 const SizedBox(height: 12),
-                _buildField(_emailController, 'Email', TextInputType.emailAddress),
+                _buildField(
+                    _emailController, 'Email', TextInputType.emailAddress),
                 const SizedBox(height: 12),
-                _buildField(_mobileController, 'Mobile number *', TextInputType.phone, maxLength: 10),
+                _buildField(
+                    _mobileController, 'Mobile number *', TextInputType.phone,
+                    maxLength: 10),
                 const SizedBox(height: 12),
-                _buildField(_dobController, 'Date of birth (DD-MM-YYYY)', TextInputType.datetime),
+                _buildField(_dobController, 'Date of birth (DD-MM-YYYY) *',
+                    TextInputType.datetime, onChanged: (v) {
+                  setState(() {});
+                }),
                 const SizedBox(height: 12),
                 _buildStateDropdown(),
                 const SizedBox(height: 12),
                 _buildCityDropdown(),
                 const SizedBox(height: 12),
-                _buildField(_pincodeController, 'Pincode', TextInputType.number, maxLength: 6),
+                _buildField(_pincodeController, 'Pincode', TextInputType.number,
+                    maxLength: 6),
                 const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: () => setState(() => _acceptedTerms = !_acceptedTerms),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      onTap: () =>
+                          setState(() => _acceptedTerms = !_acceptedTerms),
+                      child: Container(
                         width: 16,
                         height: 16,
                         margin: const EdgeInsets.only(top: 2),
                         decoration: BoxDecoration(
-                          border: Border.all(color: _acceptedTerms ? const Color(0xFFE8B438) : const Color(0xFF666666)),
-                          color: _acceptedTerms ? const Color(0xFFE8B438) : Colors.transparent,
+                          border: Border.all(
+                              color: _acceptedTerms
+                                  ? const Color(0xFFE8B438)
+                                  : const Color(0xFF666666)),
+                          color: _acceptedTerms
+                              ? const Color(0xFFE8B438)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(3),
                         ),
-                        child: _acceptedTerms ? const Icon(Icons.check, size: 12, color: Colors.black) : null,
+                        child: _acceptedTerms
+                            ? const Icon(Icons.check,
+                                size: 12, color: Colors.black)
+                            : null,
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          "I agree to Karatly's Terms and Conditions",
-                          style: TextStyle(fontSize: 11, height: 1.5, color: const Color(0xFFBDB6A0).withOpacity(0.9)),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Wrap(children: [
+                        Text("By continuing, you agree to our ",
+                            style: TextStyle(
+                                fontSize: 11,
+                                height: 1.5,
+                                color:
+                                    const Color(0xFFBDB6A0).withOpacity(0.9))),
+                        GestureDetector(
+                          onTap: () => context.push('/terms'),
+                          child: const Text('Terms',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  height: 1.5,
+                                  color: Color(0xFFF7CD57),
+                                  decoration: TextDecoration.underline)),
                         ),
-                      ),
-                    ],
-                  ),
+                        Text(" & ",
+                            style: TextStyle(
+                                fontSize: 11,
+                                height: 1.5,
+                                color:
+                                    const Color(0xFFBDB6A0).withOpacity(0.9))),
+                        GestureDetector(
+                          onTap: () => context.push('/privacy-policy'),
+                          child: const Text('Privacy Policy',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  height: 1.5,
+                                  color: Color(0xFFF7CD57),
+                                  decoration: TextDecoration.underline)),
+                        ),
+                      ]),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
-                GestureDetector(
-                  onTap: _isLoading ? null : _sendOtp,
-                  child: Container(
-                    width: double.infinity,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(50),
-                      gradient: const LinearGradient(colors: [Color(0xFFF7CD57), Color(0xFFE5AF35), Color(0xFFB57F23)]),
+                Builder(builder: (context) {
+                  final isDobFilled = _dobController.text.trim().isNotEmpty;
+                  return GestureDetector(
+                    onTap: (_isLoading || !isDobFilled) ? null : _sendOtp,
+                    child: Container(
+                      width: double.infinity,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(50),
+                        gradient: (!isDobFilled || _isLoading)
+                            ? null
+                            : const LinearGradient(colors: [
+                                Color(0xFFF7CD57),
+                                Color(0xFFE5AF35),
+                                Color(0xFFB57F23)
+                              ]),
+                        color: (!isDobFilled || _isLoading)
+                            ? const Color(0xFF3A3220)
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(_isLoading ? 'Sending...' : 'Send OTP',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDobFilled && !_isLoading
+                                      ? Colors.black
+                                      : const Color(0xFF666666))),
+                          if (!_isLoading) ...[
+                            const SizedBox(width: 12),
+                            Icon(Icons.arrow_forward,
+                                size: 20,
+                                color: isDobFilled
+                                    ? Colors.black
+                                    : const Color(0xFF666666))
+                          ],
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(_isLoading ? 'Sending...' : 'Send OTP', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.black)),
-                        if (!_isLoading) ...[const SizedBox(width: 12), const Icon(Icons.arrow_forward, size: 20, color: Colors.black)],
-                      ],
-                    ),
-                  ),
-                ),
+                  );
+                }),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Already have an account? ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFFFFF6D9))),
+                    const Text('Already have an account? ',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFFFFF6D9))),
                     GestureDetector(
                       onTap: () => context.go(AppRoutes.login),
-                      child: const Text('Sign in', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFFE8B438))),
+                      child: const Text('Sign in',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFFE8B438))),
                     ),
                   ],
                 ),
@@ -365,7 +476,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     );
   }
 
-  Widget _buildField(TextEditingController controller, String hint, TextInputType type, {int? maxLength}) {
+  Widget _buildField(
+      TextEditingController controller, String hint, TextInputType type,
+      {int? maxLength, ValueChanged<String>? onChanged}) {
     return TextField(
       controller: controller,
       keyboardType: type,
@@ -376,9 +489,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           final digits = v.replaceAll(RegExp(r'\D'), '');
           if (v != digits) {
             controller.text = digits;
-            controller.selection = TextSelection.fromPosition(TextPosition(offset: digits.length));
+            controller.selection =
+                TextSelection.fromPosition(TextPosition(offset: digits.length));
           }
         }
+        onChanged?.call(v);
       },
       decoration: InputDecoration(
         hintText: hint,
@@ -386,10 +501,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         hintStyle: const TextStyle(color: Color(0xFF5E5B5B)),
         filled: true,
         fillColor: const Color(0xFF1A1510),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF666666))),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF666666))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF666666))),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFF666666))),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFF666666))),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFF666666))),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       ),
     );
   }
@@ -401,7 +523,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             value: _selectedState,
             dropdownColor: const Color(0xFF1A1510),
             style: const TextStyle(fontSize: 16, color: Color(0xFFFFF6D9)),
-            hint: const Text('State *', style: TextStyle(color: Color(0xFF5E5B5B))),
+            hint: const Text('State *',
+                style: TextStyle(color: Color(0xFF5E5B5B))),
             isExpanded: true,
             items: _states.map((state) {
               return DropdownMenuItem(
@@ -461,7 +584,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFF666666)),
       ),
-      child: Text(text, style: const TextStyle(fontSize: 16, color: Color(0xFF5E5B5B))),
+      child: Text(text,
+          style: const TextStyle(fontSize: 16, color: Color(0xFF5E5B5B))),
     );
   }
 
@@ -470,9 +594,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       counterText: '',
       filled: true,
       fillColor: const Color(0xFF1A1510),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF666666))),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF666666))),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF666666))),
+      border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFF666666))),
+      enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFF666666))),
+      focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFF666666))),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     );
   }

@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../models/user_model.dart';
 import '../api/auth_api.dart';
 import '../storage/local_storage.dart';
+import 'push_notification_service.dart';
 
 // ── Auth State ──
 class AuthState {
@@ -181,6 +182,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   void logout() {
+    PushNotificationService.instance.onLogout();
     LocalStorageService.clearAuthSession();
     state = const AuthState(loading: false);
   }

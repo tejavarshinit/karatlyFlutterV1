@@ -43,13 +43,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _sendOtp() async {
     if (!_acceptedTerms) {
-      setState(() => _error = 'Please agree to the Terms and Conditions before continuing.');
+      setState(() => _error =
+          'Please agree to the Terms and Conditions before continuing.');
       return;
     }
 
     final normalizedMobile = _normalizeMobile(_phoneController.text);
     if (normalizedMobile.length != 10) {
-      setState(() => _error = 'Invalid mobile number format. Must be exactly 10 digits');
+      setState(() =>
+          _error = 'Invalid mobile number format. Must be exactly 10 digits');
       return;
     }
 
@@ -60,9 +62,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       final result = await ref.read(authProvider.notifier).sendOtp(
-        mobileNumber: normalizedMobile,
-        type: 'login',
-      );
+            mobileNumber: normalizedMobile,
+            type: 'login',
+          );
       if (mounted) {
         final success = result['ok'] == true || result['success'] == true;
         final notRegistered = result['notRegistered'] == true;
@@ -72,14 +74,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             'type': 'login',
           });
         } else if (notRegistered) {
-          setState(() => _error = 'This mobile number is not registered. Please create an account first.');
+          setState(() => _error =
+              'This mobile number is not registered. Please create an account first.');
         } else {
-          setState(() => _error = result['message']?.toString() ?? 'Failed to send OTP');
+          setState(() =>
+              _error = result['message']?.toString() ?? 'Failed to send OTP');
         }
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _error = 'Unable to send OTP. Please check your connection and try again.');
+        setState(() => _error =
+            'Unable to send OTP. Please check your connection and try again.');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -121,7 +126,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 1.8),
                       ),
-                      child: const Icon(Icons.chevron_left, size: 18, color: Colors.white),
+                      child: const Icon(Icons.chevron_left,
+                          size: 18, color: Colors.white),
                     ),
                   ),
                 ),
@@ -131,7 +137,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
                 // Vault Access badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: const Color(0xFF7D5800)),
@@ -140,7 +147,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.auto_awesome, size: 12, color: Colors.white),
+                      const Icon(Icons.auto_awesome,
+                          size: 12, color: Colors.white),
                       const SizedBox(width: 6),
                       const Text(
                         'VAULT ACCESS',
@@ -190,7 +198,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(width: 39, height: 1, color: const Color(0xFFC7C7C7)),
+                    Container(
+                        width: 39, height: 1, color: const Color(0xFFC7C7C7)),
                     const SizedBox(width: 12),
                     Transform.rotate(
                       angle: 0.7854,
@@ -201,7 +210,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Container(width: 39, height: 1, color: const Color(0xFFC7C7C7)),
+                    Container(
+                        width: 39, height: 1, color: const Color(0xFFC7C7C7)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -228,7 +238,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Text(
                       _error!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 14, color: Colors.redAccent),
+                      style: const TextStyle(
+                          fontSize: 14, color: Colors.redAccent),
                     ),
                   ),
                 ],
@@ -269,44 +280,75 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       borderRadius: BorderRadius.circular(10),
                       borderSide: const BorderSide(color: Color(0xFF666666)),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 18),
                   ),
                 ),
                 const SizedBox(height: 16),
                 // Terms checkbox
-                GestureDetector(
-                  onTap: () => setState(() => _acceptedTerms = !_acceptedTerms),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      onTap: () =>
+                          setState(() => _acceptedTerms = !_acceptedTerms),
+                      child: Container(
                         width: 16,
                         height: 16,
                         margin: const EdgeInsets.only(top: 2),
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: _acceptedTerms ? const Color(0xFFE8B438) : const Color(0xFF666666),
+                            color: _acceptedTerms
+                                ? const Color(0xFFE8B438)
+                                : const Color(0xFF666666),
                           ),
-                          color: _acceptedTerms ? const Color(0xFFE8B438) : Colors.transparent,
+                          color: _acceptedTerms
+                              ? const Color(0xFFE8B438)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(3),
                         ),
                         child: _acceptedTerms
-                            ? const Icon(Icons.check, size: 12, color: Colors.black)
+                            ? const Icon(Icons.check,
+                                size: 12, color: Colors.black)
                             : null,
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          "I agree to Karatly's Terms and Conditions",
-                          style: TextStyle(
-                            fontSize: 11,
-                            height: 1.5,
-                            color: const Color(0xFFBDB6A0).withOpacity(0.9),
-                          ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Wrap(children: [
+                        Text("By continuing, you agree to our ",
+                            style: TextStyle(
+                                fontSize: 11,
+                                height: 1.5,
+                                color:
+                                    const Color(0xFFBDB6A0).withOpacity(0.9))),
+                        GestureDetector(
+                          onTap: () => context.push('/terms'),
+                          child: const Text('Terms',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  height: 1.5,
+                                  color: Color(0xFFF7CD57),
+                                  decoration: TextDecoration.underline)),
                         ),
-                      ),
-                    ],
-                  ),
+                        Text(" & ",
+                            style: TextStyle(
+                                fontSize: 11,
+                                height: 1.5,
+                                color:
+                                    const Color(0xFFBDB6A0).withOpacity(0.9))),
+                        GestureDetector(
+                          onTap: () => context.push('/privacy-policy'),
+                          child: const Text('Privacy Policy',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  height: 1.5,
+                                  color: Color(0xFFF7CD57),
+                                  decoration: TextDecoration.underline)),
+                        ),
+                      ]),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
                 // Send OTP button
@@ -338,7 +380,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         if (!_isLoading) ...[
                           const SizedBox(width: 12),
-                          const Icon(Icons.arrow_forward, size: 20, color: Colors.black),
+                          const Icon(Icons.arrow_forward,
+                              size: 20, color: Colors.black),
                         ],
                       ],
                     ),
@@ -348,7 +391,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Secure login divider
                 Row(
                   children: [
-                    Expanded(child: Container(height: 1, color: const Color(0xFFC1C1C1))),
+                    Expanded(
+                        child: Container(
+                            height: 1, color: const Color(0xFFC1C1C1))),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
@@ -360,7 +405,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ),
-                    Expanded(child: Container(height: 1, color: const Color(0xFFC1C1C1))),
+                    Expanded(
+                        child: Container(
+                            height: 1, color: const Color(0xFFC1C1C1))),
                   ],
                 ),
                 const SizedBox(height: 12),

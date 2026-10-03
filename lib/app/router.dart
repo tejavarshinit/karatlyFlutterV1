@@ -19,6 +19,7 @@ import '../features/brands/brands_screen.dart';
 import '../features/payment/payment_gateway_screen.dart';
 import '../features/sell_flow/sell_silver_upi_screen.dart';
 import '../features/sell_flow/sell_silver_bank_screen.dart';
+import '../features/sell_flow/silver_sell_flow_screen.dart';
 
 import '../features/payment/payment_return_screen.dart';
 import '../features/settings/help_center_screen.dart';
@@ -30,6 +31,7 @@ import '../features/settings/terms_of_use_screen.dart';
 import '../features/settings/trademark_notice_screen.dart';
 import '../features/settings/how_it_works_screen.dart';
 import '../features/settings/why_karatly_screen.dart';
+import '../features/settings/delete_account_screen.dart';
 import '../features/commerce/rewards_screen.dart';
 import '../features/commerce/transfer_screen.dart';
 import '../features/commerce/gold_certificate_screen.dart';
@@ -168,15 +170,15 @@ class AppRoutes {
   static const bankVerify = '/bank-verify';
   static const bankVerifyLoading = '/bank-verify-loading';
   static const gift360 = '/gift360';
+  static const deleteAccount = '/delete-account';
 }
-
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(
     authProvider.select((state) => (
-      isAuthenticated: state.isAuthenticated,
-      loading: state.loading,
-    )),
+          isAuthenticated: state.isAuthenticated,
+          loading: state.loading,
+        )),
   );
 
   return GoRouter(
@@ -192,6 +194,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             location == AppRoutes.signup ||
             location == AppRoutes.otp ||
             location == AppRoutes.splash ||
+            location == AppRoutes.lock ||
+            location == AppRoutes.terms ||
+            location == AppRoutes.termsOfUse ||
+            location == AppRoutes.privacyPolicy ||
+            location == AppRoutes.refundPolicy;
+      }
+
+      bool isOnlyAuthRoute(String location) {
+        return location == AppRoutes.login ||
+            location == AppRoutes.signup ||
+            location == AppRoutes.otp ||
+            location == AppRoutes.splash ||
             location == AppRoutes.lock;
       }
 
@@ -201,7 +215,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         return AppRoutes.login;
       }
 
-      if (isLoggedIn && isPublicAuthRoute(path)) {
+      if (isLoggedIn && isOnlyAuthRoute(path)) {
         return AppRoutes.home;
       }
 
@@ -209,173 +223,312 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: AppRoutes.lock, builder: (_, __) => const LockScreen()),
-      GoRoute(path: AppRoutes.splash, builder: (_, __) => const SplashController()),
+      GoRoute(
+          path: AppRoutes.splash, builder: (_, __) => const SplashController()),
       GoRoute(path: AppRoutes.login, builder: (_, __) => const LoginScreen()),
-      GoRoute(path: AppRoutes.otp, builder: (_, state) {
-        final extras = state.extra as Map<String, dynamic>? ?? {};
-        return OtpScreen(
-          mobileNumber: extras['mobileNumber'] as String? ?? '',
-          type: extras['type'] as String? ?? 'login',
-          email: extras['email'] as String? ?? '',
-          fullName: extras['fullName'] as String? ?? '',
-          dateOfBirth: extras['dateOfBirth'] as String? ?? '',
-        );
-      }),
+      GoRoute(
+          path: AppRoutes.otp,
+          builder: (_, state) {
+            final extras = state.extra as Map<String, dynamic>? ?? {};
+            return OtpScreen(
+              mobileNumber: extras['mobileNumber'] as String? ?? '',
+              type: extras['type'] as String? ?? 'login',
+              email: extras['email'] as String? ?? '',
+              fullName: extras['fullName'] as String? ?? '',
+              dateOfBirth: extras['dateOfBirth'] as String? ?? '',
+            );
+          }),
       GoRoute(path: AppRoutes.signup, builder: (_, __) => const SignupScreen()),
 
       ShellRoute(
         builder: (context, state, child) => BottomNavShell(child: child),
         routes: [
           GoRoute(path: AppRoutes.home, builder: (_, __) => const HomeScreen()),
-          GoRoute(path: AppRoutes.dashboard, builder: (_, __) => const DashboardScreen()),
-          GoRoute(path: AppRoutes.market, builder: (_, __) => const MarketScreen()),
-          GoRoute(path: AppRoutes.orders, builder: (_, __) => const OrdersScreen()),
-          GoRoute(path: AppRoutes.profile, builder: (_, __) => const ProfileScreen()),
+          GoRoute(
+              path: AppRoutes.dashboard,
+              builder: (_, __) => const DashboardScreen()),
+          GoRoute(
+              path: AppRoutes.market, builder: (_, __) => const MarketScreen()),
+          GoRoute(
+              path: AppRoutes.orders, builder: (_, __) => const OrdersScreen()),
+          GoRoute(
+              path: AppRoutes.profile,
+              builder: (_, __) => const ProfileScreen()),
           GoRoute(path: AppRoutes.cart, builder: (_, __) => const CartScreen()),
-          GoRoute(path: AppRoutes.categories, builder: (_, __) => const MarketScreen()),
-          GoRoute(path: AppRoutes.brands, builder: (_, __) => const BrandsScreen()),
+          GoRoute(
+              path: AppRoutes.categories,
+              builder: (_, __) => const MarketScreen()),
+          GoRoute(
+              path: AppRoutes.brands, builder: (_, __) => const BrandsScreen()),
         ],
       ),
 
-      GoRoute(path: AppRoutes.buyGoldSelect, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return BuySelectionScreen(metalType: metalType);
-      }),
-      GoRoute(path: AppRoutes.buyDiamonds, builder: (_, __) => const BuyDiamondsScreen()),
-      GoRoute(path: AppRoutes.diamondPaymentSuccess, builder: (_, __) => const DiamondPaymentSuccessScreen()),
-      GoRoute(path: AppRoutes.sellGoldSelect, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return SellSelectionScreen(metalType: metalType);
-      }),
-      GoRoute(path: AppRoutes.buySelect, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return BuyScreen(metalType: metalType);
-      }),
-      GoRoute(path: AppRoutes.buy1, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return BuyScreen(step: 1, metalType: metalType);
-      }),
-      GoRoute(path: AppRoutes.buy2, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return BuyScreen(step: 2, metalType: metalType);
-      }),
-      GoRoute(path: AppRoutes.buy3, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return BuyScreen(step: 3, metalType: metalType);
-      }),
-      GoRoute(path: AppRoutes.buy4, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return BuyScreen(step: 4, metalType: metalType);
-      }),
-      GoRoute(path: AppRoutes.buy5, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return BuyScreen(step: 5, metalType: metalType);
-      }),
+      GoRoute(
+          path: AppRoutes.buyGoldSelect,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return BuySelectionScreen(metalType: metalType);
+          }),
+      GoRoute(
+          path: AppRoutes.buyDiamonds,
+          builder: (_, __) => const BuyDiamondsScreen()),
+      GoRoute(
+          path: AppRoutes.diamondPaymentSuccess,
+          builder: (_, __) => const DiamondPaymentSuccessScreen()),
+      GoRoute(
+          path: AppRoutes.sellGoldSelect,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return SellSelectionScreen(metalType: metalType);
+          }),
+      GoRoute(
+          path: AppRoutes.buySelect,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return BuyScreen(metalType: metalType);
+          }),
+      GoRoute(
+          path: AppRoutes.buy1,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return BuyScreen(step: 1, metalType: metalType);
+          }),
+      GoRoute(
+          path: AppRoutes.buy2,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return BuyScreen(step: 2, metalType: metalType);
+          }),
+      GoRoute(
+          path: AppRoutes.buy3,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return BuyScreen(step: 3, metalType: metalType);
+          }),
+      GoRoute(
+          path: AppRoutes.buy4,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return BuyScreen(step: 4, metalType: metalType);
+          }),
+      GoRoute(
+          path: AppRoutes.buy5,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return BuyScreen(step: 5, metalType: metalType);
+          }),
 
-      GoRoute(path: AppRoutes.sellGoldSelect, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return SellScreen(step: 1, metalType: metalType);
-      }),
-      GoRoute(path: AppRoutes.sell1, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return SellScreen(step: 1, metalType: metalType);
-      }),
-      GoRoute(path: AppRoutes.sell2, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return SellScreen(step: 2, metalType: metalType);
-      }),
-      GoRoute(path: AppRoutes.sell3, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return SellScreen(step: 3, metalType: metalType);
-      }),
-      GoRoute(path: AppRoutes.sell4, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return SellScreen(step: 4, metalType: metalType);
-      }),
-      GoRoute(path: AppRoutes.sell5, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        return SellScreen(step: 5, metalType: metalType);
-      }),
+      GoRoute(
+          path: AppRoutes.sellGoldSelect,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return SellScreen(step: 1, metalType: metalType);
+          }),
+      GoRoute(
+          path: AppRoutes.sell1,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return SellScreen(step: 1, metalType: metalType);
+          }),
+      GoRoute(
+          path: AppRoutes.sell2,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return SellScreen(step: 2, metalType: metalType);
+          }),
+      GoRoute(
+          path: AppRoutes.sell3,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return SellScreen(step: 3, metalType: metalType);
+          }),
+      GoRoute(
+          path: AppRoutes.sell4,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return SellScreen(step: 4, metalType: metalType);
+          }),
+      GoRoute(
+          path: AppRoutes.sell5,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            return SellScreen(step: 5, metalType: metalType);
+          }),
 
       // Gold coin sell/redeem flow
-      GoRoute(path: AppRoutes.sellGoldCoin1, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        final backRoute = state.uri.queryParameters['back'] ?? AppRoutes.market;
-        return GoldCoinScreen(step: 1, metalType: metalType, backRoute: backRoute);
-      }),
-      GoRoute(path: AppRoutes.sellGoldCoinReview, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        final backRoute = state.uri.queryParameters['back'] ?? AppRoutes.market;
-        return GoldCoinScreen(step: 2, metalType: metalType, backRoute: backRoute);
-      }),
-      GoRoute(path: AppRoutes.sellGoldCoin2, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        final backRoute = state.uri.queryParameters['back'] ?? AppRoutes.market;
-        return GoldCoinScreen(step: 3, metalType: metalType, backRoute: backRoute);
-      }),
-      GoRoute(path: AppRoutes.sellGoldCoin3, builder: (_, state) {
-        final metalType = state.uri.queryParameters['metal'] ?? 'gold';
-        final backRoute = state.uri.queryParameters['back'] ?? AppRoutes.market;
-        return GoldCoinScreen(step: 4, metalType: metalType, backRoute: backRoute);
-      }),
+      GoRoute(
+          path: AppRoutes.sellGoldCoin1,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            final backRoute =
+                state.uri.queryParameters['back'] ?? AppRoutes.market;
+            return GoldCoinScreen(
+                step: 1, metalType: metalType, backRoute: backRoute);
+          }),
+      GoRoute(
+          path: AppRoutes.sellGoldCoinReview,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            final backRoute =
+                state.uri.queryParameters['back'] ?? AppRoutes.market;
+            return GoldCoinScreen(
+                step: 2, metalType: metalType, backRoute: backRoute);
+          }),
+      GoRoute(
+          path: AppRoutes.sellGoldCoin2,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            final backRoute =
+                state.uri.queryParameters['back'] ?? AppRoutes.market;
+            return GoldCoinScreen(
+                step: 3, metalType: metalType, backRoute: backRoute);
+          }),
+      GoRoute(
+          path: AppRoutes.sellGoldCoin3,
+          builder: (_, state) {
+            final metalType = state.uri.queryParameters['metal'] ?? 'gold';
+            final backRoute =
+                state.uri.queryParameters['back'] ?? AppRoutes.market;
+            return GoldCoinScreen(
+                step: 4, metalType: metalType, backRoute: backRoute);
+          }),
 
-      GoRoute(path: AppRoutes.sip1, builder: (_, __) => const SipScreen(step: 1)),
-      GoRoute(path: AppRoutes.sip2, builder: (_, __) => const SipScreen(step: 2)),
-      GoRoute(path: AppRoutes.sip3, builder: (_, __) => const SipScreen(step: 3)),
-      GoRoute(path: AppRoutes.sip4, builder: (_, __) => const SipScreen(step: 4)),
-      GoRoute(path: AppRoutes.sip5, builder: (_, __) => const SipScreen(step: 5)),
+      GoRoute(
+          path: AppRoutes.sip1, builder: (_, __) => const SipScreen(step: 1)),
+      GoRoute(
+          path: AppRoutes.sip2, builder: (_, __) => const SipScreen(step: 2)),
+      GoRoute(
+          path: AppRoutes.sip3, builder: (_, __) => const SipScreen(step: 3)),
+      GoRoute(
+          path: AppRoutes.sip4, builder: (_, __) => const SipScreen(step: 4)),
+      GoRoute(
+          path: AppRoutes.sip5, builder: (_, __) => const SipScreen(step: 5)),
 
-      // Silver sell UPI/Bank add
-      GoRoute(path: '/sell-silver/upi', builder: (_, __) => const SellSilverUpiScreen()),
-      GoRoute(path: '/sell-silver/bank', builder: (_, __) => const SellSilverBankScreen()),
+      // Dedicated React-equivalent Silver Sell flow.
+      GoRoute(
+          path: AppRoutes.sellSilver1,
+          builder: (_, __) => const SilverSellFlowScreen(step: 1)),
+      GoRoute(
+          path: AppRoutes.sellSilver2,
+          builder: (_, __) => const SilverSellFlowScreen(step: 2)),
+      GoRoute(
+          path: AppRoutes.sellSilver3,
+          builder: (_, __) => const SilverSellFlowScreen(step: 3)),
+      GoRoute(
+          path: AppRoutes.sellSilver4,
+          builder: (_, __) => const SilverSellFlowScreen(step: 4)),
+      GoRoute(
+          path: AppRoutes.sellSilver5,
+          builder: (_, __) => const SilverSellFlowScreen(step: 5)),
+      GoRoute(
+          path: AppRoutes.sellSilverVerify,
+          builder: (_, __) => const SilverSellFlowScreen(step: 4)),
+      GoRoute(
+          path: AppRoutes.sellSilverVerified,
+          builder: (_, __) => const SilverSellFlowScreen(step: 5)),
 
-      GoRoute(path: AppRoutes.paymentGateway, builder: (_, state) {
-        final extras = state.extra as Map<String, dynamic>? ?? {};
-        return PaymentGatewayScreen(
-          paymentSessionId: extras['paymentSessionId'] as String? ?? '',
-          orderId: extras['orderId'] as String? ?? '',
-          paymentAmount: (extras['amount'] as num?)?.toDouble() ?? 0,
-          paymentRequest: extras['paymentRequest'] as Map<String, dynamic>?,
-        );
-      }),
-      GoRoute(path: AppRoutes.paymentReturn, builder: (_, state) {
-        final extras = state.extra as Map<String, dynamic>? ?? {};
-        final orderId = extras['orderId'] as String? ?? state.uri.queryParameters['order_id'] ?? '';
-        return PaymentReturnScreen(orderId: orderId);
-      }),
+      // Silver payout destination screens.
+      GoRoute(
+          path: AppRoutes.sellSilverUpi,
+          builder: (_, __) => const SellSilverUpiScreen()),
+      GoRoute(
+          path: AppRoutes.sellSilverBank,
+          builder: (_, __) => const SellSilverBankScreen()),
 
-      GoRoute(path: AppRoutes.rewards, builder: (_, __) => const RewardsScreen()),
-      GoRoute(path: AppRoutes.transfer, builder: (_, __) => const TransferScreen()),
-      GoRoute(path: AppRoutes.goldCertificate, builder: (_, __) => const GoldCertificateScreen()),
-      GoRoute(path: AppRoutes.auditCertificate, builder: (_, __) => const AuditCertificateScreen()),
-      GoRoute(path: AppRoutes.silverCertificate, builder: (_, __) => const SilverCertificateScreen()),
-      GoRoute(path: AppRoutes.diamondCertificate, builder: (_, __) => const DiamondCertificateScreen()),
-      GoRoute(path: AppRoutes.invoice, builder: (_, state) {
-        final extras = state.extra as Map<String, dynamic>? ?? {};
-        return InvoiceScreen(
-          transactionId: extras['transactionId'] as String? ?? '',
-          type: extras['type'] as String? ?? 'buy',
-        );
-      }),
-      GoRoute(path: AppRoutes.bankVerify, builder: (_, __) => const BankVerifyScreen()),
-      GoRoute(path: AppRoutes.bankVerifyLoading, builder: (_, state) {
-        final extras = state.extra as Map<String, dynamic>? ?? {};
-        return BankVerifyLoadingScreen(details: extras);
-      }),
-      GoRoute(path: AppRoutes.kycVerification, builder: (_, __) => const KycVerificationScreen()),
-      GoRoute(path: AppRoutes.paymentMethods, builder: (_, __) => const PaymentMethodsScreen()),
+      GoRoute(
+          path: AppRoutes.paymentGateway,
+          builder: (_, state) {
+            final extras = state.extra as Map<String, dynamic>? ?? {};
+            return PaymentGatewayScreen(
+              paymentSessionId: extras['paymentSessionId'] as String? ?? '',
+              orderId: extras['orderId'] as String? ?? '',
+              paymentAmount: (extras['amount'] as num?)?.toDouble() ?? 0,
+              paymentRequest: extras['paymentRequest'] as Map<String, dynamic>?,
+            );
+          }),
+      GoRoute(
+          path: AppRoutes.paymentReturn,
+          builder: (_, state) {
+            final extras = state.extra as Map<String, dynamic>? ?? {};
+            final orderId = extras['orderId'] as String? ??
+                state.uri.queryParameters['order_id'] ??
+                '';
+            return PaymentReturnScreen(orderId: orderId);
+          }),
 
-      GoRoute(path: AppRoutes.helpCenter, builder: (_, __) => const HelpCenterScreen()),
+      GoRoute(
+          path: AppRoutes.rewards, builder: (_, __) => const RewardsScreen()),
+      GoRoute(
+          path: AppRoutes.transfer, builder: (_, __) => const TransferScreen()),
+      GoRoute(
+          path: AppRoutes.goldCertificate,
+          builder: (_, __) => const GoldCertificateScreen()),
+      GoRoute(
+          path: AppRoutes.auditCertificate,
+          builder: (_, __) => const AuditCertificateScreen()),
+      GoRoute(
+          path: AppRoutes.silverCertificate,
+          builder: (_, __) => const SilverCertificateScreen()),
+      GoRoute(
+          path: AppRoutes.diamondCertificate,
+          builder: (_, __) => const DiamondCertificateScreen()),
+      GoRoute(
+          path: AppRoutes.invoice,
+          builder: (_, state) {
+            final extras = state.extra as Map<String, dynamic>? ?? {};
+            return InvoiceScreen(
+              transactionId: extras['transactionId'] as String? ?? '',
+              type: extras['type'] as String? ?? 'buy',
+            );
+          }),
+      GoRoute(
+          path: AppRoutes.bankVerify,
+          builder: (_, __) => const BankVerifyScreen()),
+      GoRoute(
+          path: AppRoutes.bankVerifyLoading,
+          builder: (_, state) {
+            final extras = state.extra as Map<String, dynamic>? ?? {};
+            return BankVerifyLoadingScreen(details: extras);
+          }),
+      GoRoute(
+          path: AppRoutes.kycVerification,
+          builder: (_, __) => const KycVerificationScreen()),
+      GoRoute(
+          path: AppRoutes.paymentMethods,
+          builder: (_, __) => const PaymentMethodsScreen()),
+
+      GoRoute(
+          path: AppRoutes.helpCenter,
+          builder: (_, __) => const HelpCenterScreen()),
       GoRoute(path: AppRoutes.terms, builder: (_, __) => const TermsScreen()),
-      GoRoute(path: AppRoutes.privacyPolicy, builder: (_, __) => const PrivacyPolicyScreen()),
-      GoRoute(path: AppRoutes.security, builder: (_, __) => const SecurityScreen()),
-      GoRoute(path: AppRoutes.refundPolicy, builder: (_, __) => const RefundPolicyScreen()),
-      GoRoute(path: AppRoutes.termsOfUse, builder: (_, __) => const TermsOfUseScreen()),
-      GoRoute(path: AppRoutes.trademarkNotice, builder: (_, __) => const TrademarkNoticeScreen()),
-      GoRoute(path: AppRoutes.howItWorks, builder: (_, __) => const HowItWorksScreen()),
-      GoRoute(path: AppRoutes.why, builder: (_, __) => const WhyKaratlyScreen()),
-      GoRoute(path: AppRoutes.notifications, builder: (_, __) => const NotificationsScreen()),
-      GoRoute(path: AppRoutes.gift360, builder: (_, __) => const Gift360WebViewScreen()),
+      GoRoute(
+          path: AppRoutes.privacyPolicy,
+          builder: (_, __) => const PrivacyPolicyScreen()),
+      GoRoute(
+          path: AppRoutes.security, builder: (_, __) => const SecurityScreen()),
+      GoRoute(
+          path: AppRoutes.refundPolicy,
+          builder: (_, __) => const RefundPolicyScreen()),
+      GoRoute(
+          path: AppRoutes.termsOfUse,
+          builder: (_, __) => const TermsOfUseScreen()),
+      GoRoute(
+          path: AppRoutes.trademarkNotice,
+          builder: (_, __) => const TrademarkNoticeScreen()),
+      GoRoute(
+          path: AppRoutes.howItWorks,
+          builder: (_, __) => const HowItWorksScreen()),
+      GoRoute(
+          path: AppRoutes.why, builder: (_, __) => const WhyKaratlyScreen()),
+      GoRoute(
+          path: AppRoutes.deleteAccount,
+          builder: (_, __) => const DeleteAccountScreen()),
+      GoRoute(
+          path: AppRoutes.notifications,
+          builder: (_, __) => const NotificationsScreen()),
+      GoRoute(
+          path: AppRoutes.gift360,
+          builder: (_, __) => const Gift360WebViewScreen()),
 
       GoRoute(path: '/', redirect: (_, __) => AppRoutes.splash),
     ],

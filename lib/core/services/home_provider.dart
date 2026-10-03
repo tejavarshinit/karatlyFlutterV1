@@ -4,6 +4,7 @@ import '../api/augmont_api.dart';
 import '../storage/local_storage.dart';
 import '../utils/unique_id.dart';
 import 'rate_provider.dart';
+import 'push_notification_service.dart';
 
 // ── Investment Data ──
 class InvestmentData {
@@ -99,6 +100,10 @@ class HomeNotifier extends StateNotifier<HomeState> {
   Future<void> fetchInvestmentData() async {
     final uniqueId = _resolveUniqueId();
     if (uniqueId.isEmpty) return;
+
+    // uniqueId may only become known after Augmont registration; make sure
+    // the FCM device token is registered (deduplicated per session).
+    PushNotificationService.instance.syncToken();
 
     state = state.copyWith(loading: true, clearError: true);
 

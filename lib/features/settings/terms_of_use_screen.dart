@@ -29,25 +29,21 @@ class TermsOfUseScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   _buildHeader(context),
                   const SizedBox(height: 24),
-                  SizedBox(
-                    height: 400,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildTitle(),
-                          SizedBox(height: 24),
-                          _buildBlockquote(),
-                          SizedBox(height: 24),
-                          _section('1 ABOUT KARATLY', _aboutKaratly),
-                          SizedBox(height: 20),
-                          _section('2 WHO CAN USE THE PLATFORM \u2014 ELIGIBILITY', ''),
-                          _eligibilityList(),
-                          SizedBox(height: 20),
-                          _section('3 KARATLY\'S ROLE \u2014 INTERMEDIARY ONLY', _intermediaryRole),
-                        ],
-                      ),
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTitle(),
+                      SizedBox(height: 24),
+                      _buildBlockquote(),
+                      SizedBox(height: 24),
+                      _section('1 ABOUT KARATLY', _aboutKaratly),
+                      SizedBox(height: 20),
+                      _section('2 WHO CAN USE THE PLATFORM \u2014 ELIGIBILITY', ''),
+                      _eligibilityList(),
+                      SizedBox(height: 20),
+                      _section('3 KARATLY\'S ROLE \u2014 INTERMEDIARY ONLY', _intermediaryRole),
+                      SizedBox(height: 32),
+                    ],
                   ),
                   const SizedBox(height: 32),
                 ],
@@ -66,7 +62,13 @@ class TermsOfUseScreen extends StatelessWidget {
         Row(
           children: [
             GestureDetector(
-              onTap: () => context.go(AppRoutes.dashboard),
+              onTap: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go(AppRoutes.home);
+                }
+              },
               child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
             ),
             const SizedBox(width: 8),

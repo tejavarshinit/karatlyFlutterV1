@@ -268,28 +268,35 @@ class _SplashScreen2State extends State<SplashScreen2> with TickerProviderStateM
                       // Scrolling dashed divider
                       SizedBox(
                         height: 2,
-                        child: AnimatedBuilder(
-                          animation: _dividerController,
-                          builder: (context, _) {
-                            return Transform.translate(
-                              offset: Offset(-120 + _dividerController.value * 120, 0),
-                              child: Row(
-                                children: List.generate(40, (i) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 6),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(width: 4, height: 2, color: const Color(0x80FFB900)),
-                                        const SizedBox(width: 2),
-                                        Container(width: 20, height: 2, color: const Color(0x2EFFB900)),
-                                      ],
-                                    ),
-                                  );
-                                }),
-                              ),
-                            );
-                          },
+                        child: ClipRect(
+                          child: OverflowBox(
+                            alignment: Alignment.centerLeft,
+                            maxWidth: double.infinity,
+                            maxHeight: 2,
+                            child: AnimatedBuilder(
+                              animation: _dividerController,
+                              builder: (context, _) {
+                                return Transform.translate(
+                                  offset: Offset(-120 + _dividerController.value * 120, 0),
+                                  child: Row(
+                                    children: List.generate(40, (i) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 6),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(width: 4, height: 2, color: const Color(0x80FFB900)),
+                                            const SizedBox(width: 2),
+                                            Container(width: 20, height: 2, color: const Color(0x2EFFB900)),
+                                          ],
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),

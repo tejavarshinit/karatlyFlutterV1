@@ -70,7 +70,13 @@ We use AES-256 encryption for data at rest and TLS 1.2/1.3 for data in transit. 
         Row(
           children: [
             GestureDetector(
-              onTap: () => context.go(AppRoutes.dashboard),
+              onTap: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go(AppRoutes.home);
+                }
+              },
               child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
             ),
             const SizedBox(width: 8),
@@ -128,17 +134,12 @@ We use AES-256 encryption for data at rest and TLS 1.2/1.3 for data in transit. 
   }
 
   Widget _buildContent() {
-    return SizedBox(
-      height: 350,
-      child: SingleChildScrollView(
-        child: Text(
-          _privacyText,
-          style: const TextStyle(
-            color: Color(0xFFBCBCBC),
-            fontSize: 12,
-            height: 1.5,
-          ),
-        ),
+    return Text(
+      _privacyText,
+      style: const TextStyle(
+        color: Color(0xFFBCBCBC),
+        fontSize: 12,
+        height: 1.5,
       ),
     );
   }

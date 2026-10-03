@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/router.dart';
@@ -25,7 +26,9 @@ class _BankVerifyScreenState extends State<BankVerifyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final canSubmit = _accountController.text.isNotEmpty && _ifscController.text.isNotEmpty && _nameController.text.isNotEmpty;
+    final canSubmit = _accountController.text.isNotEmpty &&
+        _ifscController.text.isNotEmpty &&
+        _nameController.text.isNotEmpty;
 
     return Scaffold(
       body: Container(
@@ -46,16 +49,21 @@ class _BankVerifyScreenState extends State<BankVerifyScreen> {
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.maybePop(context),
-                      child: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFF7CD57), size: 18),
+                      child: const Icon(Icons.arrow_back_ios_new_rounded,
+                          color: Color(0xFFF7CD57), size: 18),
                     ),
                     const SizedBox(width: 8),
-                    const Text('Verify Bank Account', style: TextStyle(fontSize: 14, color: Color(0xFFF7CD57))),
+                    const Text('Verify Bank Account',
+                        style:
+                            TextStyle(fontSize: 14, color: Color(0xFFF7CD57))),
                   ],
                 ),
                 const SizedBox(height: 20),
-                const Text('We will deposit ₹1 to verify your account details.', style: TextStyle(color: Color(0xFFB4B0B0), fontSize: 13)),
+                const Text('We will deposit ₹1 to verify your account details.',
+                    style: TextStyle(color: Color(0xFFB4B0B0), fontSize: 13)),
                 const SizedBox(height: 20),
-                _field('Account Number', _accountController, keyboardType: TextInputType.number),
+                _field('Account Number', _accountController,
+                    keyboardType: TextInputType.number),
                 const SizedBox(height: 14),
                 _field('IFSC Code', _ifscController, upperCase: true),
                 const SizedBox(height: 14),
@@ -71,12 +79,14 @@ class _BankVerifyScreenState extends State<BankVerifyScreen> {
                   child: const Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.info_outline, color: Color(0xFFF7CD57), size: 18),
+                      Icon(Icons.info_outline,
+                          color: Color(0xFFF7CD57), size: 18),
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'The name on your bank account must match the name on your PAN card for successful verification.',
-                          style: TextStyle(color: Color(0xFFB4B0B0), fontSize: 12),
+                          style:
+                              TextStyle(color: Color(0xFFB4B0B0), fontSize: 12),
                         ),
                       ),
                     ],
@@ -91,7 +101,8 @@ class _BankVerifyScreenState extends State<BankVerifyScreen> {
                               AppRoutes.bankVerifyLoading,
                               extra: {
                                 'accountNumber': _accountController.text.trim(),
-                                'ifscCode': _ifscController.text.trim(),
+                                'ifscCode':
+                                    _ifscController.text.trim().toUpperCase(),
                                 'accountName': _nameController.text.trim(),
                               },
                             )
@@ -112,27 +123,47 @@ class _BankVerifyScreenState extends State<BankVerifyScreen> {
     );
   }
 
-  Widget _field(String label, TextEditingController controller, {TextInputType keyboardType = TextInputType.text, bool upperCase = false}) {
+  Widget _field(String label, TextEditingController controller,
+      {TextInputType keyboardType = TextInputType.text,
+      bool upperCase = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Text(label,
+            style: const TextStyle(color: Colors.white70, fontSize: 12)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           keyboardType: keyboardType,
-          textCapitalization: upperCase ? TextCapitalization.characters : TextCapitalization.none,
+          textCapitalization: upperCase
+              ? TextCapitalization.characters
+              : TextCapitalization.none,
+          inputFormatters: upperCase ? [UpperCaseTextFormatter()] : null,
           onChanged: (_) => setState(() {}),
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xFF0D0D0D),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF2E2E2E))),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF2E2E2E))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFF7CD57))),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFF2E2E2E))),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFF2E2E2E))),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: Color(0xFFF7CD57))),
           ),
         ),
       ],
     );
+  }
+}
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    return newValue.copyWith(text: newValue.text.toUpperCase());
   }
 }

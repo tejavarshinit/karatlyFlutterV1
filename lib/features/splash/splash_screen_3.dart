@@ -124,7 +124,7 @@ class _SplashScreen3State extends State<SplashScreen3> with TickerProviderStateM
                     return Transform.translate(
                       offset: Offset(-40 * (1 - enterT.value), 20 * (1 - enterT.value)),
                       child: Opacity(
-                        opacity: enterT.value,
+                        opacity: enterT.value.clamp(0.0, 1.0),
                         child: AnimatedBuilder(
                           animation: _bobController,
                           builder: (context, _) {

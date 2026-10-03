@@ -63,7 +63,30 @@ class AugmontApi {
       if (descMatch != null) return descMatch.group(1)?.trim() ?? payloadMsg;
     }
 
-    return payloadMsg ?? data['message']?.toString() ?? fallback;
+    if (payloadMsg != null) return payloadMsg;
+
+    final rawMsg = data['message']?.toString();
+    if (rawMsg != null && rawMsg.startsWith('{')) {
+      try {
+        final parsed = jsonDecode(rawMsg);
+        if (parsed is Map) {
+          final errors = parsed['errors'] as Map<String, dynamic>?;
+          if (errors != null && errors.isNotEmpty) {
+            final firstErrors = errors.values.first;
+            if (firstErrors is List && firstErrors.isNotEmpty) {
+              final firstError = firstErrors.first;
+              if (firstError is Map && firstError['message'] != null) {
+                return firstError['message'].toString();
+              }
+            }
+          }
+          if (parsed['message'] != null) return parsed['message'].toString();
+        }
+      } catch (_) {}
+      return rawMsg;
+    }
+
+    return rawMsg ?? fallback;
   }
 
   String _extractStatusCode(Map<String, dynamic> data) {
